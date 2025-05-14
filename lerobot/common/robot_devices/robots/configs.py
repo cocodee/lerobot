@@ -674,3 +674,14 @@ class LeKiwiRobotConfig(RobotConfig):
     )
 
     mock: bool = False
+
+
+@RobotConfig.register_subclass("agibotx1")
+@dataclass
+class AgibotX1RobotConfig(RobotConfig):
+    # `max_relative_target` limits the magnitude of the relative positional target vector for safety purposes.
+    # Set this to a positive scalar to have the same value for all motors, or a list that is the same length as
+    # the number of motors in your follower arms.
+    max_relative_target: int | None = None
+
+    mock: bool = False
