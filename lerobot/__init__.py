@@ -183,6 +183,7 @@ available_robots = [
     "so100",
     "so101",
     "moss",
+    "agibotx1",
 ]
 
 # lists all available cameras from `lerobot/common/robot_devices/cameras`
@@ -195,6 +196,7 @@ available_cameras = [
 available_motors = [
     "dynamixel",
     "feetech",
+    "agibotx1",
 ]
 
 # keys and values refer to yaml files

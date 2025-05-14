@@ -1,5 +1,5 @@
 import logging
-
+from lerobot.common.robot_devices.motors.configs import AgibotX1MotorsBusConfig
 
 class AgibotX1MotorsBus():
     def __init__(
