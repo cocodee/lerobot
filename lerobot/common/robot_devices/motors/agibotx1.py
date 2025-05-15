@@ -14,6 +14,12 @@ POWER_FLOW_R86 = "POWER_FLOW_R86"
 POWER_FLOW_R52 = "POWER_FLOW_R52"
 POWER_FLOW_L28 = "POWER_FLOW_L28"
 OMNI_PICKER = "OMNI_PICKER"
+
+DATA_NAMES = ["position", "velocity", "effort"]
+DATA_NAME_POSITION = "position"
+DATA_NAME_VELOCITY = "velocity"
+DATA_NAME_EFFORT = "effort"
+
 '''
 AgibotX1RobotConfig(
                 dcu_name="body",
@@ -97,9 +103,9 @@ class AgibotX1MotorsBus():
             motor_names = [motor_names]
         values = []
         reader_map = {
-            'position': self.controller.get_position,
-            'velocity': self.controller.get_velocity,
-            'effort': self.controller.get_effort,
+            DATA_NAME_POSITION: self.controller.get_position,
+            DATA_NAME_VELOCITY: self.controller.get_velocity,
+            DATA_NAME_EFFORT: self.controller.get_effort,
         }
         reader = reader_map.get(data_name)
         if not reader:
@@ -118,9 +124,15 @@ class AgibotX1MotorsBus():
             values = [values] * len(motor_names)
         if len(values) != len(motor_names):
             raise ValueError("Length of values must match the number of motor names.")
-        if data_name == 'mit_cmd':
-            for name, value in zip(motor_names, values):
+        for name, value in zip(motor_names, values):
+            if data_name == DATA_NAME_POSITION:
                 pos = value
                 self.controller.set_mit_cmd(name, pos, 0, 0, self.kp, self.kd)
-        else:
-            raise ValueError(f"Unknown data_name: {data_name}")
+            elif data_name == DATA_NAME_VELOCITY:
+                vel = value
+                self.controller.set_mit_cmd(name, 0, vel, 0, self.kp, self.kd)
+            elif data_name == DATA_NAME_EFFORT:
+                eff = value
+                self.controller.set_mit_cmd(name, 0, 0, eff, self.kp, self.kd)
+            else:
+                raise ValueError(f"Unknown data_name: {data_name}")
