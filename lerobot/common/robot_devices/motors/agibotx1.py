@@ -83,7 +83,35 @@ class JointOutOfRangeError(Exception):
         self.message = message
         super().__init__(self.message)
 
+
+controller_cache = {}
+def start_controller(controller:XyberController,if_name str):
+    return controller.start(ifname=if_name, cycle_ns=1000000, enable_dc=True)
+def get_controller(dcu_name, ethercat_id):
+    key = (dcu_name, ethercat_id)
+    if key not in controller_cache:
+        controller = XyberController.get_instance()
+        controller.create_dcu(dcu_name, ethercat_id)
+        controller.set_realtime(rt_priority=90, bind_cpu=1)
+        controller_cache[key] = controller
+    return controller_cache[key]
 class AgibotX1MotorsBus():
+    def __init__(
+        self,
+        config: AgibotX1MotorsBusConfig,
+    ):
+        self.dcu_name = config.dcu_name
+        self.ethercat_id = config.ethercat_id
+        self.motors = config.motors
+        #self.if_name == config.if_name
+        self.kp = 0.9
+        self.kd = 0.2
+        self.mock = config.mock
+        self.calibration = None
+        self.is_connected = False
+        self.logs = {}
+        self.acturator_type_resolution = deepcopy(ACTURATOR_TYPE_RESOLUTION)
+
     def __init__(
         self,
         config: AgibotX1MotorsBusConfig,
@@ -101,18 +129,15 @@ class AgibotX1MotorsBus():
         self.acturator_type_resolution = deepcopy(ACTURATOR_TYPE_RESOLUTION)
 
     def connect(self):
-        self.controller = XyberController.get_instance()
-        for motor_name,motor in self.motors:
-            self.controller.create_dcu(self.dcu_name, self.ethercat_id)
-            self.controller.attach_actuator(
+        controller = self.get_controller(self.dcu_name, self.ethercat_id)
+        for motor_name, motor in self.motors.items():
+            controller.attach_actuator(
                 dcu_name=self.dcu_name,
                 ch=motor[CTRL_CHANNEL_INDEX],
                 type=motor[ACTURATOR_TYPE_INDEX],
                 actuator_name=motor_name,
                 can_id=motor[CAN_ID_INDEX],
             )
-        self.controller.set_realtime(rt_priority=90, bind_cpu=1)
-        self.controller.start(ifname=self.if_name, cycle_ns=1000000, enable_dc=True)
         self.is_connected = True
     def reconnect(self):
         if self.is_connected:
