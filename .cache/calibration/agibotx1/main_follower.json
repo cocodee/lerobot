@@ -1,50 +1,45 @@
 {
     "homing_offset": [
-        2048,
-        3072,
-        3072,
-        -1024,
-        -1024,
-        2048,
-        -2048,
-        2048,
-        -2048
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
     ],
     "drive_mode": [
-        1,
-        1,
-        1,
         0,
         0,
-        1,
         0,
-        1,
+        0,
+        0,
+        0,
+        0,
         0
     ],
     "start_pos": [
-        2015,
-        3058,
-        3061,
-        1071,
-        1071,
-        2035,
-        2152,
-        2029,
-        2499
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
     ],
     "end_pos": [
-        -1008,
-        -1963,
-        -1966,
-        2141,
-        2143,
-        -971,
-        3043,
-        -1077,
-        3144
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
     ],
     "calib_mode": [
-        "DEGREE",
         "DEGREE",
         "DEGREE",
         "DEGREE",
@@ -55,14 +50,13 @@
         "LINEAR"
     ],
     "motor_names": [
-        "waist",
-        "shoulder",
-        "shoulder_shadow",
-        "elbow",
-        "elbow_shadow",
-        "forearm_roll",
-        "wrist_angle",
-        "wrist_rotate",
-        "gripper"
+        "right_shoulder_pitch_actuator",
+        "right_shoulder_roll_actuator",
+        "right_shoulder_yaw_actuator",
+        "right_elbow_pitch_actuator",
+        "right_elbow_yaw_actuator",
+        "right_wrist_front_actuator",
+        "right_wrist_back_actuator",
+        "right_claw_actuator"
     ]
 }
