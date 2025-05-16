@@ -4,6 +4,7 @@ from mock_xybercontrller import MockXyberController as XyberController
 from mock_xybercontrller import MockActautorMode, MockActautorState, MockActuatorType, MockCtrlChannel as ActautorMode,ActautorState,ActuatorType,CtrlChannel
 import numpy as np
 import math
+import enum
 from copy import deepcopy
 
 
@@ -32,12 +33,16 @@ UPPER_BOUND_DEGREE = 270
 LOWER_BOUND_LINEAR = -10
 UPPER_BOUND_LINEAR = 110
 
+'''
+https://github.com/AgibotTech/agibot_x1_infer/blob/main/doc/dcu_driver_module/dcu_driver_module.zh_CN.md
+'''
 ACTURATOR_TYPE_RESOLUTION = {
     "POWER_FLOW_R86": math.pi*2,
     "POWER_FLOW_R52": math.pi*2,
     "POWER_FLOW_L28": math.pi*2,
     "OMNI_PICKER": 1,
 }
+
 '''
   - left_shoulder_pitch_actuator
   - left_shoulder_roll_actuator
