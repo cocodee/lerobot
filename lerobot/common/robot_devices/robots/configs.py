@@ -704,6 +704,9 @@ class AgibotX1RobotConfig(RobotConfig):
 
     calibration_dir: str = ".cache/calibration/agibotx1"
     if_name: str = 'enp2s0'
+    dcu_configs: list[tuple[str,int]] = field(
+        default_factory=lambda: [("body",1)]
+     )
     leader_arms: dict[str,AgibotX1MotorsBusConfig] = field(
         default_factory=lambda: {
             "main": AgibotX1MotorsBusConfig(

@@ -83,6 +83,8 @@ class JointOutOfRangeError(Exception):
         self.message = message
         super().__init__(self.message)
 
+def get_controller():
+    return XyberController.get_instance()
 def start_controller(controller:XyberController,if_name str):
     controller = XyberController.get_instance()
     controller.set_realtime(rt_priority=90, bind_cpu=1)
