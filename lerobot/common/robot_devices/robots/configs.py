@@ -26,6 +26,7 @@ from lerobot.common.robot_devices.cameras.configs import (
 from lerobot.common.robot_devices.motors.configs import (
     DynamixelMotorsBusConfig,
     FeetechMotorsBusConfig,
+    AgibotX1MotorsBusConfig,
     MotorsBusConfig,
 )
 
@@ -675,7 +676,24 @@ class LeKiwiRobotConfig(RobotConfig):
 
     mock: bool = False
 
-
+'''
+AgibotX1RobotConfig(
+                dcu_name="body",
+                ethercat_id=1,
+                if_name="eth0",
+                motors={
+                    # name: (ctrl_channel,can_id,actuator_type)
+                    "left_shoulder_pitch_actuator": [1, 1, "POWER_FLOW_R86"],
+                    "left_shoulder_roll_actuator": [1, 2, "POWER_FLOW_R86"],
+                    "left_shoulder_yaw_actuator": [1, 3, "POWER_FLOW_R52"],
+                    "left_elbow_pitch_actuator": [1, 4, "POWER_FLOW_R52"],
+                    "left_elbow_yaw_actuator": [1, 5, "POWER_FLOW_R52"],
+                    "left_wrist_front_actuator": [1, 6, "POWER_FLOW_L28"],
+                    "left_wrist_back_actuator": [1, 7, "POWER_FLOW_L28"],
+                    "left_claw_actuator": [1, 7, "OMNI_PICKER"],
+                },
+            ),
+'''
 @RobotConfig.register_subclass("agibotx1")
 @dataclass
 class AgibotX1RobotConfig(RobotConfig):
@@ -683,5 +701,49 @@ class AgibotX1RobotConfig(RobotConfig):
     # Set this to a positive scalar to have the same value for all motors, or a list that is the same length as
     # the number of motors in your follower arms.
     max_relative_target: int | None = None
+
+    calibration_dir: str = ".cache/calibration/agibotx1"
+    if_name: str = 'enp2s0'
+    leader_arms: dict[str,AgibotX1MotorsBusConfig] = field(
+        default_factory=lambda: {
+            "main": AgibotX1MotorsBusConfig(
+                mock= False,
+                dcu_name = "body",
+                ethercat_id = 1,
+                motors={
+                    # name: (ctrl_channel,can_id,actuator_type)
+                    "left_shoulder_pitch_actuator": [1, 1, "POWER_FLOW_R86"],
+                    "left_shoulder_roll_actuator": [1, 2, "POWER_FLOW_R86"],
+                    "left_shoulder_yaw_actuator": [1, 3, "POWER_FLOW_R52"],
+                    "left_elbow_pitch_actuator": [1, 4, "POWER_FLOW_R52"],
+                    "left_elbow_yaw_actuator": [1, 5, "POWER_FLOW_R52"],
+                    "left_wrist_front_actuator": [1, 6, "POWER_FLOW_L28"],
+                    "left_wrist_back_actuator": [1, 7, "POWER_FLOW_L28"],
+                    "left_claw_actuator": [1, 8, "OMNI_PICKER"],
+                },
+            ),
+        }
+    )
+
+    follower_arms: dict[str, MotorsBusConfig] = field(
+        default_factory=lambda: {
+            "main": AgibotX1MotorsBusConfig(
+                mock= False,
+                dcu_name = "body",
+                ethercat_id = 1,
+                motors={
+                    # name: (ctrl_channel,can_id,actuator_type)
+                    "right_shoulder_pitch_actuator": [2, 1, "POWER_FLOW_R86"],
+                    "right_shoulder_roll_actuator": [2, 2, "POWER_FLOW_R86"],
+                    "right_shoulder_yaw_actuator": [2, 3, "POWER_FLOW_R52"],
+                    "right_elbow_pitch_actuator": [2, 4, "POWER_FLOW_R52"],
+                    "right_elbow_yaw_actuator": [2, 5, "POWER_FLOW_R52"],
+                    "right_wrist_front_actuator": [2, 6, "POWER_FLOW_L28"],
+                    "right_wrist_back_actuator": [2, 7, "POWER_FLOW_L28"],
+                    "right_claw_actuator": [2, 8, "OMNI_PICKER"],
+                },
+            ),
+        }
+    )
 
     mock: bool = False

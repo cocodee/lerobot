@@ -83,18 +83,16 @@ class JointOutOfRangeError(Exception):
         self.message = message
         super().__init__(self.message)
 
-
-controller_cache = {}
 def start_controller(controller:XyberController,if_name str):
+    controller = XyberController.get_instance()
+    controller.set_realtime(rt_priority=90, bind_cpu=1)
     return controller.start(ifname=if_name, cycle_ns=1000000, enable_dc=True)
-def get_controller(dcu_name, ethercat_id):
-    key = (dcu_name, ethercat_id)
-    if key not in controller_cache:
-        controller = XyberController.get_instance()
-        controller.create_dcu(dcu_name, ethercat_id)
-        controller.set_realtime(rt_priority=90, bind_cpu=1)
-        controller_cache[key] = controller
-    return controller_cache[key]
+def create_dcu(dcu_name, ethercat_id):
+    controller = XyberController.get_instance()
+    return controller.create_dcu(dcu_name, ethercat_id)
+
+def stop_controller(controller:XyberController):
+    return controller.stop()
 class AgibotX1MotorsBus():
     def __init__(
         self,
