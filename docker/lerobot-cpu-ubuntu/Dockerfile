@@ -31,7 +31,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN add-apt-repository ppa:ubuntu-toolchain-r/test -y && \
 apt-get update && apt-get install -y gcc-13 g++-13 && \
 update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 60 --slave /usr/bin/g++ g++ /usr/bin/g++-13 && \
-apt-get clean && rm -rf /var/lib/apt/lists/* \
+apt-get clean && rm -rf /var/lib/apt/lists/*
 # Clone repository and install LeRobot in a single layer
 COPY . /lerobot
 WORKDIR /lerobot
