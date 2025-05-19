@@ -20,6 +20,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     sudo \
     lsb-release \
+    gnupg \
+    gpg-agent \
     software-properties-common \
     speech-dispatcher libgeos-dev \
     python${PYTHON_VERSION}-dev python${PYTHON_VERSION}-venv \
