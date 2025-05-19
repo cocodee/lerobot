@@ -71,6 +71,8 @@ AgibotX1RobotConfig(
 
 '''
 
+CALIBRATION_REQUIRED = ["position"]
+
 
 class CalibrationMode(enum.Enum):
     # Joints with rotational motions are expressed in degrees in nominal range of [-180, 180]
@@ -273,6 +275,8 @@ class AgibotX1MotorsBus():
             raise ValueError(f"Unknown data_name: {data_name}")
         for name in motor_names:
             values.append(reader(name))
+        if data_name in CALIBRATION_REQUIRED and self.calibration is not None:
+            values = self.apply_calibration_autocorrect(values, motor_names)    
         return np.array(values)
 
     def write(self, data_name, values: int | float | np.ndarray, motor_names: str | list[str] | None = None):
@@ -285,6 +289,8 @@ class AgibotX1MotorsBus():
             values = [values] * len(motor_names)
         if len(values) != len(motor_names):
             raise ValueError("Length of values must match the number of motor names.")
+        if data_name in CALIBRATION_REQUIRED and self.calibration is not None:
+            values = self.revert_calibration(values, motor_names)        
         for name, value in zip(motor_names, values):
             if data_name == DATA_NAME_POSITION:
                 pos = value
