@@ -1,7 +1,12 @@
 import logging
 from lerobot.common.robot_devices.motors.configs import AgibotX1MotorsBusConfig
-from mock_xybercontrller import MockXyberController as XyberController
-from mock_xybercontrller import MockActautorMode, MockActautorState, MockActuatorType, MockCtrlChannel as ActautorMode,ActautorState,ActuatorType,CtrlChannel
+from lerobot.common.robot_devices.motors.mock_xybercontroller import MockXyberController as XyberController
+from lerobot.common.robot_devices.motors.mock_xybercontroller import(
+    MockActautorMode as ActautorMode,        # MockActautorMode 重命名为 ActautorMode
+    MockActautorState as ActautorState,      # MockActautorState 重命名为 ActautorState
+    MockActuatorType as ActuatorType,        # MockActuatorType 重命名为 ActuatorType
+    MockCtrlChannel as CtrlChannel          # MockCtrlChannel 重命名为 CtrlChannel
+)
 import numpy as np
 import math
 import enum
@@ -87,7 +92,7 @@ class JointOutOfRangeError(Exception):
 
 def get_controller():
     return XyberController.get_instance()
-def start_controller(controller:XyberController,if_name str):
+def start_controller(controller:XyberController,if_name:str):
     controller = XyberController.get_instance()
     controller.set_realtime(rt_priority=90, bind_cpu=1)
     return controller.start(ifname=if_name, cycle_ns=1000000, enable_dc=True)

@@ -17,6 +17,7 @@ from typing import Protocol
 from lerobot.common.robot_devices.motors.configs import (
     DynamixelMotorsBusConfig,
     FeetechMotorsBusConfig,
+    AgibotX1MotorsBusConfig,
     MotorsBusConfig,
 )
 
@@ -66,6 +67,12 @@ def make_motors_bus(motor_type: str, **kwargs) -> MotorsBus:
 
         config = FeetechMotorsBusConfig(**kwargs)
         return FeetechMotorsBus(config)
+
+    elif motor_type == "agibotx1":
+        from lerobot.common.robot_devices.motors.agibotx1 import AgibotX1MotorsBus
+
+        config = AgibotX1MotorsBusConfig(**kwargs)
+        return AgibotX1MotorsBus(config)
 
     else:
         raise ValueError(f"The motor type '{motor_type}' is not valid.")
