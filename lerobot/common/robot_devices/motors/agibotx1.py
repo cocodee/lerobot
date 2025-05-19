@@ -1,11 +1,18 @@
 import logging
 from lerobot.common.robot_devices.motors.configs import AgibotX1MotorsBusConfig
-from lerobot.common.robot_devices.motors.mock_xybercontroller import MockXyberController as XyberController
-from lerobot.common.robot_devices.motors.mock_xybercontroller import(
-    MockActautorMode as ActautorMode,        # MockActautorMode 重命名为 ActautorMode
-    MockActautorState as ActautorState,      # MockActautorState 重命名为 ActautorState
-    MockActuatorType as ActuatorType,        # MockActuatorType 重命名为 ActuatorType
-    MockCtrlChannel as CtrlChannel          # MockCtrlChannel 重命名为 CtrlChannel
+#from lerobot.common.robot_devices.motors.mock_xybercontroller import MockXyberController as XyberController
+#from lerobot.common.robot_devices.motors.mock_xybercontroller import(
+#    MockActautorMode as ActautorMode,        # MockActautorMode 重命名为 ActautorMode
+#    MockActautorState as ActautorState,      # MockActautorState 重命名为 ActautorState
+#    MockActuatorType as ActuatorType,        # MockActuatorType 重命名为 ActuatorType
+#    MockCtrlChannel as CtrlChannel          # MockCtrlChannel 重命名为 CtrlChannel
+#)
+from lerobot.common.robot_devices.motors.xyber_controller_py import XyberController as XyberController
+from lerobot.common.robot_devices.motors.xyber_controller_py import(
+    ActautorMode as ActautorMode,        # MockActautorMode 重命名为 ActautorMode
+    ActautorState as ActautorState,      # MockActautorState 重命名为 ActautorState
+    ActuatorType as ActuatorType,        # MockActuatorType 重命名为 ActuatorType
+    CtrlChannel as CtrlChannel          # MockCtrlChannel 重命名为 CtrlChannel
 )
 import numpy as np
 import math
@@ -110,23 +117,7 @@ class AgibotX1MotorsBus():
         self.dcu_name = config.dcu_name
         self.ethercat_id = config.ethercat_id
         self.motors = config.motors
-        #self.if_name == config.if_name
-        self.kp = 0.9
-        self.kd = 0.2
-        self.mock = config.mock
-        self.calibration = None
-        self.is_connected = False
-        self.logs = {}
-        self.acturator_type_resolution = deepcopy(ACTURATOR_TYPE_RESOLUTION)
-
-    def __init__(
-        self,
-        config: AgibotX1MotorsBusConfig,
-    ):
-        self.dcu_name = config.dcu_name
-        self.ethercat_id = config.ethercat_id
-        self.motors = config.motors
-        self.if_name == config.if_name
+        self.if_name = config.if_name
         self.kp = 0.9
         self.kd = 0.2
         self.mock = config.mock
@@ -136,7 +127,7 @@ class AgibotX1MotorsBus():
         self.acturator_type_resolution = deepcopy(ACTURATOR_TYPE_RESOLUTION)
 
     def connect(self):
-        controller = self.get_controller(self.dcu_name, self.ethercat_id)
+        controller = get_controller()
         for motor_name, motor in self.motors.items():
             controller.attach_actuator(
                 dcu_name=self.dcu_name,

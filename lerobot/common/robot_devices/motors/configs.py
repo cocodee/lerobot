@@ -43,7 +43,8 @@ class FeetechMotorsBusConfig(MotorsBusConfig):
 @MotorsBusConfig.register_subclass("agibotx1")
 @dataclass
 class AgibotX1MotorsBusConfig(MotorsBusConfig):
-    dcu_name=str
+    if_name: str
+    dcu_name:str
     ethercat_id:int
     motors: dict[str, tuple[int, int,str]]
     mock: bool = False
