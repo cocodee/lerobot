@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     sudo \
     lsb-release \
-    software-properties-commo \
+    software-properties-common \
     speech-dispatcher libgeos-dev \
     python${PYTHON_VERSION}-dev python${PYTHON_VERSION}-venv \
     && ln -s /usr/bin/python${PYTHON_VERSION} /usr/bin/python \
