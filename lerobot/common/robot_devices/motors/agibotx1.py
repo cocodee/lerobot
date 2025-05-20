@@ -50,9 +50,9 @@ UPPER_BOUND_LINEAR = 110
 https://github.com/AgibotTech/agibot_x1_infer/blob/main/doc/dcu_driver_module/dcu_driver_module.zh_CN.md
 '''
 ACTURATOR_TYPE_RESOLUTION = {
-    "POWER_FLOW_R86": math.pi*2,
-    "POWER_FLOW_R52": math.pi*2,
-    "POWER_FLOW_L28": math.pi*2,
+    "POWER_FLOW_R86": math.pi*4,
+    "POWER_FLOW_R52": math.pi*4,
+    "POWER_FLOW_L28": 10,
     "OMNI_PICKER": 1,
 }
 
@@ -286,7 +286,7 @@ class AgibotX1MotorsBus():
                 # A full turn corresponds to 360 degrees but also to 4096 steps for a motor resolution of 4096.
                 self.calibration["homing_offset"][calib_idx] += resolution * factor        
     def apply_calibration(self, values: np.ndarray | list, motor_names: list[str] | None):
-        print(f"Applying calibration to {motor_names} {values}")
+        #print(f"Applying calibration to {motor_names} {values}")
         motor_names = motor_names or self.motor_names()
         calibrated_values = []
         for i, name in enumerate(motor_names):
@@ -411,7 +411,7 @@ class AgibotX1MotorsBus():
         for name in motor_names:
             values.append(reader(name))
         values = np.array(values)
-        print(f"loaded {data_name} for {motor_names} {values}")
+        #print(f"loaded {data_name} for {motor_names} {values}")
         if data_name in CALIBRATION_REQUIRED and self.calibration is not None:
             values = self.apply_calibration(values, motor_names)    
         return np.array(values)

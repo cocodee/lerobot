@@ -35,8 +35,8 @@
         0,
         0,
         0,
-        0,
-        0,
+        10,
+        10,
         1
     ],
     "calib_mode": [
@@ -45,8 +45,8 @@
         "DEGREE",
         "DEGREE",
         "DEGREE",
-        "DEGREE",
-        "DEGREE",
+        "LINEAR",
+        "LINEAR",
         "LINEAR"
     ],
     "motor_names": [
