@@ -100,7 +100,7 @@ class JointOutOfRangeError(Exception):
 
 def get_controller():
     return XyberController.get_instance()
-def start_controller(controller:XyberController,if_name:str):
+def start_controller(if_name:str):
     controller = XyberController.get_instance()
     controller.set_realtime(rt_priority=90, bind_cpu=1)
     return controller.start(ifname=if_name, cycle_ns=1000000, enable_dc=True)
@@ -108,7 +108,8 @@ def create_dcu(dcu_name, ethercat_id):
     controller = XyberController.get_instance()
     return controller.create_dcu(dcu_name, ethercat_id)
 
-def stop_controller(controller:XyberController):
+def stop_controller():
+    controller = XyberController.get_instance()
     return controller.stop()
 
 def to_dcu_channel(ch:int):
@@ -139,7 +140,6 @@ class AgibotX1MotorsBus():
         self.dcu_name = config.dcu_name
         self.ethercat_id = config.ethercat_id
         self.motors = config.motors
-        self.if_name = config.if_name
         self.kp = 0.9
         self.kd = 0.2
         self.mock = config.mock

@@ -328,8 +328,6 @@ def make_motors_bus(motor_type: str, **kwargs) -> MotorsBus:
         return make_motors_bus_device(motor_type, port=port, motors=motors, **kwargs)
 
     elif motor_type == "agibotx1":
-        port = kwargs.pop("port", AGIBOTX1_PORT)
-        motors = kwargs.pop("motors", AGIBOTX1_MOTORS)
-        return make_motors_bus_device(motor_type, port=port, motors=motors, **kwargs)
+        return make_motors_bus_device(motor_type, **kwargs)
     else:
         raise ValueError(f"The motor type '{motor_type}' is not valid.")

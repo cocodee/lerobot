@@ -17,7 +17,6 @@ class TestAgibotX1MotorsBus(unittest.TestCase):
         self.mock_config = AgibotX1MotorsBusConfig(
             dcu_name="body",
             ethercat_id=1,
-            if_name="enp2s0",
             motors={
                     # name: (ctrl_channel,can_id,actuator_type)
                 "left_shoulder_pitch_actuator": [1, 1, "POWER_FLOW_R86"],
@@ -28,7 +27,7 @@ class TestAgibotX1MotorsBus(unittest.TestCase):
     def test_connect_and_read(self, mock_get_instance):
         agibotx1.create_dcu(self.mock_config.dcu_name,self.mock_config.ethercat_id)
         self.motor_bus.connect()
-        ret = agibotx1.start_controller(self.motor_bus.controller,self.mock_config.if_name)
+        ret = agibotx1.start_controller("enp2s0")
         agibotx1.get_controller().enable_all_actuators()
         read_data = self.motor_bus.read("position")
         self.assertTrue(self.motor_bus.is_connected)

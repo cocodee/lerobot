@@ -83,6 +83,7 @@ def make_robot_from_config(config: RobotConfig):
         return MobileManipulator(config)
     elif isinstance(config, AgibotX1RobotConfig):
         from lerobot.common.robot_devices.robots.agibotx1 import AgibotX1Robot
+        return AgibotX1Robot(config)
     else:
         from lerobot.common.robot_devices.robots.stretch import StretchRobot
 

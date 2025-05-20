@@ -49,6 +49,7 @@ class AgibotX1Robot():
         self.leader_arms = make_motors_buses_from_configs(self.config.leader_arms)
         self.follower_arms = make_motors_buses_from_configs(self.config.follower_arms)
         self.cameras = None
+        self.if_name = self.config.if_name
 
     def connect(self) -> None:
         if self.is_connected:
@@ -79,8 +80,8 @@ class AgibotX1Robot():
             print(f"Connecting {name} leader arm.")
             self.leader_arms[name].connect()
 
-        agibotx1.start_controller()
-        agibotx1.get_controller().enable_all_actuators()
+        agibotx1.start_controller(self.if_name)
+        agibotx1.get_controller().enable_all_actuator()
 
         #TODO: torque mode?
         #TODO: activate calibration?
