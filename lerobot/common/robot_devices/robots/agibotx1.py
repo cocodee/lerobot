@@ -9,7 +9,7 @@ from lerobot.common.robot_devices.robots.utils import get_arm_id
 import json
 import torch
 import numpy as np
-
+from pathlib import Path
 def ensure_safe_goal_position(
     goal_pos: torch.Tensor, present_pos: torch.Tensor, max_relative_target: float | list[float]
 ):
@@ -42,6 +42,7 @@ class AgibotX1Robot():
         self.is_connected = False
         self.teleop = None
         self.logs = {}
+        self.calibration_dir = Path(self.config.calibration_dir)
 
         self.state_keys = None
         self.action_keys = None
@@ -84,8 +85,8 @@ class AgibotX1Robot():
         agibotx1.get_controller().enable_all_actuator()
 
         #TODO: torque mode?
-        #TODO: activate calibration?
-
+        #TODO: activate calibration
+        self.activate_calibration()
         #TODO: set_agibotx1_robot_preset()
 
         # TODO:Enable torque on all motors of the follower arms?

@@ -301,8 +301,9 @@ class AgibotX1MotorsBus():
             raise ValueError(f"Unknown data_name: {data_name}")
         for name in motor_names:
             values.append(reader(name))
+        values = np.array(values)
         if data_name in CALIBRATION_REQUIRED and self.calibration is not None:
-            values = self.apply_calibration_autocorrect(values, motor_names)    
+            values = self.apply_calibration(values, motor_names)    
         return np.array(values)
 
     def write(self, data_name, values: int | float | np.ndarray, motor_names: str | list[str] | None = None):
@@ -315,6 +316,7 @@ class AgibotX1MotorsBus():
             values = [values] * len(motor_names)
         if len(values) != len(motor_names):
             raise ValueError("Length of values must match the number of motor names.")
+        values = np.array(values)
         if data_name in CALIBRATION_REQUIRED and self.calibration is not None:
             values = self.revert_calibration(values, motor_names)        
         for name, value in zip(motor_names, values):
