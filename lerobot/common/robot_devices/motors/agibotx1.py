@@ -14,6 +14,7 @@ from lerobot.common.robot_devices.motors.xyber_controller_py import(
     ActuatorType as ActuatorType,        # MockActuatorType 重命名为 ActuatorType
     CtrlChannel as CtrlChannel          # MockCtrlChannel 重命名为 CtrlChannel
 )
+from lerobot.common.robot_devices.utils import RobotDeviceAlreadyConnectedError, RobotDeviceNotConnectedError
 import numpy as np
 import math
 import enum
@@ -109,6 +110,27 @@ def create_dcu(dcu_name, ethercat_id):
 
 def stop_controller(controller:XyberController):
     return controller.stop()
+
+def to_dcu_channel(ch:int):
+      if ch == 1:
+          return CtrlChannel.CTRL_CH1
+      elif ch == 2:
+          return CtrlChannel.CTRL_CH2
+      elif ch == 3:
+          return CtrlChannel.CTRL_CH3
+      else:
+          raise ValueError("Invalid channel")
+def to_dcu_actuator_type(actuator_type:str):
+      if actuator_type == "POWER_FLOW_R86":
+          return ActuatorType.POWER_FLOW_R86
+      elif  actuator_type == "POWER_FLOW_R52":
+          return ActuatorType.POWER_FLOW_R52
+      elif actuator_type == "POWER_FLOW_L28":
+          return ActuatorType.POWER_FLOW_L28
+      elif actuator_type == "OMNI_PICKER":
+          return ActuatorType.OMNI_PICKER
+      else:
+          raise ValueError("Invalid actuator type")
 class AgibotX1MotorsBus():
     def __init__(
         self,
@@ -125,14 +147,14 @@ class AgibotX1MotorsBus():
         self.is_connected = False
         self.logs = {}
         self.acturator_type_resolution = deepcopy(ACTURATOR_TYPE_RESOLUTION)
+        self.controller = get_controller()
 
     def connect(self):
-        controller = get_controller()
         for motor_name, motor in self.motors.items():
-            controller.attach_actuator(
+            self.controller.attach_actuator(
                 dcu_name=self.dcu_name,
-                ch=motor[CTRL_CHANNEL_INDEX],
-                type=motor[ACTURATOR_TYPE_INDEX],
+                ch=to_dcu_channel(motor[CTRL_CHANNEL_INDEX]),
+                type=to_dcu_actuator_type(motor[ACTURATOR_TYPE_INDEX]),
                 actuator_name=motor_name,
                 can_id=motor[CAN_ID_INDEX],
             )
@@ -141,6 +163,14 @@ class AgibotX1MotorsBus():
         if self.is_connected:
             self.controller.stop()
         self.connect()
+
+    def disconnect(self):
+        if not self.is_connected:
+            raise RobotDeviceNotConnectedError(
+                f"DynamixelMotorsBus({self.port}) is not connected. Try running `motors_bus.connect()` first."
+            )
+        self.controller.stop()
+        self.is_connected = False        
     def motor_names(self) -> list[str]:
         return list(self.motors.keys())
 
