@@ -215,7 +215,7 @@ class AgibotX1MotorsBus():
                 # Convert from range [-resolution//2, resolution//2] to
                 # universal float32 centered degree range [-180, 180]
                 # (e.g. 2048 / (4096 // 2) * 180 = 180)
-                values[i] = values[i] / (resolution // 2) * HALF_TURN_DEGREE
+                values[i] = values[i] / (resolution / 2) * HALF_TURN_DEGREE
 
                 if (values[i] < LOWER_BOUND_DEGREE) or (values[i] > UPPER_BOUND_DEGREE):
                     raise JointOutOfRangeError(
@@ -266,7 +266,7 @@ class AgibotX1MotorsBus():
 
                 # Reverse universal float32 centered degree range [-180, 180] to
                 # range [-resolution//2, resolution//2] (e.g. [-2048, 2048])
-                values[i] = values[i] / HALF_TURN_DEGREE * (resolution // 2)
+                values[i] = values[i] / HALF_TURN_DEGREE * (resolution / 2)
 
                 # Reverse nominal range [-resolution//2, resolution//2] to
                 # range [-2**31, 2**31]
