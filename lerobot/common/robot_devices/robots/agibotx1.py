@@ -48,7 +48,7 @@ class AgibotX1Robot():
 
         self.leader_arms = make_motors_buses_from_configs(self.config.leader_arms)
         self.follower_arms = make_motors_buses_from_configs(self.config.follower_arms)
-        self.cameras = None
+        self.cameras = []
         self.if_name = self.config.if_name
 
     def connect(self) -> None:
