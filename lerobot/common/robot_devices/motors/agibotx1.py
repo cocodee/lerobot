@@ -436,7 +436,7 @@ class AgibotX1MotorsBus():
             if data_name == DATA_NAME_POSITION:
                 pos = value
                 ret = self.controller.set_mit_cmd(name, pos, 0, 0, self.kp, self.kd)
-                logging.warning(f"Failed to set {name} to {pos},result {ret}")
+                logging.warning(f"Set {name} to {pos},result {ret}")
             elif data_name == DATA_NAME_VELOCITY:
                 vel = value
                 self.controller.set_mit_cmd(name, 0, vel, 0, self.kp, self.kd)

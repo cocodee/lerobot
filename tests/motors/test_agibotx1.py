@@ -44,6 +44,7 @@ class TestAgibotX1MotorsBus(unittest.TestCase):
         # add 1 to read_data
         print(f"write data:{(read_data+2).tolist()}")
         self.motor_bus.write("position", read_data + 2)
+        time.sleep(10)
         self.motor_bus.disconnect()
 
 if __name__ == "__main__":
