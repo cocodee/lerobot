@@ -41,6 +41,9 @@ class TestAgibotX1MotorsBus(unittest.TestCase):
         self.assertIsInstance(read_data, np.ndarray)
         time.sleep(5)
         print(f"data:{read_data.tolist()}")
+        # add 1 to read_data
+        print(f"write data:{(read_data+2).tolist()}")
+        self.motor_bus.write("position", read_data + 2)
         self.motor_bus.disconnect()
 
 if __name__ == "__main__":
