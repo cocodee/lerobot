@@ -137,18 +137,26 @@ class AgibotX1Robot():
                 "ManipulatorRobot is not connected. You need to run `robot.connect()`."
             )
 
+        def get_arm_name(name:str,prefix:str):
+            if  name.startswith(prefix):
+                return name[len(prefix):]
+            else:
+                return name
         # Prepare to assign the position of the leader to the follower
         leader_pos = {}
         for name in self.leader_arms:
             before_lread_t = time.perf_counter()
+            name = get_arm_name(name,"left_")
             leader_pos[name] = self.leader_arms[name].read("position")
             leader_pos[name] = torch.from_numpy(leader_pos[name])
             self.logs[f"read_leader_{name}_pos_dt_s"] = time.perf_counter() - before_lread_t
 
+        print(f'leader_pos: {leader_pos}')
         # Send goal position to the follower
         follower_goal_pos = {}
         for name in self.follower_arms:
             before_fwrite_t = time.perf_counter()
+            name = get_arm_name(name,"right_")
             goal_pos = leader_pos[name]
 
             # Cap goal position when too far away from present position.
