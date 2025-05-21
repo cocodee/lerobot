@@ -413,7 +413,7 @@ class AgibotX1MotorsBus():
             #print(f"Reading {data_name} for {name} reader_value {a}")
             values.append(reader(name))
         values = np.array(values)
-        #print(f"loaded {data_name} for {motor_names} {values}")
+        print(f"loaded {data_name} for {motor_names} {values}")
         if data_name in CALIBRATION_REQUIRED and self.calibration is not None:
             values = self.apply_calibration(values, motor_names)    
         return np.array(values)
@@ -431,6 +431,7 @@ class AgibotX1MotorsBus():
         values = np.array(values)
         if data_name in CALIBRATION_REQUIRED and self.calibration is not None:
             values = self.revert_calibration(values, motor_names)        
+        print(f"Setting {data_name} to {values}")
         for name, value in zip(motor_names, values):
             if data_name == DATA_NAME_POSITION:
                 pos = value
