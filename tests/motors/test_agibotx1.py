@@ -48,6 +48,8 @@ class TestAgibotX1MotorsBus(unittest.TestCase):
         time.sleep(10)
         self.motor_bus.show_status("left_shoulder_pitch_actuator")
         self.motor_bus.disconnect()
+        agibotx1.get_controller().disable_all_actuator()
+        agibotx1.get_controller().stop()
 
 if __name__ == "__main__":
     unittest.main()
