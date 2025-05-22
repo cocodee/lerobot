@@ -110,6 +110,7 @@ def create_dcu(dcu_name, ethercat_id):
 
 def stop_controller():
     controller = XyberController.get_instance()
+    controller.disable_all_actuator()
     return controller.stop()
 
 def to_dcu_channel(ch:int):
@@ -169,6 +170,7 @@ class AgibotX1MotorsBus():
             raise RobotDeviceNotConnectedError(
                 f"DynamixelMotorsBus({self.port}) is not connected. Try running `motors_bus.connect()` first."
             )
+        self.controller.disable_all_actuator()
         self.controller.stop()
         self.is_connected = False        
     def motor_names(self) -> list[str]:
