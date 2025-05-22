@@ -170,8 +170,7 @@ class AgibotX1MotorsBus():
             raise RobotDeviceNotConnectedError(
                 f"DynamixelMotorsBus({self.port}) is not connected. Try running `motors_bus.connect()` first."
             )
-        self.controller.disable_all_actuator()
-        self.controller.stop()
+        self.disable_all_actuator()
         self.is_connected = False        
     def motor_names(self) -> list[str]:
         return list(self.motors.keys())
@@ -448,6 +447,13 @@ class AgibotX1MotorsBus():
             else:
                 raise ValueError(f"Unknown data_name: {data_name}")
             
+    def enable_all_actuator(self):
+        for name in self.motor_names():
+            self.controller.enable_actuator(name)
+    
+    def disable_all_actuator(self):
+        for name in self.motor_names():
+            self.controller.disable_actuator(name)
     def show_status(self,name:str):
         mode = self.controller.get_mode(name)
         pos = self.controller.get_position(name)
