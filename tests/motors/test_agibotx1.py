@@ -19,7 +19,14 @@ class TestAgibotX1MotorsBus(unittest.TestCase):
             ethercat_id=1,
             motors={
                     # name: (ctrl_channel,can_id,actuator_type)
-                "left_elbow_pitch_actuator": [1, 4, "POWER_FLOW_R52"],
+                    "left_shoulder_pitch_actuator": [1, 1, "POWER_FLOW_R86"],
+                    "left_shoulder_roll_actuator": [1, 2, "POWER_FLOW_R86"],
+                    "left_shoulder_yaw_actuator": [1, 3, "POWER_FLOW_R52"],
+                    "left_elbow_pitch_actuator": [1, 4, "POWER_FLOW_R52"],
+                    "left_elbow_yaw_actuator": [1, 5, "POWER_FLOW_R52"],
+                    "left_wrist_front_actuator": [1, 6, "POWER_FLOW_L28"],
+                    "left_wrist_back_actuator": [1, 7, "POWER_FLOW_L28"],
+                    "left_claw_actuator": [1, 8, "OMNI_PICKER"],
             },
         )
         self.motor_bus = AgibotX1MotorsBus(self.mock_config)
@@ -44,7 +51,7 @@ class TestAgibotX1MotorsBus(unittest.TestCase):
         print(f"data:{read_data.tolist()}")
         # add 1 to read_data
         print(f"write data:{(read_data+2).tolist()}")
-        self.motor_bus.write("position", read_data + 0.8)
+        self.motor_bus.write("position", read_data + 0.5)
         time.sleep(10)
         self.motor_bus.show_status("left_elbow_pitch_actuator")
         #self.motor_bus.disconnect()
