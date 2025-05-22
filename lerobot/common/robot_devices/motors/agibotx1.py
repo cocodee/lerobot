@@ -141,7 +141,7 @@ class AgibotX1MotorsBus():
         self.ethercat_id = config.ethercat_id
         self.motors = config.motors
         self.kp = 100
-        self.kd = 0.5
+        self.kd = 1
         self.mock = config.mock
         self.calibration = None
         self.is_connected = False
