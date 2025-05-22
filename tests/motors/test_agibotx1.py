@@ -36,6 +36,7 @@ class TestAgibotX1MotorsBus(unittest.TestCase):
             print("Enable Actuator Success")
         else:
             print("Enable Actuator Failed")
+        self.motor_bus.show_status("left_shoulder_pitch_actuator")
         read_data = self.motor_bus.read("position")
         self.assertTrue(self.motor_bus.is_connected)
         self.assertIsInstance(read_data, np.ndarray)
@@ -45,6 +46,7 @@ class TestAgibotX1MotorsBus(unittest.TestCase):
         print(f"write data:{(read_data+2).tolist()}")
         self.motor_bus.write("position", read_data + 2)
         time.sleep(10)
+        self.motor_bus.show_status("left_shoulder_pitch_actuator")
         self.motor_bus.disconnect()
 
 if __name__ == "__main__":

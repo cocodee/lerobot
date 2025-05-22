@@ -445,3 +445,12 @@ class AgibotX1MotorsBus():
                 self.controller.set_mit_cmd(name, 0, 0, eff, self.kp, self.kd)
             else:
                 raise ValueError(f"Unknown data_name: {data_name}")
+            
+    def show_status(self,name:str):
+        mode = self.controller.get_mode(name)
+        pos = self.controller.get_position(name)
+        vel = self.controller.get_velocity(name)
+        toq = self.controller.get_effort(name)
+        print(f"{name}: mode {mode}, pos {pos}, vel {vel}, toq {toq}")
+
+        
