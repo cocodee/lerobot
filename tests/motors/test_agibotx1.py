@@ -19,7 +19,7 @@ class TestAgibotX1MotorsBus(unittest.TestCase):
             ethercat_id=1,
             motors={
                     # name: (ctrl_channel,can_id,actuator_type)
-                "left_shoulder_pitch_actuator": [1, 1, "POWER_FLOW_R86"],
+                "left_elbow_pitch_actuator": [1, 4, "POWER_FLOW_R52"],
             },
         )
         self.motor_bus = AgibotX1MotorsBus(self.mock_config)
@@ -36,7 +36,7 @@ class TestAgibotX1MotorsBus(unittest.TestCase):
             print("Enable Actuator Success")
         else:
             print("Enable Actuator Failed")
-        self.motor_bus.show_status("left_shoulder_pitch_actuator")
+        self.motor_bus.show_status("left_elbow_pitch_actuator")
         read_data = self.motor_bus.read("position")
         self.assertTrue(self.motor_bus.is_connected)
         self.assertIsInstance(read_data, np.ndarray)
@@ -44,9 +44,9 @@ class TestAgibotX1MotorsBus(unittest.TestCase):
         print(f"data:{read_data.tolist()}")
         # add 1 to read_data
         print(f"write data:{(read_data+2).tolist()}")
-        self.motor_bus.write("position", read_data + 2)
+        self.motor_bus.write("position", read_data + 1)
         time.sleep(10)
-        self.motor_bus.show_status("left_shoulder_pitch_actuator")
+        self.motor_bus.show_status("left_elbow_pitch_actuator")
         #self.motor_bus.disconnect()
         agibotx1.get_controller().disable_all_actuator()
         agibotx1.get_controller().stop()
