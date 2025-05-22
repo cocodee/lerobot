@@ -38,7 +38,7 @@ class TestAgibotX1MotorsBus(unittest.TestCase):
         if not ret:
             print("Start Failed")        
         agibotx1.get_controller().disable_all_actuator()
-        ret = self.motor_bus.enable_all_actuator()
+        #ret = self.motor_bus.enable_all_actuator()
         if ret:
             print("Enable Actuator Success")
         else:
