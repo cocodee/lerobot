@@ -44,7 +44,7 @@ class TestAgibotX1MotorsBus(unittest.TestCase):
         print(f"data:{read_data.tolist()}")
         # add 1 to read_data
         print(f"write data:{(read_data+2).tolist()}")
-        self.motor_bus.write("position", read_data + 1)
+        self.motor_bus.write("position", read_data + 0.8)
         time.sleep(10)
         self.motor_bus.show_status("left_elbow_pitch_actuator")
         #self.motor_bus.disconnect()
