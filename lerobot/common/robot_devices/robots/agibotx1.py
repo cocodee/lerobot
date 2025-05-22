@@ -91,7 +91,7 @@ class AgibotX1Robot():
             self.leader_arms[name].disable_all_actuator()  
         
         #TODO: activate calibration
-        self.activate_calibration()
+        #self.activate_calibration()
         #TODO: set_agibotx1_robot_preset()
 
         # TODO:Enable torque on all motors of the follower arms?
@@ -151,7 +151,7 @@ class AgibotX1Robot():
         leader_pos = {}
         for name in self.leader_arms:
             before_lread_t = time.perf_counter()
-            name = get_arm_name(name,"left_")
+            #name = get_arm_name(name,"left_")
             leader_pos[name] = self.leader_arms[name].read("position")
             leader_pos[name] = torch.from_numpy(leader_pos[name])
             self.logs[f"read_leader_{name}_pos_dt_s"] = time.perf_counter() - before_lread_t
@@ -161,7 +161,7 @@ class AgibotX1Robot():
         follower_goal_pos = {}
         for name in self.follower_arms:
             before_fwrite_t = time.perf_counter()
-            name = get_arm_name(name,"right_")
+            #name = get_arm_name(name,"right_")
             goal_pos = leader_pos[name]
 
             # Cap goal position when too far away from present position.
