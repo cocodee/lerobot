@@ -33,16 +33,23 @@ class TestAgibotX1MotorsBus(unittest.TestCase):
     def test_connect_and_read(self):
         agibotx1.create_dcu(self.mock_config.dcu_name,self.mock_config.ethercat_id)
         self.motor_bus = AgibotX1MotorsBus(self.mock_config)
-
         self.motor_bus.connect()
         ret = agibotx1.start_controller("enp2s0")
         if not ret:
-            print("Start Failed")
-        ret = agibotx1.get_controller().enable_all_actuator()
+            print("Start Failed")        
+        agibotx1.get_controller().disable_all_actuator()
+        ret = self.motor_bus.enable_all_actuator()
         if ret:
             print("Enable Actuator Success")
         else:
             print("Enable Actuator Failed")
+        for i in range(60*100):
+            read_data = self.motor_bus.read("position")
+            print(f"data:{read_data.tolist()}")
+            time.sleep(0.01)
+        agibotx1.get_controller().disable_all_actuator()
+        agibotx1.get_controller().stop()            
+'''
         self.motor_bus.show_status("left_elbow_pitch_actuator")
         read_data = self.motor_bus.read("position")
         self.assertTrue(self.motor_bus.is_connected)
@@ -55,8 +62,8 @@ class TestAgibotX1MotorsBus(unittest.TestCase):
         time.sleep(10)
         self.motor_bus.show_status("left_elbow_pitch_actuator")
         #self.motor_bus.disconnect()
-        agibotx1.get_controller().disable_all_actuator()
-        agibotx1.get_controller().stop()
+'''
+
 
 if __name__ == "__main__":
     unittest.main()
