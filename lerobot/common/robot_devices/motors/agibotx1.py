@@ -152,13 +152,15 @@ class AgibotX1MotorsBus():
 
     def connect(self):
         for motor_name, motor in self.motors.items():
-            self.controller.attach_actuator(
+            ret = self.controller.attach_actuator(
                 dcu_name=self.dcu_name,
                 ch=to_dcu_channel(motor[CTRL_CHANNEL_INDEX]),
                 type=to_dcu_actuator_type(motor[ACTURATOR_TYPE_INDEX]),
                 actuator_name=motor_name,
                 can_id=motor[CAN_ID_INDEX],
             )
+            if not ret:
+                print(f"Failed to attach actuator {motor_name}")
         self.is_connected = True
     def reconnect(self):
         if self.is_connected:
