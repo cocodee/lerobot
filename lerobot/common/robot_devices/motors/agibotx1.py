@@ -18,6 +18,7 @@ from lerobot.common.robot_devices.utils import RobotDeviceAlreadyConnectedError,
 import numpy as np
 import math
 import enum
+import time
 from copy import deepcopy
 
 
@@ -412,8 +413,9 @@ class AgibotX1MotorsBus():
         if not reader:
             raise ValueError(f"Unknown data_name: {data_name}")
         for name in motor_names:
-            v= reader(name)
+            v= self.controller.get_position(name)
             print(f"Reading {data_name} for {name} reader_value {v}")
+            time.sleep(0.1)
             values.append(v)
         values = np.array(values)
         print(f"loaded {data_name} for {motor_names} {values}")
