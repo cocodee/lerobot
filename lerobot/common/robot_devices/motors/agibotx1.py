@@ -142,7 +142,7 @@ class AgibotX1MotorsBus():
         self.dcu_name = config.dcu_name
         self.ethercat_id = config.ethercat_id
         self.motors = config.motors
-        self.kp = 5
+        self.kp = 15
         self.kd = 1
         self.mock = config.mock
         self.calibration = None
