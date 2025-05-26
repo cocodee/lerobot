@@ -455,12 +455,16 @@ class AgibotX1MotorsBus():
             
     def enable_all_actuator(self):
         for name in self.motor_names():
-            self.controller.enable_actuator(name)
+            ret = self.controller.enable_actuator(name)
+            if not ret:
+                print(f"Failed to enable actuator {name}")
         self.enabled = True
     
     def disable_all_actuator(self):
         for name in self.motor_names():
-            self.controller.disable_actuator(name)
+            ret = self.controller.disable_actuator(name)
+            if not ret:
+                print(f"Failed to disable actuator {name}")
         self.enabled = False
     def show_status(self,name:str):
         mode = self.controller.get_mode(name)
