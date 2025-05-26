@@ -142,7 +142,7 @@ class AgibotX1MotorsBus():
         self.dcu_name = config.dcu_name
         self.ethercat_id = config.ethercat_id
         self.motors = config.motors
-        self.kp = 30
+        self.kp = 5
         self.kd = 1
         self.mock = config.mock
         self.calibration = None
@@ -418,7 +418,6 @@ class AgibotX1MotorsBus():
         for name in motor_names:
             v= self.controller.get_position(name)
             print(f"Reading {data_name} for {name} reader_value {v}")
-            time.sleep(0.1)
             values.append(v)
         values = np.array(values)
         print(f"loaded {data_name} for {motor_names} {values}")
