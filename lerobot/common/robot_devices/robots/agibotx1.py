@@ -82,13 +82,13 @@ class AgibotX1Robot():
             self.leader_arms[name].connect()
 
         agibotx1.start_controller(self.if_name)
-        agibotx1.get_controller().disable_all_actuator()
+        #agibotx1.get_controller().disable_all_actuator()
         
         #TODO: torque mode?
         for name in self.follower_arms:
             self.follower_arms[name].enable_all_actuator()
         for name in self.leader_arms:
-            self.leader_arms[name].enable_all_actuator()  
+            self.leader_arms[name].disable_all_actuator()  
         
         #TODO: activate calibration
         #self.activate_calibration()

@@ -150,6 +150,7 @@ class AgibotX1MotorsBus():
         self.logs = {}
         self.acturator_type_resolution = deepcopy(ACTURATOR_TYPE_RESOLUTION)
         self.controller = get_controller()
+        self.enabled = False
 
     def connect(self):
         for motor_name, motor in self.motors.items():
@@ -412,6 +413,8 @@ class AgibotX1MotorsBus():
         reader = reader_map.get(data_name)
         if not reader:
             raise ValueError(f"Unknown data_name: {data_name}")
+        if self.enabled == False:
+            self.disable_all_actuator()
         for name in motor_names:
             v= self.controller.get_position(name)
             print(f"Reading {data_name} for {name} reader_value {v}")
@@ -454,10 +457,12 @@ class AgibotX1MotorsBus():
     def enable_all_actuator(self):
         for name in self.motor_names():
             self.controller.enable_actuator(name)
+        self.enabled = True
     
     def disable_all_actuator(self):
         for name in self.motor_names():
             self.controller.disable_actuator(name)
+        self.enabled = False
     def show_status(self,name:str):
         mode = self.controller.get_mode(name)
         pos = self.controller.get_position(name)
