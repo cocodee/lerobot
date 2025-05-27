@@ -746,7 +746,21 @@ class AgibotX1RobotConfig(RobotConfig):
 #                    "right_claw_actuator": [2, 8, "OMNI_PICKER"],
                 },
             ),
-        }
+        }   
     )
 
+    lumbar: dict[str,MotorsBusConfig] = field(
+        default_factory=lambda: {
+            "main": AgibotX1MotorsBusConfig(
+                mock= False,
+                dcu_name = "body",
+                ethercat_id = 1,
+                motors={
+                    # name: (ctrl_channel,can_id,actuator_type)
+                    "lumbar_left_actuator": [3, 1, "POWER_FLOW_R86"],
+                    "lumbar_right_actuator": [3, 2, "POWER_FLOW_R86"],
+                },
+            ),
+        }   
+    )
     mock: bool = False
