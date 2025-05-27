@@ -91,7 +91,7 @@ class AgibotX1Robot():
             self.leader_arms[name].disable_all_actuator()  
         
         #TODO: activate calibration
-        #self.activate_calibration()
+        self.activate_calibration()
         #TODO: set_agibotx1_robot_preset()
 
         # TODO:Enable torque on all motors of the follower arms?
