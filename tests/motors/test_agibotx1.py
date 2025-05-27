@@ -20,13 +20,13 @@ class TestAgibotX1MotorsBus(unittest.TestCase):
             motors={
                     # name: (ctrl_channel,can_id,actuator_type)
                     "left_shoulder_pitch_actuator": [1, 1, "POWER_FLOW_R86"],
-#                    "left_shoulder_roll_actuator": [1, 2, "POWER_FLOW_R86"],
-#                    "left_shoulder_yaw_actuator": [1, 3, "POWER_FLOW_R52"],
-#                    "left_elbow_pitch_actuator": [1, 4, "POWER_FLOW_R52"],
-#                    "left_elbow_yaw_actuator": [1, 5, "POWER_FLOW_R52"],
-#                    "left_wrist_front_actuator": [1, 6, "POWER_FLOW_L28"],
-#                    "left_wrist_back_actuator": [1, 7, "POWER_FLOW_L28"],
-#                    "left_claw_actuator": [1, 8, "OMNI_PICKER"],
+                    "left_shoulder_roll_actuator": [1, 2, "POWER_FLOW_R86"],
+                    "left_shoulder_yaw_actuator": [1, 3, "POWER_FLOW_R52"],
+                    "left_elbow_pitch_actuator": [1, 4, "POWER_FLOW_R52"],
+                    "left_elbow_yaw_actuator": [1, 5, "POWER_FLOW_R52"],
+                    "left_wrist_front_actuator": [1, 6, "POWER_FLOW_L28"],
+                    "left_wrist_back_actuator": [1, 7, "POWER_FLOW_L28"],
+                    "left_claw_actuator": [1, 8, "OMNI_PICKER"],
             },
         )
         self.motor_bus = AgibotX1MotorsBus(self.mock_config)
@@ -49,21 +49,18 @@ class TestAgibotX1MotorsBus(unittest.TestCase):
             time.sleep(0.01)
         agibotx1.get_controller().disable_all_actuator()
         agibotx1.get_controller().stop()            
-'''
-        self.motor_bus.show_status("left_elbow_pitch_actuator")
-        read_data = self.motor_bus.read("position")
-        self.assertTrue(self.motor_bus.is_connected)
-        self.assertIsInstance(read_data, np.ndarray)
-        time.sleep(5)
-        print(f"data:{read_data.tolist()}")
-        # add 1 to read_data
-        print(f"write data:{(read_data+2).tolist()}")
-        self.motor_bus.write("position", read_data + 0.5)
-        time.sleep(10)
-        self.motor_bus.show_status("left_elbow_pitch_actuator")
-        #self.motor_bus.disconnect()
-'''
 
+    def test_zero(self):
+        agibotx1.create_dcu(self.mock_config.dcu_name,self.mock_config.ethercat_id)
+        self.motor_bus = AgibotX1MotorsBus(self.mock_config)
+        self.motor_bus.connect()
+        ret = agibotx1.start_controller("enp2s0")
+        if not ret:
+            print("Start Failed") 
+        self.motor_bus.enable_all_actuator()
+        self.motor_bus.write("position",[0,0,0,0,0,0,0,0])
+        agibotx1.get_controller().disable_all_actuator()
+        agibotx1.get_controller().stop()  
 
 if __name__ == "__main__":
     unittest.main()
