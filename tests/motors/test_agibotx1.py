@@ -58,8 +58,8 @@ class TestAgibotX1MotorsBus(unittest.TestCase):
         if not ret:
             print("Start Failed") 
         self.motor_bus.enable_all_actuator()
-        self.motor_bus.write("position",[0,0,0,0,0,0,0,0])
-        time.sleep(5)
+        self.motor_bus.write("position",[0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5])
+        time.sleep(20)
         agibotx1.get_controller().disable_all_actuator()
         agibotx1.get_controller().stop()  
 
