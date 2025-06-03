@@ -178,7 +178,8 @@ class AgibotX1Robot():
 
             joy_data = self.joy_instance.get_joy_data()
             print(f"joy_data: {joy_data}")
-            
+
+            print(f"goal_position: {goal_pos}")
             if joy_data is not None:
                 if joy_data[4]==1:
                     goal_pos[8] = claw_position[0]+0.5
