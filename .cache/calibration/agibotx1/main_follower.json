@@ -4,6 +4,9 @@
         0,
         0,
         0,
+        0,
+        0,
+        0,
         0
     ],
     "drive_mode": [
@@ -11,9 +14,15 @@
         0,
         0,
         1,
+        0,
+        0,
+        0,
         0
     ],
     "start_pos": [
+        0,
+        0,
+        0,
         0,
         0,
         0,
@@ -25,20 +34,29 @@
         0,
         0,
         0,
-        0
+        0,
+        1,
+        1,
+        10
     ],
     "calib_mode": [
         "DEGREE",
         "DEGREE",
         "DEGREE",
         "DEGREE",
-        "DEGREE"
+        "DEGREE",
+        "LINEAR",
+        "LINEAR",
+        "LINEAR"        
     ],
     "motor_names": [
         "right_shoulder_pitch_actuator",
         "right_shoulder_roll_actuator",
         "right_shoulder_yaw_actuator",
         "right_elbow_pitch_actuator",
-        "right_elbow_yaw_actuator"
+        "right_elbow_yaw_actuator",
+        "right_wrist_front_actuator",
+        "right_wrist_back_actuator",
+        "right_claw_actuator"        
     ]
 }

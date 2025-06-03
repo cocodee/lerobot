@@ -10,6 +10,7 @@ import json
 import torch
 import numpy as np
 from pathlib import Path
+import joy_stick_py
 def ensure_safe_goal_position(
     goal_pos: torch.Tensor, present_pos: torch.Tensor, max_relative_target: float | list[float]
 ):
@@ -52,6 +53,7 @@ class AgibotX1Robot():
         self.lumbar = make_motors_buses_from_configs(self.config.lumbar)
         self.cameras = []
         self.if_name = self.config.if_name
+        self.joy_instance = joy_stick_py.Joy()
 
     def connect(self) -> None:
         if self.is_connected:
@@ -171,6 +173,17 @@ class AgibotX1Robot():
             #name = get_arm_name(name,"right_")
             goal_pos = leader_pos[name]
 
+            claw_position = self.follower_arms[name].read("position","right_claw_actuator")
+            print(f"claw_position: {claw_position}")
+
+            joy_data = self.joy_instance.get_joy_data()
+            print(f"joy_data: {joy_data}")
+            
+            if joy_data is not None:
+                if joy_data[4]==1:
+                    goal_pos[8] = claw_position[0]+0.5
+                elif  joy_data[5]==1:
+                    goal_pos[8] = claw_position[0]-0.5
             # Cap goal position when too far away from present position.
             # Slower fps expected due to reading from the follower.
             if self.config.max_relative_target is not None:
