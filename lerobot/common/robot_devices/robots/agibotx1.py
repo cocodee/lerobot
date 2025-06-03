@@ -10,7 +10,7 @@ import json
 import torch
 import numpy as np
 from pathlib import Path
-import lerobot.common.robot_devices.robots.joy_stick_py
+import lerobot.common.robot_devices.robots.joy_stick_py as joy_stick_py
 def ensure_safe_goal_position(
     goal_pos: torch.Tensor, present_pos: torch.Tensor, max_relative_target: float | list[float]
 ):
