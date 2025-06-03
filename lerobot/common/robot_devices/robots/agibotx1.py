@@ -181,9 +181,9 @@ class AgibotX1Robot():
 
             print(f"goal_position: {goal_pos}")
             if joy_data is not None:
-                if joy_data[4]==1:
+                if joy_data.buttons[4]==1:
                     goal_pos[8] = claw_position[0]+0.5
-                elif  joy_data[5]==1:
+                elif  joy_data.buttons[5]==1:
                     goal_pos[8] = claw_position[0]-0.5
             # Cap goal position when too far away from present position.
             # Slower fps expected due to reading from the follower.
