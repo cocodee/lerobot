@@ -187,7 +187,7 @@ class AgibotX1Robot():
                     goal_pos[7] = v
                 elif  joy_data.buttons[5]==1:
                     v = float(claw_position[0])
-                    v = min(v-5,100)
+                    v = min(v-5,0)
                     goal_pos[7] = v
                 else:
                     goal_pos[7] = float(claw_position[0])
