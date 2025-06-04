@@ -183,12 +183,14 @@ class AgibotX1Robot():
             if joy_data is not None:
                 if joy_data.buttons[4]==1:
                     v = float(claw_position[0])
-                    v = min(v+5,100)
+                    v = max(v+5,100)
                     goal_pos[7] = v
                 elif  joy_data.buttons[5]==1:
                     v = float(claw_position[0])
-                    v = max(v-5,100)
+                    v = min(v-5,100)
                     goal_pos[7] = v
+                else:
+                    goal_pos[7] = float(claw_position[0])
             # Cap goal position when too far away from present position.
             # Slower fps expected due to reading from the follower.
             if self.config.max_relative_target is not None:
