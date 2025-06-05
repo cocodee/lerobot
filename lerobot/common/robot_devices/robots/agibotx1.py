@@ -330,3 +330,23 @@ class AgibotX1Robot():
     def __del__(self):
         if getattr(self, "is_connected", False):
             self.disconnect()
+
+    def get_motor_names(self, arm: dict[str, MotorsBus]) -> list:
+        return [f"{arm}_{motor}" for arm, bus in arm.items() for motor in bus.motors]
+    
+    @property
+    def motor_features(self) -> dict:
+        action_names = self.get_motor_names(self.follower_arms)
+        state_names = self.get_motor_names(self.follower_arms)
+        return {
+            "action": {
+                "dtype": "float32",
+                "shape": (len(action_names),),
+                "names": action_names,
+            },
+            "observation.state": {
+                "dtype": "float32",
+                "shape": (len(state_names),),
+                "names": state_names,
+            },
+        }    
