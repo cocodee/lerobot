@@ -445,6 +445,8 @@ class AgibotX1MotorsBus():
                 cur = 0
                 if name.endswith("claw_actuator"):
                     cur = 0.6
+                else:
+                    cur = 50
                 ret = self.controller.set_mit_cmd(name, pos, 0, cur, self.kp, self.kd)
                 logging.warning(f"Set {name} to {pos},result {ret}")
             elif data_name == DATA_NAME_VELOCITY:
