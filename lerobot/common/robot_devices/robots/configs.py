@@ -707,7 +707,6 @@ class AgibotX1RobotConfig(RobotConfig):
     dcu_configs: list[tuple[str,int]] = field(
         default_factory=lambda: [("body",1)]
      )
-    cameras: None
     leader_arms: dict[str,AgibotX1MotorsBusConfig] = field(
         default_factory=lambda: {
             "main": AgibotX1MotorsBusConfig(
