@@ -314,6 +314,22 @@ class AgibotX1Robot():
 
         return torch.cat(action_sent)
 
+    @property
+    def motor_features(self) -> dict:
+        action_names = self.get_motor_names(self.leader_arms)
+        state_names = self.get_motor_names(self.leader_arms)
+        return {
+            "action": {
+                "dtype": "float32",
+                "shape": (len(action_names),),
+                "names": action_names,
+            },
+            "observation.state": {
+                "dtype": "float32",
+                "shape": (len(state_names),),
+                "names": state_names,
+            },
+        }
     def print_logs(self):
         pass
         # TODO(aliberts): move robot-specific logs logic here
