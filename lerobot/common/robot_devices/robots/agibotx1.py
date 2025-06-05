@@ -51,7 +51,7 @@ class AgibotX1Robot():
         self.leader_arms = make_motors_buses_from_configs(self.config.leader_arms)
         self.follower_arms = make_motors_buses_from_configs(self.config.follower_arms)
         self.lumbar = make_motors_buses_from_configs(self.config.lumbar)
-        self.cameras = []
+        self.cameras = {}
         self.if_name = self.config.if_name
         self.joy_instance = joy_stick_py.Joy()
 
