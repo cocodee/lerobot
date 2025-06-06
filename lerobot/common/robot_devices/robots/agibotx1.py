@@ -97,7 +97,11 @@ class AgibotX1Robot():
             self.leader_arms[name].disable_all_actuator()  
         for name in self.lumbar:
             self.lumbar[name].enable_all_actuator()
-      
+        
+        for name in self.follower_arms:
+            self.follower_arms[name].write("position", [0,0,0,0,0,0,0,0])
+        for name in self.leader_arms:
+            self.leader_arms[name].write("position", [0,0,0,0,0,0,0,0])
         self.lumbar["main"].write("position", [-0,0])
         time.sleep(5)
         #TODO: activate calibration
