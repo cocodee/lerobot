@@ -98,6 +98,7 @@ class AgibotX1Robot():
         for name in self.lumbar:
             self.lumbar[name].enable_all_actuator()
 
+        time.sleep(5)
         #TODO: activate calibration
         self.activate_calibration()
         #TODO: set_agibotx1_robot_preset()
@@ -110,8 +111,8 @@ class AgibotX1Robot():
         for name in self.leader_arms:
             self.leader_arms[name].read("position")
 
-        for i in range(20):
-            self.lumbar["main"].write("position", [-0.02*i,0.02*i])
+        for i in range(10):
+            self.lumbar["main"].write("position", [-0.04*i,0.04*i])
             time.sleep(0.2)
         # Connect the cameras?
 
