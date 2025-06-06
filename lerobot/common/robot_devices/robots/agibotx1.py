@@ -294,7 +294,7 @@ class AgibotX1Robot():
         action_sent = []
         for name in self.follower_arms:
             # Get goal position of each follower arm by splitting the action vector
-            to_idx += len(self.follower_arms[name].motor_names)
+            to_idx += len(self.follower_arms[name].motor_names())
             goal_pos = action[from_idx:to_idx]
             from_idx = to_idx
 
