@@ -355,6 +355,7 @@ def replay(
         robot.connect()
 
     log_say("Replaying episode", cfg.play_sounds, blocking=True)
+    log_say("Eposode num: {dataset.num_episodes}")
     for idx in range(dataset.num_frames):
         print(f'Frame {idx} of {dataset.num_frames}')
         start_episode_t = time.perf_counter()
