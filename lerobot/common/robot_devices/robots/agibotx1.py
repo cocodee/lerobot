@@ -110,7 +110,9 @@ class AgibotX1Robot():
         for name in self.leader_arms:
             self.leader_arms[name].read("position")
 
-        self.lumbar["main"].write("position", [-0.4,0.4])
+        for i in range(10):
+            self.lumbar["main"].write("position", [-0.4*i,0.4*i])
+            time.sleep(0.2)
         # Connect the cameras?
 
         self.is_connected = True
