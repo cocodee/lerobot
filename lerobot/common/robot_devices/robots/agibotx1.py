@@ -110,7 +110,7 @@ class AgibotX1Robot():
         for name in self.leader_arms:
             self.leader_arms[name].read("position")
 
-        self.lumbar["main"].write("position", [-0.6,0.6])
+        self.lumbar["main"].write("position", [-0.4,0.4])
         # Connect the cameras?
 
         self.is_connected = True
@@ -206,7 +206,7 @@ class AgibotX1Robot():
             self.follower_arms[name].write("position", goal_pos)
             self.logs[f"write_follower_{name}_goal_pos_dt_s"] = time.perf_counter() - before_fwrite_t
 
-        self.lumbar["main"].write("position", [-0.6,0,6])
+        self.lumbar["main"].write("position", [-0.4,0,4])
         # Early exit when recording data is not requested
         if not record_data:
             return
