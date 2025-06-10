@@ -770,7 +770,7 @@ class AgibotX1RobotConfig(RobotConfig):
     cameras: dict[str, CameraConfig] = field(
         default_factory=lambda: {
             "cam_high": IntelRealSenseCameraConfig(
-                serial_number=128422271347,
+                serial_number=327122071154,
                 fps=30,
                 width=640,
                 height=480,
