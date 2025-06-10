@@ -461,6 +461,7 @@ class AgibotX1MotorsBus():
             ret = self.controller.enable_actuator(name)
             if not ret:
                 print(f"Failed to enable actuator {name}")
+            self.controller.set_mit_cmd(name, 0, 0, 0, 0, 0)
         self.enabled = True
     
     def disable_all_actuator(self):
