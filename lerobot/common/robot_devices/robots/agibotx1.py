@@ -1,6 +1,7 @@
 import time
 from dataclasses import replace
 
+from lerobot.common.robot_devices.cameras.utils import make_cameras_from_configs
 from lerobot.common.robot_devices.robots.configs import AgibotX1RobotConfig
 from lerobot.common.robot_devices.utils import RobotDeviceAlreadyConnectedError, RobotDeviceNotConnectedError
 import lerobot.common.robot_devices.motors.agibotx1 as agibotx1
@@ -51,7 +52,7 @@ class AgibotX1Robot():
         self.leader_arms = make_motors_buses_from_configs(self.config.leader_arms)
         self.follower_arms = make_motors_buses_from_configs(self.config.follower_arms)
         self.lumbar = make_motors_buses_from_configs(self.config.lumbar)
-        self.cameras = {}
+        self.cameras = make_cameras_from_configs(self.config.cameras)
         self.if_name = self.config.if_name
         self.joy_instance = joy_stick_py.Joy()
 
@@ -120,6 +121,8 @@ class AgibotX1Robot():
             self.lumbar["main"].write("position", [-0.04*i,0.04*i])
             time.sleep(0.2)
         # Connect the cameras?
+        for name in self.cameras:
+            self.cameras[name].connect()
 
         self.is_connected = True
 
@@ -243,11 +246,20 @@ class AgibotX1Robot():
         action = torch.cat(action)
 
         # Capture images from cameras
+        images = {}
+        for name in self.cameras:
+            before_camread_t = time.perf_counter()
+            images[name] = self.cameras[name].async_read()
+            images[name] = torch.from_numpy(images[name])
+            self.logs[f"read_camera_{name}_dt_s"] = self.cameras[name].logs["delta_timestamp_s"]
+            self.logs[f"async_read_camera_{name}_dt_s"] = time.perf_counter() - before_camread_t
 
         # Populate output dictionaries
         obs_dict, action_dict = {}, {}
         obs_dict["observation.state"] = state
         action_dict["action"] = action
+        for name in self.cameras:
+            obs_dict[f"observation.images.{name}"] = images[name]
 
         return obs_dict, action_dict
 
@@ -274,12 +286,19 @@ class AgibotX1Robot():
         state = torch.cat(state)
 
         # Capture images from cameras
+        images = {}
+        for name in self.cameras:
+            before_camread_t = time.perf_counter()
+            images[name] = self.cameras[name].async_read()
+            images[name] = torch.from_numpy(images[name])
+            self.logs[f"read_camera_{name}_dt_s"] = self.cameras[name].logs["delta_timestamp_s"]
+            self.logs[f"async_read_camera_{name}_dt_s"] = time.perf_counter() - before_camread_t
 
         # Populate output dictionaries and format to pytorch
         obs_dict = {}
         obs_dict["observation.state"] = state
-        #for name in self.cameras:
-        #    obs_dict[f"observation.images.{name}"] = images[name]
+        for name in self.cameras:
+            obs_dict[f"observation.images.{name}"] = images[name]
         return obs_dict
 
     def send_action(self, action: torch.Tensor) -> torch.Tensor:
@@ -332,7 +351,8 @@ class AgibotX1Robot():
                 "ManipulatorRobot is not connected. You need to run `robot.connect()` before disconnecting."
             )
         agibotx1.stop_controller()
-
+        for name in self.cameras:
+            self.cameras[name].disconnect()
         self.is_connected = False
 
     def __del__(self):
@@ -358,3 +378,27 @@ class AgibotX1Robot():
                 "names": state_names,
             },
         }    
+    
+    @property
+    def camera_features(self) -> dict:
+        cam_ft = {}
+        for cam_key, cam in self.cameras.items():
+            key = f"observation.images.{cam_key}"
+            cam_ft[key] = {
+                "shape": (cam.height, cam.width, cam.channels),
+                "names": ["height", "width", "channels"],
+                "info": None,
+            }
+        return cam_ft  
+
+    @property
+    def features(self):
+        return {**self.motor_features, **self.camera_features}     
+
+    @property
+    def has_camera(self):
+        return len(self.cameras) > 0
+
+    @property
+    def num_cameras(self):
+        return len(self.cameras)
