@@ -767,14 +767,21 @@ class AgibotX1RobotConfig(RobotConfig):
         # Troubleshooting: If one of your IntelRealSense cameras freeze during
     # data recording due to bandwidth limit, you might need to plug the camera
     # on another USB hub or PCIe card.
+    #cameras: dict[str, CameraConfig] = field(
+    #    default_factory=lambda: {
+    #        "cam_high": IntelRealSenseCameraConfig(
+    #            serial_number=327122071154,
+    #            fps=10,
+    #            width=640,
+    #            height=480,
+    #        ),
+    #    }
+    #)
     cameras: dict[str, CameraConfig] = field(
         default_factory=lambda: {
-            "cam_high": IntelRealSenseCameraConfig(
-                serial_number=327122071154,
-                fps=30,
-                width=640,
-                height=480,
+            "front": OpenCVCameraConfig(
+                camera_index="/dev/video0", fps=30, width=640, height=480, rotation=90
             ),
         }
-    )
+    )    
     mock: bool = False
