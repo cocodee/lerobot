@@ -187,6 +187,10 @@ class AgibotX1Robot():
             claw_position = self.follower_arms[name].read("position","right_claw_actuator")
             print(f"claw_position: {claw_position}")
 
+            wrist_front = self.follower_arms[name].read("position","right_wrist_front_actuator")
+            wrist_back = self.follower_arms[name].read("position","right_wrist_back_actuator")
+            print(f"wrist_front: {wrist_front}, wrist_back: {wrist_back}")
+
             joy_data = self.joy_instance.get_joy_data()
             print(f"joy_data: {joy_data}")
 
@@ -200,8 +204,30 @@ class AgibotX1Robot():
                     v = float(claw_position[0])
                     v = max(v-50,0)
                     goal_pos[7] = v
-                else:
+                elif joy_data.buttons[4]==0 and joy_data.buttons[5]==0:
                     goal_pos[7] = float(claw_position[0])
+
+                if joy_data.buttons[0]==1:
+                    v = float(wrist_front[0])
+                    v = min(v+50,100)
+                    goal_pos[5] = v
+                elif  joy_data.buttons[1]==1:
+                    v = float(wrist_front[0])
+                    v = max(v-50,0)
+                    goal_pos[5] = v
+                elif joy_data.buttons[0]==0 and joy_data.buttons[1]==0:
+                    goal_pos[5] = float(wrist_front[0])
+                 
+                if joy_data.buttons[2]==1:
+                    v = float(wrist_back[0])
+                    v = min(v+50,100)
+                    goal_pos[6] = v
+                elif  joy_data.buttons[3]==1:
+                    v = float(wrist_back[0])
+                    v = max(v-50,0)
+                    goal_pos[6] = v
+                elif joy_data.buttons[2]==0 and joy_data.buttons[3]==0:
+                    goal_pos[6] = float(wrist_back[0])
             # Cap goal position when too far away from present position.
             # Slower fps expected due to reading from the follower.
             if self.config.max_relative_target is not None:
