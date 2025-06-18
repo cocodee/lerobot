@@ -200,10 +200,12 @@ class AgibotX1Robot():
                     v = float(claw_position[0])
                     v = min(v+50,100)
                     goal_pos[7] = v
+                    print(f"increase claw position to {v}")
                 elif  joy_data.buttons[5]==1:
                     v = float(claw_position[0])
                     v = max(v-50,0)
                     goal_pos[7] = v
+                    print(f"decrease claw position to {v}")
                 elif joy_data.buttons[4]==0 and joy_data.buttons[5]==0:
                     goal_pos[7] = float(claw_position[0])
 
@@ -211,10 +213,12 @@ class AgibotX1Robot():
                     v = float(wrist_front[0])
                     v = min(v+50,100)
                     goal_pos[5] = v
+                    print(f"increase wrist_front position to {v}")
                 elif  joy_data.buttons[1]==1:
                     v = float(wrist_front[0])
                     v = max(v-50,0)
                     goal_pos[5] = v
+                    print(f"decrease wrist_front position to {v}")
                 elif joy_data.buttons[0]==0 and joy_data.buttons[1]==0:
                     goal_pos[5] = float(wrist_front[0])
                  
@@ -222,10 +226,12 @@ class AgibotX1Robot():
                     v = float(wrist_back[0])
                     v = min(v+50,100)
                     goal_pos[6] = v
+                    print(f"increase wrist_back position to {v}")
                 elif  joy_data.buttons[3]==1:
                     v = float(wrist_back[0])
                     v = max(v-50,0)
                     goal_pos[6] = v
+                    print(f"decrease wrist_back position to {v}")
                 elif joy_data.buttons[2]==0 and joy_data.buttons[3]==0:
                     goal_pos[6] = float(wrist_back[0])
             # Cap goal position when too far away from present position.
