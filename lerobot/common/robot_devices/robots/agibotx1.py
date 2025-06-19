@@ -220,7 +220,12 @@ class AgibotX1Robot():
                     goal_pos[5] = v
                     print(f"decrease wrist_front position to {v}")
                 elif joy_data.buttons[0]==0 and joy_data.buttons[1]==0:
-                    goal_pos[5] = float(wrist_front[0])
+                    v = float(wrist_front[0])
+                    if v<0:
+                        v = 0
+                    elif v>9.5:
+                        v = 9.5
+                    goal_pos[5] = v
                  
                 if joy_data.buttons[2]==1:
                     v = float(wrist_back[0])
@@ -233,7 +238,12 @@ class AgibotX1Robot():
                     goal_pos[6] = v
                     print(f"decrease wrist_back position to {v}")
                 elif joy_data.buttons[2]==0 and joy_data.buttons[3]==0:
-                    goal_pos[6] = float(wrist_back[0])
+                    v = float(wrist_back[0])
+                    if v<0:
+                            v = 0
+                    elif v>9.5:
+                        v = 9.5
+                    goal_pos[6] = v
             # Cap goal position when too far away from present position.
             # Slower fps expected due to reading from the follower.
             if self.config.max_relative_target is not None:
