@@ -56,6 +56,10 @@ def make_robot_from_config(config: RobotConfig) -> Robot:
         from .reachy2 import Reachy2Robot
 
         return Reachy2Robot(config)
+    elif config.type == "ros2_follower":
+        from .ros2_follower import ROS2RobotFollower
+
+        return ROS2RobotFollower(config)    
     elif config.type == "mock_robot":
         from tests.mocks.mock_robot import MockRobot
 
