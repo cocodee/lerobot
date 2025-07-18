@@ -617,6 +617,10 @@ def make_robot_config(robot_type: str, **kwargs) -> RobotConfig:
         from lerobot.robots.lekiwi import LeKiwiConfig
 
         return LeKiwiConfig(**kwargs)
+    elif robot_type == "ros2_follower":
+        from lerobot.robots.ros2_follower import ROS2FollowerConfig
+
+        return ROS2FollowerConfig(**kwargs)
     else:
         raise ValueError(f"Robot type '{robot_type}' is not available.")
 

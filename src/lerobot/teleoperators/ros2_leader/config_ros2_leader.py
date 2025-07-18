@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-
-# Copyright 2025 The HuggingFace Inc. team. All rights reserved.
+# Copyright 2024 The HuggingFace Inc. team. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .config import TeleoperatorConfig
-from .teleoperator import Teleoperator
-from .utils import make_teleoperator_from_config
-from . import ros2_leader
+from dataclasses import dataclass
+
+from lerobot.teleoperators.config import TeleoperatorConfig
+
+
+@TeleoperatorConfig.register_subclass("ros2_leader")
+@dataclass
+class ROS2LeaderConfig(TeleoperatorConfig):
+    """
+    Configuration for the ROS2 Leader Teleoperator (Left Arm).
+    """
+
+    name: str = "ros2_leader"
+    num_joints: int = 7  # Default to 7, adjust as needed
+    topic_joint_states: str = "/joint_states"
+    joint_name_prefix: str = "left_joint_"
