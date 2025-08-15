@@ -80,7 +80,11 @@ def make_teleoperator_from_config(config: TeleoperatorConfig) -> Teleoperator:
     elif config.type == "ros2_leader":
         from .ros2_leader import ROS2RobotLeader
 
-        return ROS2RobotLeader(config)    
+        return ROS2RobotLeader(config)  
+    elif config.type == "ros2_dual_leader":
+        from .ros2_leader import ROS2DualRobotLeader
+
+        return ROS2DualRobotLeader(config)      
     else:
         try:
             return cast(Teleoperator, make_device_from_device_class(config))
