@@ -26,7 +26,7 @@ def monitor_performance(func):
         frequency = 1.0 / interval if interval > 0 else float('inf')
 
         # --- 3. 执行原函数并计时 ---
-        print(f"--- Function '{func.__name__}' Start ---")
+        #print(f"--- Function '{func.__name__}' Start ---")
         start_time = time.perf_counter()
         result = func(*args, **kwargs) # 执行真正的函数
         end_time = time.perf_counter()
@@ -48,7 +48,8 @@ def monitor_performance(func):
         #print(f"  Frequency (瞬时频率): {frequency:.2f} Hz")
         #print(f"  Average Duration (平均时长): {avg_duration:.6f} s")
         #print("-" * (len(func.__name__) + 24))
-        print(f"--- Function '{func.__name__}' End ---  Call #{wrapper.call_count}   Duration (本次时长): {duration:.6f} s")
+        if duration>0.1:
+            print(f"--- Function '{func.__name__}' End ---  Call #{wrapper.call_count}   Duration (本次时长): {duration:.6f} s")
         return result
     
     return wrapper
