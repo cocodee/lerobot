@@ -32,6 +32,7 @@ from lerobot.datasets.lerobot_dataset import LeRobotDataset
 from lerobot.datasets.utils import DEFAULT_FEATURES
 from lerobot.policies.pretrained import PreTrainedPolicy
 from lerobot.robots import Robot
+from lerobot.utils.monitor_utils import monitor_performance
 
 
 def log_control_info(robot: Robot, dt_s, episode_index=None, frame_index=None, fps=None):
@@ -96,7 +97,7 @@ def is_headless():
         print()
         return True
 
-
+@monitor_performance
 def predict_action(
     observation: dict[str, np.ndarray],
     policy: PreTrainedPolicy,
