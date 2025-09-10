@@ -72,6 +72,8 @@ class TeleopAligner(Node):
         self.calibration_map = {
             name: MotorCalibration(name, min_p, max_p) for name, min_p, max_p in calibration_data_degrees
         }
+        self.joint_direction= [-1, -1, 1, 1, 1, -1,1, -1, -1, 1, 1, 1, -1,1]
+
         self.get_logger().info("对齐器节点已启动。")
 
 
@@ -155,7 +157,7 @@ class TeleopAligner(Node):
         # <<< MODIFICATION 3: 核心逻辑 - 使用角度单位钳位目标位置 >>>
         clamped_target_positions = []
         for i, joint_name in enumerate(joint_names):
-            original_target_pos = leader_joints[i]
+            original_target_pos = leader_joints[i]*self.joint_direction[i]
             
             # 从 'follower_left_arm_joint_1' 中提取基础名称 'left_arm_joint_1'
             base_joint_name = joint_name.replace("follower_", "")
