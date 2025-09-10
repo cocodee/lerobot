@@ -38,6 +38,7 @@ from functools import cached_property
 from ..utils import ensure_safe_goal_position
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
 from lerobot.utils.prometheus_manager import prometheus_manager
+from lerobot.utils.monitor_utils import monitor_performance
 
 import wandb
 
@@ -422,7 +423,7 @@ class ROS2DualRobotFollower(Robot):
         
         #self._ros_node.get_logger().info(f"Returning final clamped action: {final_action}")
         return final_action
-
+    @monitor_performance
     def send_target_position(self, target_positions):
         """
         Splits the combined target position list and sends commands to the left and right arm publishers.
