@@ -251,6 +251,7 @@ class ROS2DualRobotFollower(Robot):
         print("Follower calibration is assumed to be handled by the robot's internal systems.")
         pass
 
+    @monitor_performance
     def get_observation(self) -> dict[str, Any]:
         if not self.is_connected:
             raise RuntimeError("Follower robot is not connected.")

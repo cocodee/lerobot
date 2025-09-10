@@ -72,6 +72,7 @@ from lerobot.datasets.video_utils import (
     get_safe_default_codec,
     get_video_info,
 )
+from lerobot.utils.monitor_utils import monitor_performance
 
 CODEBASE_VERSION = "v2.1"
 
@@ -762,7 +763,8 @@ class LeRobotDataset(torch.utils.data.Dataset):
             write_image(image, fpath)
         else:
             self.image_writer.save_image(image=image, fpath=fpath)
-
+    
+    @monitor_performance
     def add_frame(self, frame: dict, task: str, timestamp: float | None = None) -> None:
         """
         This function only adds the frame to the episode_buffer. Apart from images — which are written in a
