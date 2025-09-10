@@ -8,7 +8,13 @@ from sensor_msgs.msg import JointState
 from builtin_interfaces.msg import Duration
 import threading
 from action_msgs.msg import GoalStatus
+import math
 
+class MotorCalibration:
+    def __init__(self, joint_name: str, min_position: float, max_position: float):
+        self.joint_name = joint_name
+        self.min_position = min_position
+        self.max_position = max_position
 class TeleopAligner(Node):
     def __init__(self, leader_joint_names,follower_joint_names):
         super().__init__('teleop_aligner')
@@ -44,6 +50,28 @@ class TeleopAligner(Node):
             self.follower_joint_state_callback,
             10
         )
+        # 原始校准数据（单位：度）
+        calibration_data_degrees = [
+            ("left_arm_joint_1", -160.0, 160.0),
+            ("left_arm_joint_2", -90.0, 0.0),
+            ("left_arm_joint_3", -150.0, 150.0),
+            ("left_arm_joint_4", -90.0, 0.0),
+            ("left_arm_joint_5", -150.0, 150.0),
+            ("left_arm_joint_6", -90.0, 90.0),
+            ("left_arm_joint_7", 0.0, 1.0),
+            ("right_arm_joint_1", -160.0, 160.0),
+            ("right_arm_joint_2", 0.0, 90.0),
+            ("right_arm_joint_3", -150.0, 150.0),
+            ("right_arm_joint_4", 0.0, 90.0),
+            ("right_arm_joint_5", -150.0, 150.0),
+            ("right_arm_joint_6", -90.0, 90.0),
+            ("right_arm_joint_7", 0.0, 1.0),
+        ]
+        
+        # <<< MODIFICATION 2: 将校准列表转换为字典，不进行单位转换 >>>
+        self.calibration_map = {
+            name: MotorCalibration(name, min_p, max_p) for name, min_p, max_p in calibration_data_degrees
+        }
         self.get_logger().info("对齐器节点已启动。")
 
 
@@ -123,8 +151,37 @@ class TeleopAligner(Node):
         start_point.time_from_start = Duration(sec=0, nanosec=0)
 
         # Point 2: 终点 (leader位置,在指定时间到达)
+
+        # <<< MODIFICATION 3: 核心逻辑 - 使用角度单位钳位目标位置 >>>
+        clamped_target_positions = []
+        for i, joint_name in enumerate(joint_names):
+            original_target_pos = leader_joints[i]
+            
+            # 从 'follower_left_arm_joint_1' 中提取基础名称 'left_arm_joint_1'
+            base_joint_name = joint_name.replace("follower_", "")
+            
+            if base_joint_name in self.calibration_map:
+                calib = self.calibration_map[base_joint_name]
+                # 执行钳位操作
+                clamped_pos = max(calib.min_position, min(original_target_pos, calib.max_position))
+                
+                # 如果发生了钳位，打印一条警告信息以便调试
+                if not math.isclose(clamped_pos, original_target_pos, rel_tol=1e-5):
+                    self.get_logger().warn(
+                        f"关节 '{base_joint_name}' 的目标位置被限制: "
+                        f"原始值={original_target_pos:.2f}°, "
+                        f"限制后={clamped_pos:.2f}°, "
+                        f"范围=[{calib.min_position:.2f}°, {calib.max_position:.2f}°]"
+                    )
+                clamped_target_positions.append(clamped_pos)
+            else:
+                # 如果某个关节没有校准数据，直接使用原始值并打印警告
+                self.get_logger().warn(f"关节 '{base_joint_name}' 缺少校准数据，将使用原始目标位置。")
+                clamped_target_positions.append(original_target_pos)
+
         end_point = JointTrajectoryPoint()
-        end_point.positions = leader_joints
+        # 使用被限制过的目标位置
+        end_point.positions = clamped_target_positions
         end_point.time_from_start = Duration(sec=int(align_time_sec), nanosec=0)
 
         trajectory.points.append(start_point)
