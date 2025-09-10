@@ -291,7 +291,7 @@ class ROS2DualRobotFollower(Robot):
             action_value[observation_joint_name] = pos_map[joint_name]
         return action_value
     def send_action(self, action: dict[str, Any]) -> dict[str, Any]:
-        self._ros_node.get_logger().info(f"Sending action: {action}")
+        ## self._ros_node.get_logger().info(f"Sending action: {action}")
         if not self.is_connected:
             raise RuntimeError("Follower robot is not connected.")
 
@@ -456,13 +456,13 @@ class ROS2DualRobotFollower(Robot):
         left_msg = Float64MultiArray()
         left_msg.data = left_positions
         result = self.left_arm_publisher_.publish(left_msg)
-        #self._ros_node.get_logger().info(f'Published to left arm: {left_msg.data} result: {result}')
+        self._ros_node.get_logger().info(f'Published to left arm: {left_msg.data} result: {result}')
 
         # Create and publish the message for the right arm
         right_msg = Float64MultiArray()
         right_msg.data = right_positions
         result = self.right_arm_publisher_.publish(right_msg)
-        #self._ros_node.get_logger().info(f'Published to right arm: {right_msg.data} result: {result}')
+        self._ros_node.get_logger().info(f'Published to right arm: {right_msg.data} result: {result}')
 
     def send_target_trajectory(self, target_positions: list[Any],action_client:ActionClient):
         # --- NEW ACTION CLIENT LOGIC ---
