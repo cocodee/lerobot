@@ -269,6 +269,7 @@ class ROS2DualRobotFollower(Robot):
             action_value[observation_joint_name] = pos_map[joint_name]    
 
         obs_dict = {f"{motor}.pos": val for motor, val in action_value.items()}
+
         # Capture images from cameras
         for cam_key, cam in self.cameras.items():
             start = time.perf_counter()
@@ -299,11 +300,19 @@ class ROS2DualRobotFollower(Robot):
         if action is None:
             raise ValueError("Action dictionary must contain 'joint_positions'.")
         # modify the action by joint_direction_map
-        action = {key: val * self.joint_direction_map[key] for key, val in action.items()}
+        # action = {key: val * self.joint_direction_map[key] for key, val in action.items()}
+        # action = {}
+        # import pdb; pdb.set_trace()
+        for key, val in action.items():
+            # import pdb; pdb.set_trace()
+            if key not in self.joint_direction_map:
+                continue
+            action[key] =  val * self.joint_direction_map[key]
+
 
         action_pos = {key.removesuffix(".pos"): val for key, val in action.items()}
 
-        ensure_safe = True
+        ensure_safe = False
         if ensure_safe:
             # 1. --- GET CURRENT STATE (Now much cleaner!) ---
             present_positions_map = self.get_current_position()
