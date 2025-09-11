@@ -125,8 +125,10 @@ class ACTPolicy(PreTrainedPolicy):
         # Action queue logic for n_action_steps > 1. When the action_queue is depleted, populate it by
         # querying the policy.
         if len(self._action_queue) == 0:
+            import time
+            start_time = time.time()
             actions = self.predict_action_chunk(batch)[:, : self.config.n_action_steps]
-
+            print("========foward time: "+str(time.time() - start_time))
             # `self.model.forward` returns a (batch_size, n_action_steps, action_dim) tensor, but the queue
             # effectively has shape (n_action_steps, batch_size, *), hence the transpose.
             self._action_queue.extend(actions.transpose(0, 1))
