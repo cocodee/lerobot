@@ -300,15 +300,7 @@ class ROS2DualRobotFollower(Robot):
         if action is None:
             raise ValueError("Action dictionary must contain 'joint_positions'.")
         # modify the action by joint_direction_map
-        # action = {key: val * self.joint_direction_map[key] for key, val in action.items()}
-        # action = {}
-        # import pdb; pdb.set_trace()
-        for key, val in action.items():
-            # import pdb; pdb.set_trace()
-            if key not in self.joint_direction_map:
-                continue
-            action[key] =  val * self.joint_direction_map[key]
-
+        action = {key: val * self.joint_direction_map[key] for key, val in action.items()}
 
         action_pos = {key.removesuffix(".pos"): val for key, val in action.items()}
 
