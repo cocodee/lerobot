@@ -77,6 +77,7 @@ from lerobot.robots import (  # noqa: F401
     so100_follower,
     so101_follower,
     ros2_follower,
+    supre_robot_follower,
 )
 from lerobot.teleoperators import (  # noqa: F401
     Teleoperator,
@@ -89,6 +90,7 @@ from lerobot.teleoperators import (  # noqa: F401
     so100_leader,
     so101_leader,
     ros2_leader,
+    supre_robot_leader,
 )
 from lerobot.utils.import_utils import register_third_party_devices
 from lerobot.utils.robot_utils import busy_wait
