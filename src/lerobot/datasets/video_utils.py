@@ -61,12 +61,108 @@ def decode_video_frames(
     """
     if backend is None:
         backend = get_safe_default_codec()
-    if backend == "torchcodec":
+
+    if backend == "pyav_hw":
+        return decode_video_frames_pyav_hw(video_path, timestamps, tolerance_s)
+    elif backend == "torchcodec":
         return decode_video_frames_torchcodec(video_path, timestamps, tolerance_s)
     elif backend in ["pyav", "video_reader"]:
         return decode_video_frames_torchvision(video_path, timestamps, tolerance_s, backend)
     else:
         raise ValueError(f"Unsupported video backend: {backend}")
+
+def decode_video_frames_pyav_hw(
+    video_path: Path | str,
+    timestamps: list[float],
+    tolerance_s: float,
+    log_loaded_timestamps: bool = False,
+) -> torch.Tensor:
+    """
+    Loads frames from a video using PyAV with Jetson's hardware acceleration (v4l2m2m).
+    """
+    video_path = str(video_path)
+    hw_decoder_map = {
+        "h264": "h264_v4l2m2m",
+        "hevc": "hevc_v4l2m2m",
+    }
+    
+    # First, open the container to inspect the video codec without decoding
+    try:
+        with av.open(video_path, "r") as container:
+            video_stream = container.streams.video[0]
+            codec_name = video_stream.codec_context.name
+            # Set time_base for accurate seeking
+            time_base = video_stream.time_base
+    except (av.AVError, IndexError) as e:
+        raise IOError(f"Failed to open or find video stream in {video_path}") from e
+
+    # Determine the hardware decoder to use
+    hw_decoder = hw_decoder_map.get(codec_name)
+    if not hw_decoder:
+        raise ValueError(
+            f"Video codec '{codec_name}' is not supported for hardware decoding. "
+            f"Supported codecs are: {list(hw_decoder_map.keys())}."
+        )
+
+    options = {"c:v": hw_decoder}
+    loaded_frames = []
+    loaded_ts = []
+
+    try:
+        with av.open(video_path, "r", options=options) as container:
+            video_stream = container.streams.video[0]
+            
+            first_ts = min(timestamps)
+            last_ts = max(timestamps)
+
+            # Seek to the nearest keyframe before the first requested timestamp
+            # av.time_base is the denominator for timestamps (often 1_000_000)
+            seek_target = int(first_ts * av.time_base)
+            container.seek(seek_target, backward=True, stream=video_stream)
+
+            # Decode frames until we pass the last requested timestamp
+            for frame in container.decode(video=0):
+                current_ts = frame.pts * time_base
+                if current_ts < first_ts - tolerance_s: # Skip frames too early
+                    continue
+                
+                # Convert av.VideoFrame to torch.Tensor
+                # The hardware decoder often outputs in a YUV format (like nv12),
+                # to_ndarray converts it to RGB for general use.
+                frame_np = frame.to_ndarray(format="rgb24")
+                frame_torch = torch.from_numpy(frame_np).permute(2, 0, 1) # HWC to CHW
+                
+                loaded_frames.append(frame_torch)
+                loaded_ts.append(current_ts)
+                
+                if log_loaded_timestamps:
+                    logging.info(f"Frame loaded at timestamp={current_ts:.4f}")
+
+                if current_ts >= last_ts:
+                    break
+    except av.AVError as e:
+        raise IOError(f"Error during hardware decoding of {video_path} with {hw_decoder}") from e
+    
+    if not loaded_frames:
+        raise ValueError(f"Could not decode any frames from {video_path} for the given timestamps.")
+
+    query_ts = torch.tensor(timestamps)
+    loaded_ts = torch.tensor(loaded_ts)
+
+    # Find the closest loaded frame for each requested timestamp
+    dist = torch.cdist(query_ts[:, None], loaded_ts[:, None], p=1)
+    min_dist, argmin_indices = dist.min(1)
+
+    is_within_tol = min_dist < tolerance_s
+    assert is_within_tol.all(), (
+        f"One or several query timestamps violate the tolerance ({min_dist[~is_within_tol]} > {tolerance_s=})."
+    )
+
+    closest_frames = torch.stack([loaded_frames[idx] for idx in argmin_indices])
+    closest_frames = closest_frames.type(torch.float32) / 255.0
+
+    assert len(timestamps) == len(closest_frames)
+    return closest_frames
 
 
 def decode_video_frames_torchvision(
@@ -283,19 +379,40 @@ def encode_video_frames(
     dummy_image = Image.open(input_list[0])
     width, height = dummy_image.size
 
-    # Define video codec options
+    # --- CORE MODIFICATION STARTS HERE ---
+
+    # Define video codec options based on the selected encoder
     video_options = {}
+
+    # Check if a Jetson hardware encoder is being used
+    is_hardware_encoder = "v4l2m2m" in vcodec
 
     if g is not None:
         video_options["g"] = str(g)
 
-    if crf is not None:
-        video_options["crf"] = str(crf)
+    if is_hardware_encoder:
+        # Hardware encoders (NVENC on Jetson) do not use 'crf'. They use 'bitrate'.
+        # We will use a hardcoded default bitrate and ignore the crf parameter.
+        default_bitrate = 10_000_000  # 10 Mbps - a reasonable default
+        video_options["b:v"] = str(default_bitrate)
+        
+        # Warn the user that 'crf' is being ignored.
+        warnings.warn(
+            f"Hardware encoder '{vcodec}' detected. The 'crf' parameter will be IGNORED. "
+            f"Using a fixed default bitrate of {default_bitrate / 1_000_000:.1f} Mbps."
+        )
+    else:
+        # For software encoders, use the original logic with 'crf' and 'fast_decode'
+        if crf is not None:
+            video_options["crf"] = str(crf)
+        
+        # This 'fast_decode' logic seems specific to certain codecs, applying it here for software encoders
+        if fast_decode:
+            key = "svtav1-params" if vcodec == "libsvtav1" else "tune"
+            value = f"fast-decode={fast_decode}" if vcodec == "libsvtav1" else "fastdecode"
+            video_options[key] = value
 
-    if fast_decode:
-        key = "svtav1-params" if vcodec == "libsvtav1" else "tune"
-        value = f"fast-decode={fast_decode}" if vcodec == "libsvtav1" else "fastdecode"
-        video_options[key] = value
+    # --- CORE MODIFICATION ENDS HERE ---
 
     # Set logging level
     if log_level is not None:
