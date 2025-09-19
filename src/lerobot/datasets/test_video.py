@@ -2,7 +2,7 @@ from pathlib import Path
 from lerobot.datasets.video_utils import encode_video_frames
 
 # 假设你的PNG图片在 './my_frames' 文件夹
-image_directory = Path("../../../outputs/cam_capture/2025-09-18/10-36-45/")
+image_directory = Path("./outputs/cam_capture/2025-09-18/10-36-45/")
 FRAME_RATE = 30
 
 # --- 调用硬件加速编码 (H.264) ---
