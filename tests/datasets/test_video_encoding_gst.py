@@ -11,6 +11,7 @@ from lerobot.datasets.video_utils import encode_video_frames_gst
 from lerobot.datasets.lerobot_dataset import LeRobotDataset 
 import shutil
 import numpy as np
+import os
 # 配置日志，方便在测试失败时查看 GStreamer 命令
 logging.basicConfig(level=logging.INFO)
 
