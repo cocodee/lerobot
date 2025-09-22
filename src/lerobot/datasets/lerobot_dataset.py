@@ -686,7 +686,8 @@ class LeRobotDataset(torch.utils.data.Dataset):
         self.writer = None
         self.latest_episode = None
         self._current_file_start_frame = None  # Track the starting frame index of the current parquet file
-
+        self.num_parallel_workers = 2
+  
         self.root.mkdir(exist_ok=True, parents=True)
 
         # Load metadata
