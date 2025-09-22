@@ -73,6 +73,7 @@ from lerobot.datasets.video_utils import (
     get_safe_default_codec,
     get_video_duration_in_s,
     get_video_info,
+    encode_video_frames_gst,
 )
 from lerobot.utils.constants import HF_LEROBOT_HOME
 
@@ -1438,6 +1439,30 @@ class LeRobotDataset(torch.utils.data.Dataset):
         encode_video_frames(img_dir, temp_path, self.fps, overwrite=True)
         shutil.rmtree(img_dir)
         return temp_path
+    
+    def encode_videos(self):
+        for ep_idx in range(self.meta.total_episodes):
+            self.encode_episode_videos(ep_idx)
+
+    def encode_episode_videos(self, episode_index: int) -> dict:
+        """
+        Use ffmpeg to convert frames stored as png into mp4 videos.
+        Note: `encode_video_frames` is a blocking call. Making it asynchronous shouldn't speedup encoding,
+        since video encoding with ffmpeg is already using multithreading.
+        """
+        video_paths = {}
+        for key in self.meta.video_keys:
+            video_path = self.root / self.meta.get_video_file_path(episode_index, key)
+            video_paths[key] = str(video_path)
+            if video_path.is_file():
+                # Skip if video is already encoded. Could be the case when resuming data recording.
+                continue
+            img_dir = self._get_image_file_path(
+                episode_index=episode_index, image_key=key, frame_index=0
+            ).parent
+            encode_video_frames_gst(img_dir, video_path, self.fps, overwrite=True)
+
+        return video_paths
 
     @classmethod
     def create(
