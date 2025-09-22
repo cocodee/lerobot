@@ -7,7 +7,7 @@ from PIL import Image, ImageDraw
 
 # 假设您的 encode_video_frames 函数存放在名为 video_utils.py 的文件中
 # 请根据实际情况修改下面的导入语句
-from lerobot.datasets.video_utils import encode_video_frames 
+from lerobot.datasets.video_utils import encode_video_frames_gst
 
 # 配置日志，方便在测试失败时查看 GStreamer 命令
 logging.basicConfig(level=logging.INFO)
@@ -55,7 +55,7 @@ class TestVideoEncoding(unittest.TestCase):
         gop_size = 5
 
         # --- 执行 ---
-        encode_video_frames(
+        encode_video_frames_gst(
             imgs_dir=self.imgs_dir,
             video_path=self.video_path,
             fps=fps,
@@ -107,7 +107,7 @@ class TestVideoEncoding(unittest.TestCase):
         """测试当输入目录为空时，是否按预期抛出异常"""
         # imgs_dir 是空的，因为我们没有调用 _generate_test_frames
         with self.assertRaises(FileNotFoundError, msg="当没有图片时应抛出 FileNotFoundError"):
-            encode_video_frames(
+            encode_video_frames_gst(
                 imgs_dir=self.imgs_dir,
                 video_path=self.video_path,
                 fps=10
@@ -122,7 +122,7 @@ class TestVideoEncoding(unittest.TestCase):
 
         # --- 执行与验证 ---
         with self.assertRaises(FileExistsError, msg="当文件存在且 overwrite=False 时应抛出 FileExistsError"):
-            encode_video_frames(
+            encode_video_frames_gst(
                 imgs_dir=self.imgs_dir,
                 video_path=self.video_path,
                 fps=10,
