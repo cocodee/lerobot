@@ -12,6 +12,7 @@ from lerobot.datasets.lerobot_dataset import LeRobotDataset
 import shutil
 import numpy as np
 import os
+import time
 # 配置日志，方便在测试失败时查看 GStreamer 命令
 logging.basicConfig(level=logging.INFO)
 
@@ -281,6 +282,110 @@ class TestVideoEncoding(unittest.TestCase):
         except subprocess.CalledProcessError as e:
             # 如果 ffplay 异常退出，打印警告但不要让测试失败
             logging.warning(f"\nffplay 播放时发生错误 (退出码: {e.returncode})，测试继续。")
+
+# --- 将这个新的性能测试方法添加到 TestVideoEncoding 类中 ---
+
+    @unittest.skipUnless(
+        os.environ.get("RUN_PERFORMANCE_TESTS", "0").lower() in ["1", "true", "yes"],
+        "Skipping performance test. Set RUN_PERFORMANCE_TESTS=1 to enable."
+    )
+    def test_parallel_encoding_performance(self):
+        """
+        对比单线程和双线程并行编码的耗时。
+        """
+        logging.info("\n\n" + "="*50)
+        logging.info("  开始并行编码性能基准测试  ")
+        logging.info("="*50)
+        
+        # --- 准备阶段 ---
+        # 准备更大量的数据以获得有意义的计时结果
+        repo_id_base = "performance_test/dataset"
+        # 编码4个视频流，这样双核编码器可以充分利用
+        video_keys = ["cam_front", "cam_wrist", "cam_left", "cam_right"]
+        fps = 30
+        num_frames_per_video = 200 # 增加帧数
+        
+        features = {
+            key: {"dtype": "video", "shape": (240, 320, 3)} for key in video_keys
+        }
+
+        # 准备一个包含多个并行度设置的列表
+        parallelism_levels = [1, 2]
+        timings = {}
+
+        for num_workers in parallelism_levels:
+            logging.info(f"\n--- 正在测试并行度: {num_workers} ---")
+            
+            # 1. 为每个测试级别创建独立的数据集实例和数据
+            repo_id = f"{repo_id_base}_w{num_workers}"
+            dataset_root = self.test_root / repo_id
+            
+            try:
+                dataset = LeRobotDataset.create(
+                    repo_id=repo_id,
+                    root=dataset_root,
+                    features=features,
+                    fps=fps,
+                )
+                dataset.num_parallel_workers = num_workers
+            except FileExistsError:
+                shutil.rmtree(dataset_root)
+                dataset = LeRobotDataset.create(
+                    repo_id=repo_id,
+                    root=dataset_root,
+                    features=features,
+                    fps=fps,
+                )
+                dataset.num_parallel_workers = num_workers
+
+            # 2. 生成图像帧 (这个过程不计时)
+            logging.info("正在生成测试图像...")
+            for i in range(num_frames_per_video):
+                frame_data = {
+                    key: Image.new("RGB", (320, 240), "gray") for key in video_keys
+                }
+                dataset.add_frame(frame_data, task="perf_task")
+            
+            # --- 执行与计时 ---
+            logging.info("开始编码...")
+            start_time = time.monotonic()
+            
+            # 调用 save_episode，这是我们要测量的核心操作
+            dataset.save_episode()
+            
+            end_time = time.monotonic()
+            
+            # 记录耗时
+            elapsed_time = end_time - start_time
+            timings[num_workers] = elapsed_time
+            logging.info(f"编码完成，耗时: {elapsed_time:.2f} 秒")
+
+            # --- 快速验证 (确保编码成功) ---
+            episode_index = 0
+            for key in video_keys:
+                video_path = dataset.root / dataset.meta.get_video_file_path(episode_index, key)
+                self.assertTrue(video_path.exists())
+                self.assertGreater(video_path.stat().st_size, 0)
+
+        # --- 总结报告 ---
+        logging.info("\n\n" + "="*50)
+        logging.info("  性能基准测试总结  ")
+        logging.info("="*50)
+        logging.info(f"测试配置: {len(video_keys)} 个视频流, 每个视频 {num_frames_per_video} 帧, {fps} FPS")
+        
+        time_w1 = timings.get(1)
+        time_w2 = timings.get(2)
+
+        if time_w1 is not None:
+            logging.info(f"并行度 = 1 (单线程): {time_w1:.2f} 秒")
+        if time_w2 is not None:
+            logging.info(f"并行度 = 2 (双线程): {time_w2:.2f} 秒")
+        
+        if time_w1 and time_w2:
+            speedup = time_w1 / time_w2
+            logging.info(f"\n性能提升 (Speedup): {speedup:.2f}x")
+            # 断言：我们期望至少有一点性能提升
+            self.assertGreater(speedup, 1.1, "并行度=2时应比并行度=1有显著的速度提升")
 
 if __name__ == '__main__':
     # 替换 'your_module_name' 为您存放函数的Python文件名（不含.py后缀）
