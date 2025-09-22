@@ -8,7 +8,9 @@ from PIL import Image, ImageDraw
 # 假设您的 encode_video_frames 函数存放在名为 video_utils.py 的文件中
 # 请根据实际情况修改下面的导入语句
 from lerobot.datasets.video_utils import encode_video_frames_gst
-
+from lerobot.datasets.lerobot_dataset import LeRobotDataset 
+import shutil
+import numpy as np
 # 配置日志，方便在测试失败时查看 GStreamer 命令
 logging.basicConfig(level=logging.INFO)
 
@@ -131,6 +133,107 @@ class TestVideoEncoding(unittest.TestCase):
         
         # 确保文件未被修改
         self.assertEqual(self.video_path.stat().st_size, 0, "受保护的文件不应被修改")
+
+    def test_real_dataset_parallel_encoding(self):
+        """
+        测试 LeRobotDataset.save_episode() 是否能正确触发并行视频编码。
+        这是一个集成测试，不使用任何模拟类。
+        """
+        # --- 准备 ---
+        # 1. 定义数据集的属性
+        repo_id = "test/test_dataset"
+        # 使用self.test_root作为数据集的根目录，测试结束后会自动清理
+        dataset_root = self.test_root / repo_id 
+        
+        video_keys = ["observation.image_main", "observation.image_wrist"]
+        fps = 10
+        features = {
+            key: {"dtype": "video", "shape": [480, 640, 3]} for key in video_keys
+        }
+        features["state"] = {"dtype": "float32", "shape": [2]}
+
+        # 2. 使用 LeRobotDataset.create 创建一个真实的数据集实例
+        try:
+            dataset = LeRobotDataset.create(
+                repo_id=repo_id,
+                root=dataset_root,
+                features=features,
+                fps=fps,
+            )
+            # 为 encode_episode_videos_gst 设置并行工作线程数
+            dataset.num_parallel_workers = 2
+        except FileExistsError:
+            # 如果之前的测试意外失败，目录可能已存在
+            shutil.rmtree(dataset_root)
+            dataset = LeRobotDataset.create(
+                repo_id=repo_id,
+                root=dataset_root,
+                features=features,
+                fps=fps,
+            )
+            dataset.num_parallel_workers = 2
+
+
+        # 3. 模拟录制一个回合的数据
+        num_frames_to_record = 30
+        for i in range(num_frames_to_record):
+            # 创建一个虚拟帧
+            frame_data = {
+                # 图像数据需要是 numpy 数组或 PIL Image
+                "observation.image_main": Image.new("RGB", (640, 480), "red"),
+                "observation.image_wrist": Image.new("RGB", (640, 480), "blue"),
+                "state": np.array([i * 0.1, i * -0.1], dtype=np.float32),
+            }
+            dataset.add_frame(frame_data, task="test_task", timestamp=(i / fps))
+
+        # --- 执行 ---
+        # 保存回合，这将触发内部对 encode_episode_videos_gst 的调用
+        dataset.save_episode()
+
+        # --- 验证 ---
+        # 1. 验证所有视频文件是否都已创建
+        episode_index = 0
+        for key in video_keys:
+            # LeRobotDataset 会根据元数据自动生成路径
+            expected_video_path = dataset.root / dataset.meta.get_video_file_path(episode_index, key)
+            
+            self.assertTrue(expected_video_path.exists(), f"视频文件 {expected_video_path} 未创建")
+            self.assertGreater(
+                expected_video_path.stat().st_size, 0, f"视频文件 {expected_video_path} 大小为0"
+            )
+        
+        # 2. 验证 Parquet 数据文件也已创建
+        expected_data_path = dataset.root / dataset.meta.get_data_file_path(episode_index)
+        self.assertTrue(expected_data_path.exists(), "Parquet 数据文件未创建")
+
+        # 3. 验证临时图像目录已被删除
+        temp_image_dir = dataset.root / "images"
+        self.assertFalse(temp_image_dir.exists(), "临时的 images 目录在编码后应被删除")
+        
+        # 4. （可选）用 ffprobe 快速检查一个视频的元数据
+        main_video_path = dataset.root / dataset.meta.get_video_file_path(episode_index, "observation.image_main")
+        try:
+            cmd = [
+                "ffprobe",
+                "-v", "error",
+                "-show_entries", "stream=width,height,codec_name,nb_frames,r_frame_rate",
+                "-of", "default=noprint_wrappers=1", 
+                str(main_video_path)
+            ]
+            result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+            video_info = dict(line.split('=') for line in result.stdout.strip().split('\n'))
+            
+            self.assertEqual(int(video_info['width']), 640)
+            self.assertEqual(int(video_info['height']), 480)
+            self.assertEqual(video_info['codec_name'], 'h264')
+            self.assertEqual(int(video_info['nb_frames']), num_frames_to_record, "视频帧数不匹配")
+            self.assertIn(str(fps), video_info['r_frame_rate'])
+
+        except FileNotFoundError:
+            self.skipTest("ffprobe 未安装，跳过视频元数据验证。")
+        except (subprocess.CalledProcessError, KeyError, ValueError) as e:
+            self.fail(f"对 observation.image_main 的 ffprobe 验证失败: {e}")
+
 
 if __name__ == '__main__':
     # 替换 'your_module_name' 为您存放函数的Python文件名（不含.py后缀）
