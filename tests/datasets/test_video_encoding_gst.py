@@ -148,9 +148,9 @@ class TestVideoEncoding(unittest.TestCase):
         video_keys = ["observation.image_main", "observation.image_wrist"]
         fps = 10
         features = {
-            key: {"dtype": "video", "shape": [480, 640, 3]} for key in video_keys
+            key: {"dtype": "video", "shape": (480, 640, 3)} for key in video_keys
         }
-        features["state"] = {"dtype": "float32", "shape": [2]}
+        features["state"] = {"dtype": "float32", "shape": (2,)}
 
         # 2. 使用 LeRobotDataset.create 创建一个真实的数据集实例
         try:
