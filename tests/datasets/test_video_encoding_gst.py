@@ -70,24 +70,33 @@ class TestVideoEncoding(unittest.TestCase):
 
         # 2. 高级验证：使用 ffprobe 检查视频元数据
         try:
+            # 新代码，更健壮的 ffprobe 解析
             cmd = [
                 "ffprobe",
                 "-v", "error",
                 "-select_streams", "v:0",
+                # 在 show_entries 中指定我们要查询的字段
                 "-show_entries", "stream=width,height,codec_name,r_frame_rate,avg_frame_rate",
-                "-of", "default=noprint_wrappers=1:nokey=1",
+                # 使用 key=value 的格式输出，这样顺序就不重要了
+                "-of", "default=noprint_wrappers=1", 
                 str(self.video_path)
             ]
             result = subprocess.run(cmd, check=True, capture_output=True, text=True)
-            output = result.stdout.strip().split('\n')
             
-            v_width, v_height, v_codec, v_r_frame_rate, v_avg_frame_rate = output
-
-            self.assertEqual(int(v_width), width, "视频宽度不匹配")
-            self.assertEqual(int(v_height), height, "视频高度不匹配")
-            self.assertEqual(v_codec, "h264", "视频编码格式不是h264")
-            self.assertIn(str(fps), v_r_frame_rate, "视频帧率不匹配") # e.g., "5/1"
-            self.assertIn(str(fps), v_avg_frame_rate, "视频平均帧率不匹配")
+            # 将 key=value 格式的输出解析到一个字典中
+            video_info = {}
+            for line in result.stdout.strip().split('\n'):
+                if "=" in line:
+                    key, value = line.split('=', 1)
+                    video_info[key] = value
+            
+            # 从字典中按键名获取值，而不是按顺序
+            self.assertEqual(int(video_info.get("width")), width, "视频宽度不匹配")
+            self.assertEqual(int(video_info.get("height")), height, "视频高度不匹配")
+            # 注意：您的GStreamer命令使用h264编码器，所以这里我们检查h264
+            self.assertEqual(video_info.get("codec_name"), "h264", "视频编码格式不是h264")
+            self.assertIn(str(fps), video_info.get("r_frame_rate"), "视频帧率不匹配")
+            self.assertIn(str(fps), video_info.get("avg_frame_rate"), "视频平均帧率不匹配")
 
         except FileNotFoundError:
             self.skipTest("ffprobe 未安装，跳过视频元数据验证。")
