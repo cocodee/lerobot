@@ -31,7 +31,7 @@ class TestVideoEncoding(unittest.TestCase):
         """在每个测试方法运行后被调用，用于清理"""
         self.temp_dir.cleanup()
 
-    def _generate_test_frames(self, num_frames=15, width=128, height=64):
+    def _generate_test_frames(self, num_frames=150, width=640, height=480):
         """一个辅助函数，用于生成测试用的 PNG 图片"""
         for i in range(num_frames):
             # 创建一个黑色背景的图片
