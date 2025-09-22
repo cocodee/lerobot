@@ -100,6 +100,7 @@ class TestVideoEncoding(unittest.TestCase):
             self.assertIn(str(fps), video_info.get("r_frame_rate"), "视频帧率不匹配")
             self.assertIn(str(fps), video_info.get("avg_frame_rate"), "视频平均帧率不匹配")
 
+            self._print_ffplay_command(self.video_path, "单视频测试 (output.mp4)")
         except FileNotFoundError:
             self.skipTest("ffprobe 未安装，跳过视频元数据验证。")
         except subprocess.CalledProcessError as e:
@@ -229,11 +230,30 @@ class TestVideoEncoding(unittest.TestCase):
             self.assertEqual(int(video_info['nb_frames']), num_frames_to_record, "视频帧数不匹配")
             self.assertIn(str(fps), video_info['r_frame_rate'])
 
+            for key in video_keys:
+                video_path = dataset.root / dataset.meta.get_video_file_path(episode_index, key)
+                self._print_ffplay_command(video_path, f"并行测试视频 ({key})")
         except FileNotFoundError:
             self.skipTest("ffprobe 未安装，跳过视频元数据验证。")
         except (subprocess.CalledProcessError, KeyError, ValueError) as e:
             self.fail(f"对 observation.image_main 的 ffprobe 验证失败: {e}")
 
+    def _print_ffplay_command(self, video_path: Path, video_name: str):
+        """检查 ffplay 是否存在，如果存在，则打印播放视频的命令。"""
+        try:
+            # 检查 ffplay 是否在 PATH 中
+            subprocess.run(["ffplay", "-version"], capture_output=True, check=True, text=True)
+            
+            # 如果命令成功执行，打印提示信息和播放命令
+            logging.info(f"\n--- 视频预览 ---")
+            logging.info(f"'{video_name}' 已成功生成。如需手动预览，请在终端运行以下命令:")
+            # -autoexit 会在播放结束后自动关闭窗口
+            # -x 和 -y 设置窗口大小，方便查看
+            logging.info(f"ffplay -autoexit -x 640 -y 480 \"{video_path}\"\n")
+            
+        except (FileNotFoundError, subprocess.CalledProcessError):
+            # 如果 ffplay 未安装或执行失败，则不打印任何内容
+            pass
 
 if __name__ == '__main__':
     # 替换 'your_module_name' 为您存放函数的Python文件名（不含.py后缀）
