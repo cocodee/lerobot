@@ -1035,7 +1035,7 @@ class LeRobotDataset(torch.utils.data.Dataset):
             
             # Create a dictionary holding all arguments for the encoding function.
             task_info = {
-                "img_dir": img_dir,
+                "imgs_dir": img_dir,
                 "video_path": video_path,
                 "fps": self.fps,
                 "overwrite": True,  # Overwrite if file exists but is empty/corrupt
