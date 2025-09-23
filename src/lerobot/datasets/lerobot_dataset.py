@@ -38,6 +38,7 @@ from lerobot.datasets.utils import (
     DEFAULT_EPISODES_PATH,
     DEFAULT_FEATURES,
     DEFAULT_IMAGE_PATH,
+    DEFAULT_IMAGE_PATH_GST,
     INFO_PATH,
     _validate_feature_names,
     check_delta_timestamps,
@@ -687,7 +688,8 @@ class LeRobotDataset(torch.utils.data.Dataset):
         self.latest_episode = None
         self._current_file_start_frame = None  # Track the starting frame index of the current parquet file
         self.num_parallel_workers = 2
-  
+        self.gst_encoding = os.environ.get("GST_ENCODING", "0").lower() in ["1", "true", "yes"]
+
         self.root.mkdir(exist_ok=True, parents=True)
 
         # Load metadata
@@ -1045,6 +1047,10 @@ class LeRobotDataset(torch.utils.data.Dataset):
         fpath = DEFAULT_IMAGE_PATH.format(
             image_key=image_key, episode_index=episode_index, frame_index=frame_index
         )
+        if self.gst_encoding:
+            fpath = DEFAULT_IMAGE_PATH_GST.format(
+                image_key=image_key, episode_index=episode_index, frame_index=frame_index
+            )
         return self.root / fpath
 
     def _get_image_file_dir(self, episode_index: int, image_key: str) -> Path:
@@ -1568,6 +1574,7 @@ class LeRobotDataset(torch.utils.data.Dataset):
         # TODO(aliberts, rcadene, alexander-soare): Merge this with OnlineBuffer/DataBuffer
         obj.episode_buffer = obj.create_episode_buffer()
         obj.num_parallel_workers = 2
+        obj.gst_encoding = os.environ.get("GST_ENCODING", "0").lower() in ["1", "true", "yes"]
         obj.episodes = None
         obj.hf_dataset = obj.create_hf_dataset()
         obj.image_transforms = None
