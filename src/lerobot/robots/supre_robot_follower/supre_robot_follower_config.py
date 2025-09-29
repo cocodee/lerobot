@@ -23,6 +23,7 @@ class SupreRobotFollowerConfig(RobotConfig):
     max_relative_joint_move: float = 15 #30.0
     prometheus_port: int | None = 8000
     control_frequency: int = 30
+    interpolation_n: int = 2
     calibration:list[MotorCalibration] = field(default_factory=lambda: [
         MotorCalibration(
             joint_name="left_arm_joint_1",

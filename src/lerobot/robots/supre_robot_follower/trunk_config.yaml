@@ -29,6 +29,7 @@ robot:
   # Corresponds to: control_frequency: int
   control_frequency: 30
 
+  interpolation_n: 2
   # List of motor calibration settings for each joint.
   # Corresponds to: calibration: list[MotorCalibration]
   calibration:
