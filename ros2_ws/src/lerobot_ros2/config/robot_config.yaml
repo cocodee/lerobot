@@ -1,0 +1,17 @@
+
+# 这是一个示例配置，请根据你的实际机器人进行修改
+# 例如，对于 LeRobot 的 XArm 示例
+# https://huggingface.co/lerobot/aliberts-xarm-pick-and-place-real
+policy_inference_server:
+  ros__parameters:
+    control_freq: 30 # 控制频率 (Hz)
+    robot:
+      type: "xarm"
+      ip_address: "192.168.1.208"  # 你的机械臂IP
+      use_camera: True
+      camera:
+        type: "realsense"
+        device_id: "YOUR_REALSENSE_SERIAL_NUMBER" # 你的 RealSense 序列号
+        width: 640
+        height: 480
+        fps: 30

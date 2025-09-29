@@ -1,0 +1,11 @@
+# Goal: what the client sends to the server
+string policy_repo_id
+string task_description
+int32 num_inference_steps
+---
+# Result: what the server sends back to the client
+bool success
+string message
+---
+# Feedback: what the server sends during execution
+int32 current_step
