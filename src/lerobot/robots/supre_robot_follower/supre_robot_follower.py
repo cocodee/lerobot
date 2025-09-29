@@ -152,7 +152,7 @@ class SupreRobotFollower(Robot):
         positions = self._hardware_manager.read()
         
         obs_dict = {f"{self.observation_joint_names[i]}.pos": positions[i] for i in range(len(self.observation_joint_names))}
-
+        print("obs_dict: ", obs_dict)
         for cam_key, cam in self.cameras.items():
             start = time.perf_counter()
             obs_dict[cam_key] = cam.async_read()
@@ -175,7 +175,7 @@ class SupreRobotFollower(Robot):
 
         action_pos = {key.removesuffix(".pos"): val for key, val in action.items()}
 
-        ensure_safe = False
+        ensure_safe = True
         if ensure_safe:
             # 1. --- GET CURRENT STATE (Now much cleaner!) ---
             present_positions_map = self.get_current_position()
@@ -293,7 +293,7 @@ class SupreRobotFollower(Robot):
         logger.debug(f"Sending action: {action}")
         # 1. 调用辅助方法来完成所有的计算和安全检查
         final_target_positions, final_action_dict = self._prepare_and_clamp_action(action)
-
+        print("final_target_positions: ",final_target_positions)
         # 2. 将计算结果发送到硬件
         self.send_target_position(final_target_positions)
 
