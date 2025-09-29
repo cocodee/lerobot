@@ -11,7 +11,20 @@ from lerobot.robots import make_robot_from_config, RobotConfig
 from lerobot.utils.control_utils import predict_action
 from lerobot.utils.utils import get_safe_torch_device
 
-# 导入我们自定义的Action
+# --- 关键部分 ---
+# 导入你的自定义机器人。这会触发 @RobotConfig.register_subclass("supre_robot_follower")
+# 让 lerobot 的工厂函数知道这个新机器人类型的存在。
+try:
+    from lerobot.robots.supre_robot_follower import SupreRobotFollower
+except ImportError as e:
+    # 打印一个有帮助的错误信息
+    print("\nERROR: Could not import SupreRobotFollower. \n"
+          "Please ensure that your custom robot class is accessible in the Python path, \n"
+          f"for example, by installing your lerobot library with 'pip install -e .'. Error: {e}\n")
+    # 如果找不到，程序依然会启动，但在接收到action goal时会因为找不到robot type而失败
+    pass
+# ------------------
+
 from lerobot_ros2.action import PolicyInference
 
 class PolicyInferenceServer(Node):
@@ -24,22 +37,47 @@ class PolicyInferenceServer(Node):
         self.declare_parameter('control_freq', 30)
         self.declare_parameter('robot', rclpy.Parameter.Type.STRUCTURE)
 
-        # 获取机器人配置
-        self.control_freq = self.get_parameter('control_freq').get_parameter_value().integer_value
-        robot_config_dict = self.get_parameter('robot').get_parameter_value().structure_value
-        
-        # 将 ROS 2 参数字典转换为 LeRobot 的 RobotConfig 对象
-        # 注意: 这部分可能需要根据 RobotConfig 的具体结构进行调整
-        self.robot_config = RobotConfig.from_dict(robot_config_dict)
-        self.get_logger().info(f"Loaded robot configuration: {self.robot_config}")
+        try:
+            # 1. 获取主机器人配置字典 (来自 robot_config.yaml)
+            robot_config_dict = self.get_parameter('robot').get_parameter_value().structure_value
+            self.get_logger().info(f"Loaded base robot config from parameter server.")
 
+            # 2. 检查是否存在 `joint_config_file` 指令
+            if 'joint_config_file' in robot_config_dict:
+                joint_config_filename = robot_config_dict.pop('joint_config_file')
+                self.get_logger().info(f"Found reference to joint config file: '{joint_config_filename}'")
+
+                # 3. 解析该文件的绝对路径
+                # 我们假设该文件位于本包的 config 目录下
+                pkg_share = get_package_share_directory('lerobot_ros2')
+                joint_config_path = os.path.join(pkg_share, 'config', joint_config_filename)
+
+                if not os.path.exists(joint_config_path):
+                    raise FileNotFoundError(f"Joint config file not found at: {joint_config_path}")
+
+                # 4. 加载并合并关节配置
+                self.get_logger().info(f"Loading joint config from: {joint_config_path}")
+                with open(joint_config_path, 'r') as f:
+                    joint_data = yaml.safe_load(f)
+                
+                robot_config_dict.update(joint_data)
+                self.get_logger().info("Successfully merged joint config into robot config.")
+            
+            # 5. 使用最终合并后的字典创建 LeRobot 配置对象
+            # `robot_config_dict` 现在包含了来自两个文件的所有信息
+            self.robot_config = RobotConfig.from_dict(robot_config_dict)
+            self.get_logger().info("Final robot configuration created successfully.")
+            
+        except Exception as e:
+            self.get_logger().fatal(f"Failed to load or merge configuration: {e}", exc_info=True)
+            raise RuntimeError("Configuration Error") from e
+
+        self.control_freq = self.get_parameter('control_freq').get_parameter_value().integer_value
         self.robot = None
         self.policy = None
         
         self._action_server = ActionServer(
-            self,
-            PolicyInference,
-            'policy_inference',
+            self, PolicyInference, 'policy_inference',
             execute_callback=self.execute_callback,
             goal_callback=self.goal_callback,
             cancel_callback=self.cancel_callback
@@ -49,7 +87,6 @@ class PolicyInferenceServer(Node):
     def goal_callback(self, goal_request):
         """接受或拒绝一个 action goal。"""
         self.get_logger().info('Received goal request')
-        # 在这里可以添加逻辑，比如检查当前是否已经在执行任务
         return GoalResponse.ACCEPT
 
     def cancel_callback(self, goal_handle):
@@ -69,79 +106,56 @@ class PolicyInferenceServer(Node):
         result = PolicyInference.Result()
         
         try:
-            # 1. 加载策略
+            # 1. 加载策略 (无变化)
             self.get_logger().info(f"Loading policy from '{goal.policy_repo_id}'...")
             policy_config = PreTrainedConfig.from_pretrained(goal.policy_repo_id)
-            # ds_meta 是为了让 policy 知道 observation/action 的结构
-            # 我们可以从 policy config 中获取
             self.policy = make_policy(policy_config, ds_meta=policy_config.dataset_repo_id)
-            self.policy.reset() # 重置 policy 内部状态 (例如 RNN)
+            self.policy.reset()
             self.get_logger().info("Policy loaded successfully.")
 
-            # 2. 初始化并连接机器人
+            # 2. 初始化并连接机器人 (无变化)
+            # make_robot_from_config 会根据 self.robot_config 的 type 字段
+            # 自动调用 SupreRobotFollower(self.robot_config)
             self.get_logger().info("Initializing and connecting to the robot...")
             self.robot = make_robot_from_config(self.robot_config)
             self.robot.connect()
             self.get_logger().info("Robot connected successfully.")
 
-            # 创建一个 rate 对象来控制循环频率
             rate = self.create_rate(self.control_freq)
 
-            # 3. 推理循环
+            # 3. 推理循环 (无变化)
             for i in range(goal.num_inference_steps):
-                # 检查是否有取消请求
                 if goal_handle.is_cancel_requested:
                     goal_handle.canceled()
                     self.get_logger().info('Goal canceled')
-                    result.success = False
-                    result.message = 'Goal was canceled.'
+                    result.success, result.message = False, 'Goal was canceled.'
                     return result
 
-                # a. 获取观测
                 observation = self.robot.get_observation()
-                
-                # b. 构建策略需要的输入帧
-                # policy.ds_meta['features'] 告诉我们 observation/action 的具体格式
                 observation_frame = build_dataset_frame(
                     self.policy.ds_meta['features'], observation, prefix="observation"
                 )
-
-                # c. 使用策略进行推理
                 action_values = predict_action(
-                    observation_frame,
-                    self.policy,
-                    get_safe_torch_device(self.policy.config.device),
-                    self.policy.config.use_amp,
-                    task=goal.task_description,
-                    robot_type=self.robot.robot_type
+                    observation_frame, self.policy,
+                    get_safe_torch_device(self.policy.config.device), self.policy.config.use_amp,
+                    task=goal.task_description, robot_type=self.robot.robot_type
                 )
-                
-                # 将推理结果转换为机器人可以理解的字典格式
                 action = {key: action_values[i].item() for i, key in enumerate(self.robot.action_features)}
-
-                # d. 发送动作到机器人
                 self.robot.send_action(action)
-                self.get_logger().debug(f"Step {i+1}: Action sent: {action}")
-
-                # e. 发布反馈
+                self.get_logger().debug(f"Step {i+1}: Action sent.")
                 feedback_msg.current_step = i + 1
                 goal_handle.publish_feedback(feedback_msg)
-                
-                # f. 等待下一个周期
-                await rate.sleep() # 使用 await for async sleep
+                await rate.sleep()
 
             goal_handle.succeed()
-            result.success = True
-            result.message = 'Inference completed successfully.'
+            result.success, result.message = True, 'Inference completed successfully.'
 
         except Exception as e:
             self.get_logger().error(f"An error occurred during execution: {e}", exc_info=True)
             goal_handle.abort()
-            result.success = False
-            result.message = f"Execution failed: {e}"
+            result.success, result.message = False, f"Execution failed: {e}"
         
         finally:
-            # 确保机器人断开连接
             if self.robot and self.robot.is_connected:
                 self.get_logger().info("Disconnecting robot...")
                 self.robot.disconnect()
@@ -151,20 +165,20 @@ class PolicyInferenceServer(Node):
 
         return result
 
-
 def main(args=None):
     rclpy.init(args=args)
     try:
         policy_inference_server = PolicyInferenceServer()
-        # 使用多线程执行器，防止 action 执行阻塞其他回调
         executor = MultiThreadedExecutor()
         rclpy.spin(policy_inference_server, executor=executor)
     except KeyboardInterrupt:
         pass
     finally:
+        if 'policy_inference_server' in locals() and policy_inference_server.robot:
+             if policy_inference_server.robot.is_connected:
+                policy_inference_server.robot.disconnect()
         policy_inference_server.destroy_node()
         rclpy.shutdown()
-
 
 if __name__ == '__main__':
     main()
