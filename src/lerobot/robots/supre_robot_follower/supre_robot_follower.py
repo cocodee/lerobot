@@ -4,6 +4,9 @@ import time
 import math
 from typing import Any, Dict, List, Optional, Tuple, Type
 from pathlib import Path
+import threading
+import queue
+import os
 
 import yaml
 import numpy as np
@@ -71,6 +74,20 @@ class SupreRobotFollower(Robot):
             # 从管理器获取共享的 Gauge 对象
             self.joint_position_gauge = prometheus_manager.get_gauge('joint_position')
 
+        self._use_interpolation = os.getenv('SUPRE_ROBOT_INTERPOLATION_ENABLED', 'false').lower() == 'true'
+
+        # --- 为单工作线程模式初始化变量 ---
+        self._interpolation_thread: Optional[threading.Thread] = None
+        self._stop_event: Optional[threading.Event] = None
+        self._target_queue: Optional[queue.Queue] = None
+
+        if self._use_interpolation:
+            logger.info("Interpolation mode is ENABLED via environment variable.")
+            # 使用 maxsize=1 的队列，它天然只保存最新的目标
+            self._target_queue = queue.Queue(maxsize=1) 
+            self._stop_event = threading.Event()
+        else:
+            logger.info("Interpolation mode is DISABLED. Using direct command sending.")
 
     @cached_property
     def observation_features(self) -> dict[str, type | tuple]:
@@ -110,6 +127,14 @@ class SupreRobotFollower(Robot):
 
             for cam in self.cameras.values():
                 cam.connect()
+
+            if self._use_interpolation:
+                logger.info("Starting the interpolation worker thread...")
+                self._interpolation_thread = threading.Thread(
+                    target=self._interpolation_worker,
+                    daemon=True
+                )
+                self._interpolation_thread.start()
 
         except Exception as e:
             print(f"Failed to connect: {e}")
@@ -295,7 +320,24 @@ class SupreRobotFollower(Robot):
         final_target_positions, final_action_dict = self._prepare_and_clamp_action(action)
         print("final_target_positions: ",final_target_positions)
         # 2. 将计算结果发送到硬件
-        self.send_target_position(final_target_positions)
+        # 2. 根据是否启用插值，选择不同的发送方式
+        if self._use_interpolation:
+            # --- 生产者逻辑 ---
+            # 清空队列，确保只处理最新的指令
+            # (由于队列 maxsize=1, put() 操作会自动覆盖，但显式清空更清晰)
+            with self._target_queue.mutex:
+                if not self._target_queue.empty():
+                    try:
+                        self._target_queue.get_nowait() # 移除旧项
+                    except queue.Empty:
+                        pass
+            
+            # 将新目标放入队列，如果队列满了会阻塞，但因为我们清空了，所以不会
+            self._target_queue.put(final_target_positions)
+            logger.debug(f"Queued new target positions.")
+        else:
+            # --- 直接发送逻辑 ---
+            self.send_target_position(final_target_positions)
 
         
         return final_action_dict
@@ -303,6 +345,61 @@ class SupreRobotFollower(Robot):
     def send_target_position(self, target_positions: list[float]) -> None:
         """将目标位置发送给机器人。"""
         self._hardware_manager.write(target_positions)
+
+    def _interpolation_worker(self):
+        """
+        一个长期运行的后台线程。
+        它等待队列中的新目标，然后执行到该目标的平滑插值。
+        """
+        logger.info("Interpolation worker thread started.")
+        while not self._stop_event.is_set():
+            try:
+                # 1. 阻塞式等待新目标。设置超时以定期检查 stop_event
+                target_positions = self._target_queue.get(timeout=1.0)
+                
+                # --- 插值逻辑 ---
+                n = self.config.interpolation_n
+                if n <= 1:
+                    self.send_target_position(target_positions)
+                    continue # 继续等待下一个目标
+
+                base_fps = self.config.control_frequency
+                target_fps = base_fps * n
+                period = 1.0 / target_fps
+
+                start_positions_map = self.get_current_position()
+                start_pos_np = np.array([start_positions_map[name] for name in self.observation_joint_names])
+                end_pos_np = np.array(target_positions)
+                
+                # 2. 执行插值循环
+                for i in range(n):
+                    # 如果在插值过程中收到停止信号，立即退出
+                    if self._stop_event.is_set():
+                        break
+                    
+                    # 关键优化：如果在插值中途有新目标到来，立即中止当前插值，去执行新的
+                    if not self._target_queue.empty():
+                        logger.debug("New target received during interpolation. Preempting.")
+                        break # 中断 for 循环，回到 while 循环顶部去 get() 新目标
+
+                    loop_start_time = time.perf_counter()
+                    
+                    alpha = (i + 1) / n
+                    interpolated_pos = start_pos_np + alpha * (end_pos_np - start_pos_np)
+                    self.send_target_position(interpolated_pos.tolist())
+
+                    elapsed = time.perf_counter() - loop_start_time
+                    sleep_duration = period - elapsed
+                    if sleep_duration > 0:
+                        time.sleep(sleep_duration)
+
+            except queue.Empty:
+                # 队列为空且超时，这是正常情况，循环继续，以检查 stop_event
+                continue
+            except Exception as e:
+                logger.error(f"Error in interpolation worker thread: {e}", exc_info=True)
+        
+        logger.info("Interpolation worker thread stopped.")
     def disconnect(self) -> None:
         """断开与机器人的连接。"""
         if not self.is_connected:
@@ -310,6 +407,24 @@ class SupreRobotFollower(Robot):
             return
         
         print("Disconnecting from robot...")
+        # --- 新增：优雅地停止工作线程 ---
+        if self._use_interpolation and self._interpolation_thread:
+            print("Stopping interpolation worker thread...")
+            self._stop_event.set()
+
+            # 向队列发送一个虚拟项，以防 `get()` 方法正在阻塞
+            # 这是一个健壮的做法，确保线程能从阻塞中唤醒并检查 stop_event
+            with self._target_queue.mutex:
+                if self._target_queue.empty():
+                    try:
+                        self._target_queue.put_nowait(None) 
+                    except queue.Full:
+                        pass
+
+            self._interpolation_thread.join(timeout=1.0) # 等待线程结束
+            if self._interpolation_thread.is_alive():
+                logger.warning("Interpolation thread did not stop gracefully.")
+                        
         try:
             if self._hardware_manager:
                 self._hardware_manager.deactivate()
