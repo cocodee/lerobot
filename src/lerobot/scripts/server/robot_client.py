@@ -55,6 +55,7 @@ from lerobot.robots import (  # noqa: F401
     make_robot_from_config,
     so100_follower,
     so101_follower,
+    supre_robot_follower
 )
 from lerobot.scripts.server.configs import RobotClientConfig
 from lerobot.scripts.server.constants import SUPPORTED_ROBOTS
@@ -98,7 +99,10 @@ class RobotClient:
 
         if config.verify_robot_cameras:
             # Load policy config for validation
-            policy_config = PreTrainedConfig.from_pretrained(config.pretrained_name_or_path)
+            policy_config = PreTrainedConfig.from_pretrained(
+                config.pretrained_name_or_path,
+                local_files_only=True
+                )
             policy_image_features = policy_config.image_features
 
             # The cameras specified for inference must match the one supported by the policy chosen
