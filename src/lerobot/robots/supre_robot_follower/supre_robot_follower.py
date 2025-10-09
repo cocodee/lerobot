@@ -192,6 +192,8 @@ class SupreRobotFollower(Robot):
         
         positions = self._hardware_manager.read()
         
+        pos_dict = {f"{self.observation_joint_names[i]}": positions[i] for i in range(len(self.observation_joint_names))}
+        print("current_pos: ", pos_dict)
         return {self.observation_joint_names[i]: positions[i] for i in range(len(self.observation_joint_names))}
 
     def _prepare_and_clamp_action(self, action: dict[str, Any]) -> Tuple[List[float], Dict[str, Any]]:
