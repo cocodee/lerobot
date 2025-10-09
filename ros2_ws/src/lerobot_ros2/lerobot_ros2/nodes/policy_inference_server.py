@@ -1,5 +1,6 @@
 import time
 import rclpy
+import os
 from rclpy.action import ActionServer, CancelResponse, GoalResponse
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
@@ -25,7 +26,7 @@ except ImportError as e:
     pass
 # ------------------
 
-from lerobot_ros2.action import PolicyInference
+from lerobot_interfaces.action import PolicyInference
 
 class PolicyInferenceServer(Node):
 

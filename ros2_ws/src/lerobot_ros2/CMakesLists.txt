@@ -1,5 +1,22 @@
+cmake_minimum_required(VERSION 3.5)
+project(lerobot_ros2)
+
+# 找 ROS 2 包
+find_package(ament_cmake REQUIRED)
+find_package(rclpy REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
+# 生成 action
 rosidl_generate_interfaces(${PROJECT_NAME}
   "action/PolicyInference.action"
 )
+
+# 安装 Python 包
+ament_python_install_package(${PROJECT_NAME})
+
+# 安装 launch/config 文件
+install(DIRECTORY launch config
+  DESTINATION share/${PROJECT_NAME}
+)
+
+ament_package()
