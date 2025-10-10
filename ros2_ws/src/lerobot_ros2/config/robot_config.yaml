@@ -36,7 +36,6 @@ policy_inference_server:
       # List of motor calibration settings for each joint.
       # Corresponds to: calibration: list[MotorCalibration]
       calibration:
-        # --- Left Arm ---
         - joint_name: "left_arm_joint_1"
           min_position: -160.0
           max_position: 160.0
