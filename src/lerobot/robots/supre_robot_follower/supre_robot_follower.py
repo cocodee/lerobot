@@ -327,12 +327,14 @@ class SupreRobotFollower(Robot):
             # --- 生产者逻辑 ---
             # 清空队列，确保只处理最新的指令
             # (由于队列 maxsize=1, put() 操作会自动覆盖，但显式清空更清晰)
-            with self._target_queue.mutex:
-                if not self._target_queue.empty():
-                    try:
-                        self._target_queue.get_nowait() # 移除旧项
-                    except queue.Empty:
-                        pass
+            while not self._target_queue.empty():
+                try:
+                    # 我们不需要手动锁，get_nowait 自己会处理
+                    self._target_queue.get_nowait()
+                except queue.Empty:
+                    # 在我们检查 empty() 和调用 get_nowait() 之间，
+                    # 消费者可能已经取走了元素。没关系，继续循环。
+                    continue
             
             # 将新目标放入队列，如果队列满了会阻塞，但因为我们清空了，所以不会
             self._target_queue.put(final_target_positions)
@@ -416,12 +418,17 @@ class SupreRobotFollower(Robot):
 
             # 向队列发送一个虚拟项，以防 `get()` 方法正在阻塞
             # 这是一个健壮的做法，确保线程能从阻塞中唤醒并检查 stop_event
-            with self._target_queue.mutex:
-                if self._target_queue.empty():
-                    try:
-                        self._target_queue.put_nowait(None) 
-                    except queue.Full:
-                        pass
+            try:
+                # 我们不需要手动管理锁。put_nowait 内部会处理。
+                # 我们只需要处理队列满的情况，因为可能有其他线程
+                # 在我们设置 stop_event 后、执行此行前，放入了一个元素。
+                self._target_queue.put_nowait(None) 
+            except queue.Full:
+                # 如果队列已满，说明 worker 线程很快就会拿到一个元素，
+                # 并且在循环的下一次迭代中检查到 stop_event。
+                # 所以我们什么都不用做。
+                logger.debug("Queue was full when trying to unblock worker. That's okay.")
+                pass
 
             self._interpolation_thread.join(timeout=1.0) # 等待线程结束
             if self._interpolation_thread.is_alive():
