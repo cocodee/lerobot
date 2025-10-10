@@ -24,7 +24,7 @@ from lerobot.utils.prometheus_manager import prometheus_manager
 import logging
 from lerobot.cameras.utils import make_cameras_from_configs
 
-logging.basicConfig(level=logging.DEBUG)
+#logging.basicConfig(level=logging.DEBUG)
 
 logger = logging.getLogger(__name__)
 
@@ -340,7 +340,7 @@ class SupreRobotFollower(Robot):
             
             # 将新目标放入队列，如果队列满了会阻塞，但因为我们清空了，所以不会
             self._target_queue.put(final_target_positions)
-            logger.info(f"Queued new target positions.")
+            logger.debug(f"Queued new target positions.")
         else:
             # --- 直接发送逻辑 ---
             self.send_target_position(final_target_positions)
@@ -398,10 +398,10 @@ class SupreRobotFollower(Robot):
                     elapsed = time.perf_counter() - loop_start_time
                     sleep_duration = period - elapsed
                     if sleep_duration > 0:
-                        logger.info(f"Sleeping for {sleep_duration:.3f} seconds.")
+                        logger.debug(f"Sleeping for {sleep_duration:.3f} seconds.")
                         time.sleep(sleep_duration)
                     else:
-                        logger.info(f"Sleep duration is negative ({sleep_duration:.3f} seconds).")
+                        logger.debug(f"Sleep duration is negative ({sleep_duration:.3f} seconds).")
 
             except queue.Empty:
                 # 队列为空且超时，这是正常情况，循环继续，以检查 stop_event
