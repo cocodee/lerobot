@@ -371,6 +371,7 @@ class SupreRobotFollower(Robot):
 
                 base_fps = self.config.control_frequency
                 target_fps = base_fps * n
+                logger.info(f"target_fps: {target_fps}")
                 period = 1.0 / target_fps
 
                 start_positions_map = self.get_current_position()
