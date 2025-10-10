@@ -24,6 +24,7 @@ from lerobot.utils.prometheus_manager import prometheus_manager
 import logging
 from lerobot.cameras.utils import make_cameras_from_configs
 
+logging.basicConfig(level=logging.DEBUG)
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +41,6 @@ class SupreRobotFollower(Robot):
 
     def __init__(self, config: SupreRobotFollowerConfig):
         super().__init__(config)
-        logging.basicConfig(level=logging.DEBUG)
         self.config = config
         self._hardware_manager: Optional[SupreRobotHardwareManager] = None
         self._is_connected_flag = False
@@ -331,6 +331,7 @@ class SupreRobotFollower(Robot):
             while not self._target_queue.empty():
                 try:
                     # 我们不需要手动锁，get_nowait 自己会处理
+                    logger.Info("Clearing old target position from queue.")
                     self._target_queue.get_nowait()
                 except queue.Empty:
                     # 在我们检查 empty() 和调用 get_nowait() 之间，
@@ -339,7 +340,7 @@ class SupreRobotFollower(Robot):
             
             # 将新目标放入队列，如果队列满了会阻塞，但因为我们清空了，所以不会
             self._target_queue.put(final_target_positions)
-            logger.debug(f"Queued new target positions.")
+            logger.info(f"Queued new target positions.")
         else:
             # --- 直接发送逻辑 ---
             self.send_target_position(final_target_positions)
