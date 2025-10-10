@@ -51,7 +51,7 @@ class PolicyInferenceServer(Node):
 
                 # 4. 加载并合并关节配置
             self.get_logger().info(f"Loading robot config from: {robot_config_path}")
-            with open(joint_config_path, 'r') as f:
+            with open(robot_config_path, 'r') as f:
                 robot_config_dict = yaml.safe_load(f)
 
             # 2. 检查是否存在 `joint_config_file` 指令
