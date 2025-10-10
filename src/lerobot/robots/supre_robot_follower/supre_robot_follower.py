@@ -398,10 +398,10 @@ class SupreRobotFollower(Robot):
                     elapsed = time.perf_counter() - loop_start_time
                     sleep_duration = period - elapsed
                     if sleep_duration > 0:
-                        logger.debug(f"Sleeping for {sleep_duration:.3f} seconds.")
+                        logger.info(f"Sleeping for {sleep_duration:.3f} seconds.")
                         time.sleep(sleep_duration)
                     else:
-                        logger.debug(f"Sleep duration is negative ({sleep_duration:.3f} seconds).")
+                        logger.info(f"Sleep duration is negative ({sleep_duration:.3f} seconds).")
 
             except queue.Empty:
                 # 队列为空且超时，这是正常情况，循环继续，以检查 stop_event
