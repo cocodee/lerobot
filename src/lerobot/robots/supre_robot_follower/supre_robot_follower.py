@@ -40,6 +40,7 @@ class SupreRobotFollower(Robot):
 
     def __init__(self, config: SupreRobotFollowerConfig):
         super().__init__(config)
+        logging.basicConfig(level=logging.DEBUG)
         self.config = config
         self._hardware_manager: Optional[SupreRobotHardwareManager] = None
         self._is_connected_flag = False
