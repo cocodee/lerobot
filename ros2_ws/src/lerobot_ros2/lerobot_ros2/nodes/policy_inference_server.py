@@ -80,7 +80,7 @@ class PolicyInferenceServer(Node):
             # 5. 使用最终合并后的字典创建 LeRobot 配置对象
             # `robot_config_dict` 现在包含了来自两个文件的所有信息
             self.get_logger().info(f"Instantiating robot config using draccus...")
-            self.robot_config = draccus.instantiate(RobotConfig, config=robot_config_dict)
+            self.robot_config = draccus.decode(RobotConfig, robot_config_dict)
             
         except Exception as e:
             self.get_logger().fatal(f"Failed to load or merge configuration: {e}")
