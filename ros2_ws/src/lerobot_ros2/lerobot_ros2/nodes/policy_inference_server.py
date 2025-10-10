@@ -17,7 +17,7 @@ from lerobot.utils.utils import get_safe_torch_device
 # 让 lerobot 的工厂函数知道这个新机器人类型的存在。
 try:
     from lerobot.robots.supre_robot_follower import SupreRobotFollower
-    from lerobot.robots.supre_robot_follower_config import SupreRobotFollowerConfig
+    from lerobot.robots.supre_robot_follower import SupreRobotFollowerConfig
 except ImportError as e:
     # 打印一个有帮助的错误信息
     print("\nERROR: Could not import SupreRobotFollower. \n"
@@ -37,12 +37,21 @@ class PolicyInferenceServer(Node):
 
         # 声明参数
         self.declare_parameter('control_freq', 30)
-        self.declare_parameter('robot', rclpy.Parameter.Type.STRUCTURE)
+        self.declare_parameter('robot_config_file', "robot_config.yaml")
 
         try:
             # 1. 获取主机器人配置字典 (来自 robot_config.yaml)
-            robot_config_dict = self.get_parameter('robot').get_parameter_value().structure_value
-            self.get_logger().info(f"Loaded base robot config from parameter server.")
+            robot_config_filename = self.get_parameter('robot_config_file').get_parameter_value().string_value
+            pkg_share = get_package_share_directory('lerobot_ros2')
+            robot_config_path = os.path.join(pkg_share, 'config', joint_config_filename)
+
+            if not os.path.exists(robot_config_path):
+                raise FileNotFoundError(f"Joint config file not found at: {joint_config_path}")
+
+                # 4. 加载并合并关节配置
+            self.get_logger().info(f"Loading robot config from: {joint_config_path}")
+            with open(joint_config_path, 'r') as f:
+                robot_config_dict = yaml.safe_load(f)
 
             # 2. 检查是否存在 `joint_config_file` 指令
             if 'joint_config_file' in robot_config_dict:

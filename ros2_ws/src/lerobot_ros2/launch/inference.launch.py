@@ -7,7 +7,7 @@ def generate_launch_description():
     pkg_share = get_package_share_directory('lerobot_ros2')
     
     # Launch文件只关心主配置文件
-    config_file = os.path.join(pkg_share, 'config', 'robot_config.yaml')
+    config_file = os.path.join(pkg_share, 'config', 'server_config.yaml')
         
     return LaunchDescription([
         Node(
