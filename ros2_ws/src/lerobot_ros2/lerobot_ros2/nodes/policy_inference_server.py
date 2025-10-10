@@ -44,37 +44,37 @@ class PolicyInferenceServer(Node):
             # 1. 获取主机器人配置字典 (来自 robot_config.yaml)
             robot_config_filename = self.get_parameter('robot_config_file').get_parameter_value().string_value
             pkg_share = get_package_share_directory('lerobot_ros2')
-            robot_config_path = os.path.join(pkg_share, 'config', joint_config_filename)
+            robot_config_path = os.path.join(pkg_share, 'config', robot_config_filename)
 
             if not os.path.exists(robot_config_path):
-                raise FileNotFoundError(f"Joint config file not found at: {joint_config_path}")
+                raise FileNotFoundError(f"Joint config file not found at: {robot_config_path}")
 
                 # 4. 加载并合并关节配置
-            self.get_logger().info(f"Loading robot config from: {joint_config_path}")
+            self.get_logger().info(f"Loading robot config from: {robot_config_path}")
             with open(joint_config_path, 'r') as f:
                 robot_config_dict = yaml.safe_load(f)
 
             # 2. 检查是否存在 `joint_config_file` 指令
             if 'joint_config_file' in robot_config_dict:
-                joint_config_filename = robot_config_dict.pop('joint_config_file')
-                self.get_logger().info(f"Found reference to joint config file: '{joint_config_filename}'")
-
-                # 3. 解析该文件的绝对路径
-                # 我们假设该文件位于本包的 config 目录下
+                # 1. 获取相对文件名，但这次不使用 .pop()，因为我们只想更新它的值
+                joint_config_filename = robot_config_dict['joint_config_file']
+                self.get_logger().info(f"Found joint config file reference: '{joint_config_filename}'")
+            
+                # 2. 解析该文件的绝对路径
+                # 假设该文件位于本ROS 2包的 'config' 目录下
                 pkg_share = get_package_share_directory('lerobot_ros2')
                 joint_config_path = os.path.join(pkg_share, 'config', joint_config_filename)
-
-                if not os.path.exists(joint_config_path):
-                    raise FileNotFoundError(f"Joint config file not found at: {joint_config_path}")
-
-                # 4. 加载并合并关节配置
-                self.get_logger().info(f"Loading joint config from: {joint_config_path}")
-                with open(joint_config_path, 'r') as f:
-                    joint_data = yaml.safe_load(f)
-                
-                robot_config_dict.update(joint_data)
-                self.get_logger().info("Successfully merged joint config into robot config.")
             
+                # 3. (推荐) 检查解析出的路径下的文件是否真实存在，以确保配置的有效性
+                if not os.path.exists(joint_config_path):
+                    self.get_logger().error(f"Joint config file not found at resolved path: {joint_config_path}")
+                    # 抛出异常会停止节点启动，这通常是正确的行为，因为配置不完整
+                    raise FileNotFoundError(f"Joint config file not found at: {joint_config_path}")
+            
+                # 4. 用解析出的绝对路径更新字典中 'joint_config_file' 键对应的值
+                robot_config_dict['joint_config_file'] = joint_config_path
+                
+                self.get_logger().info(f"Resolved and updated 'joint_config_file' path to: '{joint_config_path}'")
             # 5. 使用最终合并后的字典创建 LeRobot 配置对象
             # `robot_config_dict` 现在包含了来自两个文件的所有信息
             self.robot_config = SupreRobotFollowerConfig.from_dict(robot_config_dict)
