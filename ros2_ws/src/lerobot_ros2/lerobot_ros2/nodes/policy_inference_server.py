@@ -4,6 +4,7 @@ import os
 from rclpy.action import ActionServer, CancelResponse, GoalResponse
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
+from ament_index_python.packages import get_package_share_directory
 
 from lerobot.configs.policies import PreTrainedConfig
 from lerobot.datasets.utils import build_dataset_frame
@@ -80,7 +81,7 @@ class PolicyInferenceServer(Node):
             self.get_logger().info("Final robot configuration created successfully.")
             
         except Exception as e:
-            self.get_logger().fatal(f"Failed to load or merge configuration: {e}", exc_info=True)
+            self.get_logger().fatal(f"Failed to load or merge configuration: {e}")
             raise RuntimeError("Configuration Error") from e
 
         self.control_freq = self.get_parameter('control_freq').get_parameter_value().integer_value
@@ -162,7 +163,7 @@ class PolicyInferenceServer(Node):
             result.success, result.message = True, 'Inference completed successfully.'
 
         except Exception as e:
-            self.get_logger().error(f"An error occurred during execution: {e}", exc_info=True)
+            self.get_logger().error(f"An error occurred during execution: {e}")
             goal_handle.abort()
             result.success, result.message = False, f"Execution failed: {e}"
         
