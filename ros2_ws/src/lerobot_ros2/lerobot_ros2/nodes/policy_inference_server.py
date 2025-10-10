@@ -1,7 +1,8 @@
 import time
-import yaml
+import ya
 import rclpy
 import os
+import draccus
 from rclpy.action import ActionServer, CancelResponse, GoalResponse
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
@@ -78,8 +79,8 @@ class PolicyInferenceServer(Node):
                 self.get_logger().info(f"Resolved and updated 'joint_config_file' path to: '{joint_config_path}'")
             # 5. 使用最终合并后的字典创建 LeRobot 配置对象
             # `robot_config_dict` 现在包含了来自两个文件的所有信息
-            self.robot_config = SupreRobotFollowerConfig.from_dict(robot_config_dict)
-            self.get_logger().info("Final robot configuration created successfully.")
+            self.get_logger().info(f"Instantiating robot config using draccus...")
+            self.robot_config = draccus.instantiate(RobotConfig, config=robot_config_dict)
             
         except Exception as e:
             self.get_logger().fatal(f"Failed to load or merge configuration: {e}")
