@@ -17,6 +17,7 @@ from lerobot.utils.utils import get_safe_torch_device
 # 让 lerobot 的工厂函数知道这个新机器人类型的存在。
 try:
     from lerobot.robots.supre_robot_follower import SupreRobotFollower
+    from lerobot.robots.supre_robot_follower_config import SupreRobotFollowerConfig
 except ImportError as e:
     # 打印一个有帮助的错误信息
     print("\nERROR: Could not import SupreRobotFollower. \n"
@@ -66,7 +67,7 @@ class PolicyInferenceServer(Node):
             
             # 5. 使用最终合并后的字典创建 LeRobot 配置对象
             # `robot_config_dict` 现在包含了来自两个文件的所有信息
-            self.robot_config = RobotConfig.from_dict(robot_config_dict)
+            self.robot_config = SupreRobotFollowerConfig.from_dict(robot_config_dict)
             self.get_logger().info("Final robot configuration created successfully.")
             
         except Exception as e:
