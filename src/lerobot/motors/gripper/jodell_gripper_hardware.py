@@ -1,6 +1,6 @@
 import time
 import jodell_gripper_py # 导入 pybind11 生成的模块
-
+from ..eyou.hardware_interface import HardwareInterface
 # --- 辅助函数 (保持不变) ---
 
 def convert_to_gripper_position(position_float: float) -> int:
@@ -17,7 +17,7 @@ def convert_to_gripper_percentage(percentage: int) -> int:
     percentage = max(0, min(100, percentage))
     return int(percentage * 255 / 100)
 
-class JodellGripperHardware:
+class JodellGripperHardware(HardwareInterface):
     """
     一个模仿 ros2_control HardwareInterface 风格的 Jodell 夹爪 Python 控制类。
     """
@@ -197,7 +197,8 @@ class JodellGripperHardware:
         self.hw_commands_position = [None] * len(self.gripper_clients)
         
         return all_success
-
+    def get_joint_count(self) -> int:
+        return len(self.slave_ids)
 
 # --- 使用示例 (与第一个版本相同) ---
 if __name__ == "__main__":
@@ -261,3 +262,4 @@ if __name__ == "__main__":
         print("\n--- Deactivating hardware ---")
         gripper_hardware.deactivate()
         print("Program finished.")
+
