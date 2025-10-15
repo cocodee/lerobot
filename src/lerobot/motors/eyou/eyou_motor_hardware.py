@@ -4,8 +4,9 @@ from typing import List, Dict, Any, Tuple, Optional
 import datetime
 # 导入更新后的 eu_motor_py 绑定
 import eu_motor_py 
+from .hardware_interface import HardwareInterface
 
-class EyouMotorHardware:
+class EyouMotorHardware(HardwareInterface):
     """
     一个模仿 supre_robot_control::EyouSystemInterface 的 Python 类。
     
@@ -225,6 +226,9 @@ class EyouMotorHardware:
             print(f"Error during deactivation: {e}")
         print("Deactivation successful.")
 
+    def get_joint_count(self) -> int:
+        """返回硬件中的电机数量。"""
+        return len(self.motor_nodes_)
 
 # --- 主程序：演示如何使用混合模式的硬件接口 ---
 if __name__ == "__main__":
