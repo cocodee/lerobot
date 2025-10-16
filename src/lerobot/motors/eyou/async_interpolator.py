@@ -138,4 +138,5 @@ class AsyncInterpolator(HardwareInterface):
             sleep_time = period - (loop_end_time - loop_start_time)
             if sleep_time > 0:
                 time.sleep(sleep_time)
+                print(f"AsyncInterpolator: Writer thread loop completed in {loop_end_time - loop_start_time:.4f} seconds.")
         print("Writer thread stopped.")
