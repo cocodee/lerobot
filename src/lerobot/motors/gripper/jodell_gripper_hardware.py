@@ -38,6 +38,11 @@ class JodellGripperHardware(HardwareInterface):
         self.hw_commands_position = []
         self.hw_states_position = []
 
+        # --- 新增：缓存相关变量 ---
+        self._cache_duration_seconds = 0.034  # 默认缓存50毫秒
+        self._last_read_time = 0.0           # 上次真实读取的时间戳
+        self._cached_positions = []          # 缓存的位置数据
+
     def init(self, config: dict) -> bool:
         # ... 此方法保持不变 ...
         print("JodellGripperHardware: Running init...")
@@ -49,7 +54,9 @@ class JodellGripperHardware(HardwareInterface):
             baud_rate = self.config.get("baud_rate", 115200)
             self.default_speed_percent = self.config.get("default_speed_percent", 50)
             self.default_force_percent = self.config.get("default_torque_percent", 50)
-            
+            # --- 新增：从配置中读取缓存时间 ---
+            self._cache_duration_seconds = self.config.get("cache_duration_seconds", 0.034)
+                        
             # 2. 验证并解析 "joints"
             if "joints" not in self.config or not self.config["joints"]:
                 print("Error: Configuration must contain a non-empty 'joints' list.")
@@ -59,6 +66,9 @@ class JodellGripperHardware(HardwareInterface):
             self.slave_ids = [0] * num_joints
             self.hw_commands_position = [None] * num_joints
             self.hw_states_position = [0.0] * num_joints
+
+            # --- 新增：初始化缓存列表 ---
+            self._cached_positions = [None] * num_joints
 
             for i, joint_info in enumerate(self.config["joints"]):
                 slave_id = int(joint_info["parameters"]["slave_id"])
@@ -136,7 +146,18 @@ class JodellGripperHardware(HardwareInterface):
         return True
     @monitor_performance    
     def read(self) -> list[float | None]:
-        # ... 此方法保持不变 ...
+        """
+        从所有夹爪读取当前位置。
+        此方法实现了缓存机制：如果距离上次真实读取的时间小于 cache_duration_seconds，
+        则直接返回缓存的数据，否则执行硬件读取并更新缓存。
+        """
+        now = time.monotonic()
+        
+        # 1. 检查缓存是否有效
+        if (now - self._last_read_time) < self._cache_duration_seconds:
+            # 缓存命中，直接返回缓存值
+            return self._cached_positions
+        
         if not self.gripper_clients:
             return [None] * len(self.slave_ids)
 
