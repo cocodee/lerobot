@@ -21,7 +21,7 @@ class SupreRobotHardwareManager:
         "JodellGripperHardware": JodellGripperHardware,
     }
 
-    def __init__(self, config_path: str,control_frequency:float = 30):
+    def __init__(self, config_path: str,control_frequency:float = 30,use_interpolation:bool = False):
         """
         构造函数。
         :param config_path: 指向 robot_config.yaml 文件的路径。
@@ -48,7 +48,7 @@ class SupreRobotHardwareManager:
         self.velocities = [0.0] * self.num_joints
         self.commands = [0.0] * self.num_joints
 
-        self.use_interpolation = os.getenv('SUPRE_ROBOT_INTERPOLATION_ENABLED', 'false').lower() == 'true'
+        self.use_interpolation = use_interpolation
         self.control_frequency = control_frequency 
     def init(self) -> bool:
         """

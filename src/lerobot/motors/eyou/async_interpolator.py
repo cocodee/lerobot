@@ -26,19 +26,29 @@ class AsyncInterpolator(HardwareInterface):
         self._base_hardware: HardwareInterface = hardware
         self._config = config
         
-        # 2. 异步和插值逻辑的内部状态 (与之前版本相同)
-        self._command_queue = queue.Queue(maxsize=1)
-        self._writer_thread: Optional[threading.Thread] = None
-        self._stop_event = threading.Event()
-        
-        control_frequency = float(self._config.get("control_frequency", 30.0))
         interpolation_n = int(self._config.get("interpolation_n", 2))
-        self._writer_frequency = control_frequency * interpolation_n
-        self._interp_duration = 1.0 / control_frequency
-        
-        self._interp_start_pos: List[float] = []
-        self._interp_end_pos: List[float] = []
-        self._interp_start_time: float = 0.0
+        self._interpolation_enabled = interpolation_n > 1
+
+        if self._interpolation_enabled:
+            print(f"AsyncInterpolator: Interpolation is ENABLED (interpolation_n = {interpolation_n}).")
+            # 只有在启用时才初始化异步相关组件
+            self._command_queue = queue.Queue(maxsize=1)
+            self._writer_thread: Optional[threading.Thread] = None
+            self._stop_event = threading.Event()
+            
+            control_frequency = float(self._config.get("control_frequency", 30.0))
+            self._writer_frequency = control_frequency * interpolation_n
+            self._interp_duration = 1.0 / control_frequency
+            
+            self._interp_start_pos: List[float] = []
+            self._interp_end_pos: List[float] = []
+            self._interp_start_time: float = 0.0
+        else:
+            print("AsyncInterpolator: Interpolation is DISABLED (interpolation_n <= 1). Operating in pass-through mode.")
+            # 确保这些成员存在但为 None，避免后续代码出错
+            self._command_queue = None
+            self._writer_thread = None
+            self._stop_event = None
 
     # --- 实现 HardwareInterface 的方法 ---
 
@@ -57,26 +67,34 @@ class AsyncInterpolator(HardwareInterface):
             print("AsyncInterpolator Error: Base hardware activation failed.")
             return False
         
-        initial_pos = self._base_hardware.read()
-        if not initial_pos:
-            print("AsyncInterpolator Error: Failed to read initial positions.")
-            return False
-            
-        self._interp_start_pos = list(initial_pos)
-        self._interp_end_pos = list(initial_pos)
-        self._interp_start_time = time.monotonic()
+        # --- MODIFICATION: 只有在启用插值时才启动线程 ---
+        if self._interpolation_enabled:
+            initial_pos = self._base_hardware.read()
+            if not initial_pos or any(p is None for p in initial_pos):
+                print("AsyncInterpolator Error: Failed to read valid initial positions.")
+                self._base_hardware.deactivate()
+                return False
+                
+            self._interp_start_pos = list(initial_pos)
+            self._interp_end_pos = list(initial_pos)
+            self._interp_start_time = time.monotonic()
 
-        self._stop_event.clear()
-        self._writer_thread = threading.Thread(target=self._writer_loop, daemon=True)
-        self._writer_thread.start()
+            self._stop_event.clear()
+            self._writer_thread = threading.Thread(target=self._writer_loop, daemon=True)
+            self._writer_thread.start()
+        
         print("AsyncInterpolator: Activated successfully.")
         return True
 
     def deactivate(self):
         """停止插值线程，然后停用底层硬件。"""
-        print("AsyncInterpolator: Deactivating...")
-        if self._writer_thread and self._writer_thread.is_alive():
+        # --- MODIFICATION: 只有在启用插值时才停止线程 ---
+        if self._interpolation_enabled and self._writer_thread and self._writer_thread.is_alive():
             self._stop_event.set()
+            # 在队列中放入一个虚拟项来唤醒可能阻塞的 get()
+            if self._command_queue:
+                try: self._command_queue.put_nowait([]) 
+                except queue.Full: pass
             self._writer_thread.join(timeout=1.0)
         
         self._base_hardware.deactivate()
@@ -93,16 +111,23 @@ class AsyncInterpolator(HardwareInterface):
 
     def write(self, commands_positions: List[float]):
         """
-        【核心装饰逻辑】
-        这个 write 调用不再直接写入硬件，而是将目标位置放入队列，
-        由后台的插值器处理。
+        如果插值已启用，将命令放入队列。
+        如果插值已禁用，直接将命令传递给底层硬件。
         """
-        try:
-            while not self._command_queue.empty():
-                self._command_queue.get_nowait()
-            self._command_queue.put_nowait(commands_positions)
-        except queue.Full:
-            pass
+        # --- MODIFICATION: 根据标志选择行为 ---
+        if self._interpolation_enabled:
+            # 行为1：异步插值
+            try:
+                # 清空旧命令，只保留最新的
+                while not self._command_queue.empty():
+                    self._command_queue.get_nowait()
+                self._command_queue.put_nowait(commands_positions)
+            except (queue.Full, AttributeError):
+                # AttributeError: self._command_queue is None
+                pass
+        else:
+            # 行为2：直接写入
+            self._base_hardware.write(commands_positions)
             
     def get_joint_count(self) -> int:
         """从底层硬件获取关节数量。"""

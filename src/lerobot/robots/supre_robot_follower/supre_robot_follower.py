@@ -102,7 +102,7 @@ class SupreRobotFollower(Robot):
             return
 
         print(f"Connecting to {self.name} using config '{self.config.joint_config_path}'...")
-        self._hardware_manager = SupreRobotHardwareManager(config_path=self.config.joint_config_path,control_frequency=self.config.control_frequency)
+        self._hardware_manager = SupreRobotHardwareManager(config_path=self.config.joint_config_path,control_frequency=self.config.control_frequency,use_interpolation=self._use_interpolation)
         
         try:
             if not self._hardware_manager.init():

@@ -157,7 +157,8 @@ class JodellGripperHardware(HardwareInterface):
         if (now - self._last_read_time) < self._cache_duration_seconds:
             # 缓存命中，直接返回缓存值
             return self._cached_positions
-        
+
+        # 2. 缓存失效，执行硬件读取
         if not self.gripper_clients:
             return [None] * len(self.slave_ids)
 
@@ -167,7 +168,11 @@ class JodellGripperHardware(HardwareInterface):
                 self.hw_states_position[i] = convert_from_gripper_position(status.position)
             except RuntimeError as e:
                 print(f"Warning: Failed to read status from slave_id {self.slave_ids[i]}: {e}")
-                self.hw_states_position[i] = None 
+                self.hw_states_position[i] = None
+        
+        # 3. 更新缓存和时间戳
+        self._cached_positions = self.hw_states_position.copy() # 使用 .copy() 是个好习惯
+        self._last_read_time = now
         
         return self.hw_states_position
     
