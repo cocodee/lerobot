@@ -1,6 +1,7 @@
 import time
 import jodell_gripper_py # 导入 pybind11 生成的模块
 from ..eyou.hardware_interface import HardwareInterface
+from lerobot.utils.monitor_utils import monitor_performance
 # --- 辅助函数 (保持不变) ---
 
 def convert_to_gripper_position(position_float: float) -> int:
@@ -133,7 +134,7 @@ class JodellGripperHardware(HardwareInterface):
             print("Bus disconnected.")
             
         return True
-    
+    @monitor_performance    
     def read(self) -> list[float | None]:
         # ... 此方法保持不变 ...
         if not self.gripper_clients:
