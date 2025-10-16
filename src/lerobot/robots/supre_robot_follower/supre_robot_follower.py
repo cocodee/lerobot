@@ -11,7 +11,7 @@ import os
 import yaml
 import numpy as np
 import dataclasses
-
+from lerobot.utils import 
 # 导入我们之前设计的硬件管理器
 from lerobot.robots.supre_robot import SupreRobotHardwareManager
 # from eyou_hardware import EyouMotorHardware  # Manager will import these
@@ -23,6 +23,7 @@ from functools import cached_property
 from lerobot.utils.prometheus_manager import prometheus_manager
 import logging
 from lerobot.cameras.utils import make_cameras_from_configs
+from lerobot.utils.monitor_utils import monitor_performance
 
 #logging.basicConfig(level=logging.DEBUG)
 
@@ -154,7 +155,7 @@ class SupreRobotFollower(Robot):
             raise RuntimeError("Cannot configure while disconnected.")
         print("Hardware is already configured on connect. Skipping.")
         pass
-
+    @monitor_performance
     def get_observation(self) -> dict[str, Any]:
         """从机器人获取当前观测值。"""
         if not self.is_connected:
@@ -299,6 +300,7 @@ class SupreRobotFollower(Robot):
         }
         
         return final_clamped_positions, final_action    
+    @monitor_performance
     def send_action(self, action: dict[str, Any]) -> dict[str, Any]:
         """向机器人发送动作指令。"""
         if not self.is_connected:
