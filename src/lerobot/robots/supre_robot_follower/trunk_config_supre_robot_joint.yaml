@@ -47,7 +47,7 @@ hardware_interfaces:
   - name: left_gripper
     type: JodellGripperHardware
     interpolation:
-      interpolation_n: 2    
+      interpolation_n: 1   
     config:
       device: "/dev/ttyTHS1" # <-- 注意修改为你的实际设备
       baud_rate": 115200
@@ -61,7 +61,7 @@ hardware_interfaces:
   - name: right_gripper
     type: JodellGripperHardware
     interpolation:
-      interpolation_n: 2    
+      interpolation_n: 1   
     config:
       device: "/dev/ttyTHS2" # <-- 注意修改为你的实际设备
       baud_rate": 115200
