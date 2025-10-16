@@ -89,6 +89,10 @@ class ACTConfig(PreTrainedConfig):
         kl_weight: The weight to use for the KL-divergence component of the loss if the variational objective
             is enabled. Loss is then calculated as: `reconstruction_loss + kl_weight * kld_loss`.
     """
+    # 增加一个cfg用来控制是否用state
+    use_state: bool = True
+    # 使用state_dropout
+    state_dropout = 0.0
 
     # Input / output structure.
     n_obs_steps: int = 1
