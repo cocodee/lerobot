@@ -171,6 +171,7 @@ class SupreRobotFollower(Robot):
             logger.debug(f"{self} read {cam_key}: {dt_ms:.1f}ms")
         return obs_dict
 
+    @monitor_performance
     def get_current_position(self) -> dict[str, float]:
         """获取机器人的当前位置。"""
         if not self.is_connected:
