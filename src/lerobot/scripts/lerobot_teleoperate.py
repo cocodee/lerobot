@@ -178,7 +178,7 @@ def teleop_loop(
 
         dt_s = time.perf_counter() - loop_start
         busy_wait(1 / fps - dt_s)
-        print(f"Time: {time.perf_counter() - start:.2f}s")
+        print(f"Time: {time.perf_counter() - loop_start:.2f}s")
         loop_s = time.perf_counter() - loop_start
         print(f"\ntime: {loop_s * 1e3:.2f}ms ({1 / loop_s:.0f} Hz)")
 
