@@ -21,8 +21,8 @@ The majority of changes here involve removing unused code, unifying naming, and 
 
 import math
 from collections import deque
-from collections.abc import Callable
 from itertools import chain
+from typing import Callable
 
 import einops
 import numpy as np
@@ -216,7 +216,7 @@ class ACTTemporalEnsembler:
                 continue
             avg *= exp_weights[:i].sum()
             avg += item * exp_weights[i]
-            avg /= exp_weights[: i + 1].sum()
+            avg /= exp_weights[:i+1].sum()
         print("online", avg)
         ```
         """
@@ -309,30 +309,14 @@ class ACT(nn.Module):
         super().__init__()
         self.config = config
 
-        # 重新定义一下 robot_state_feature 的判断条件，方便自定义state是否需要
-        self.robot_state_feature = True
-        if not self.config.use_state or not self.config.robot_state_feature:
-            self.robot_state_feature = False
-            print("not use_state !")
-        # state_dropout 配置
-        self.state_dropout = None
-        if self.config.state_dropout != 0.0 and self.config.use_state:
-            self.state_dropout = self.config.state_dropout
-            print("state_dropout = ",self.state_dropout)
-
-
         if self.config.use_vae:
             self.vae_encoder = ACTEncoder(config, is_vae_encoder=True)
             self.vae_encoder_cls_embed = nn.Embedding(1, config.dim_model)
-
             # Projection layer for joint-space configuration to hidden dimension.
-            # if self.config.robot_state_feature:
-            if self.robot_state_feature:
+            if self.config.robot_state_feature:
                 self.vae_encoder_robot_state_input_proj = nn.Linear(
                     self.config.robot_state_feature.shape[0], config.dim_model
                 )
-                if self.state_dropout:
-                    self.vae_dropout = nn.Dropout(p=self.state_dropout)
             # Projection layer for action (joint-space target) to hidden dimension.
             self.vae_encoder_action_input_proj = nn.Linear(
                 self.config.action_feature.shape[0],
@@ -343,8 +327,7 @@ class ACT(nn.Module):
             # Fixed sinusoidal positional embedding for the input to the VAE encoder. Unsqueeze for batch
             # dimension.
             num_input_token_encoder = 1 + config.chunk_size
-            # if self.config.robot_state_feature:
-            if self.robot_state_feature:
+            if self.config.robot_state_feature:
                 num_input_token_encoder += 1
             self.register_buffer(
                 "vae_encoder_pos_enc",
@@ -369,14 +352,10 @@ class ACT(nn.Module):
 
         # Transformer encoder input projections. The tokens will be structured like
         # [latent, (robot_state), (env_state), (image_feature_map_pixels)].
-        # if self.config.robot_state_feature:
-        if self.robot_state_feature:
+        if self.config.robot_state_feature:
             self.encoder_robot_state_input_proj = nn.Linear(
                 self.config.robot_state_feature.shape[0], config.dim_model
             )
-            if self.state_dropout:
-                self.encoder_dropout = nn.Dropout(p=self.state_dropout)
-
         if self.config.env_state_feature:
             self.encoder_env_state_input_proj = nn.Linear(
                 self.config.env_state_feature.shape[0], config.dim_model
@@ -388,8 +367,7 @@ class ACT(nn.Module):
             )
         # Transformer encoder positional embeddings.
         n_1d_tokens = 1  # for the latent
-        # if self.config.robot_state_feature:
-        if self.robot_state_feature:
+        if self.config.robot_state_feature:
             n_1d_tokens += 1
         if self.config.env_state_feature:
             n_1d_tokens += 1
@@ -431,10 +409,6 @@ class ACT(nn.Module):
             Tuple containing the latent PDF's parameters (mean, log(σ²)) both as (B, L) tensors where L is the
             latent dimension.
         """
-        # 重新定义stete的cfg，使得state丢弃从而做到state free的状态。
-        # import pdb; pdb.set_trace()
-        # self.config.robot_state_feature = None
-
         if self.config.use_vae and self.training:
             assert "action" in batch, (
                 "actions must be provided when using the variational objective in training mode."
@@ -446,22 +420,17 @@ class ACT(nn.Module):
             batch_size = batch["observation.environment_state"].shape[0]
 
         # Prepare the latent for input to the transformer encoder.
-        if self.config.use_vae and "action" in batch and self.training:
+        if self.config.use_vae and "action" in batch:
             # Prepare the input to the VAE encoder: [cls, *joint_space_configuration, *action_sequence].
             cls_embed = einops.repeat(
                 self.vae_encoder_cls_embed.weight, "1 d -> b 1 d", b=batch_size
             )  # (B, 1, D)
-            # if self.config.robot_state_feature:
-            if self.robot_state_feature:
+            if self.config.robot_state_feature:
                 robot_state_embed = self.vae_encoder_robot_state_input_proj(batch["observation.state"])
-                if self.state_dropout and self.training:
-                    robot_state_embed = self.vae_dropout(robot_state_embed)
-
                 robot_state_embed = robot_state_embed.unsqueeze(1)  # (B, 1, D)
             action_embed = self.vae_encoder_action_input_proj(batch["action"])  # (B, S, D)
 
-            # if self.config.robot_state_feature:
-            if self.robot_state_feature:
+            if self.config.robot_state_feature:
                 vae_encoder_input = [cls_embed, robot_state_embed, action_embed]  # (B, S+2, D)
             else:
                 vae_encoder_input = [cls_embed, action_embed]
@@ -474,17 +443,11 @@ class ACT(nn.Module):
             # Prepare key padding mask for the transformer encoder. We have 1 or 2 extra tokens at the start of the
             # sequence depending whether we use the input states or not (cls and robot state)
             # False means not a padding token.
-            # cls_joint_is_pad = torch.full(
-            #     (batch_size, 2 if self.config.robot_state_feature else 1),
-            #     False,
-            #     device=batch["observation.state"].device,
-            # )
             cls_joint_is_pad = torch.full(
-                (batch_size, 2 if self.robot_state_feature else 1),
+                (batch_size, 2 if self.config.robot_state_feature else 1),
                 False,
                 device=batch["observation.state"].device,
             )
-
             key_padding_mask = torch.cat(
                 [cls_joint_is_pad, batch["action_is_pad"]], axis=1
             )  # (bs, seq+1 or 2)
@@ -514,12 +477,8 @@ class ACT(nn.Module):
         encoder_in_tokens = [self.encoder_latent_input_proj(latent_sample)]
         encoder_in_pos_embed = list(self.encoder_1d_feature_pos_embed.weight.unsqueeze(1))
         # Robot state token.
-        # if self.config.robot_state_feature:
-        if self.robot_state_feature:
-            if self.state_dropout and self.training:
-                encoder_in_tokens.append(self.encoder_dropout(self.encoder_robot_state_input_proj(batch["observation.state"])))
-            else:
-                encoder_in_tokens.append(self.encoder_robot_state_input_proj(batch["observation.state"]))
+        if self.config.robot_state_feature:
+            encoder_in_tokens.append(self.encoder_robot_state_input_proj(batch["observation.state"]))
         # Environment state token.
         if self.config.env_state_feature:
             encoder_in_tokens.append(
