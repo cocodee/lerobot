@@ -317,6 +317,7 @@ class SupreRobotFollower(Robot):
         
         return final_action_dict
         
+    @monitor_performance
     def send_target_position(self, target_positions: list[float]) -> None:
         """将目标位置发送给机器人。"""
         self._hardware_manager.write(target_positions)
