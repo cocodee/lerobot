@@ -143,8 +143,7 @@ class JodellGripperHardware(HardwareInterface):
             self.gripper_bus = None
             print("Bus disconnected.")
             
-        return True
-    @monitor_performance    
+        return True    
     def read(self) -> list[float | None]:
         """
         从所有夹爪读取当前位置。

@@ -161,7 +161,6 @@ class EyouMotorHardware(HardwareInterface):
 
         print("Activation successful.")
         return True
-    @monitor_performance
     def read(self) -> list[float | None]:
         """
         更新内部状态并返回一份新的状态拷贝。
