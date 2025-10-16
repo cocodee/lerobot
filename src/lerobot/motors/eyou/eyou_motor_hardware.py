@@ -5,6 +5,7 @@ import datetime
 # 导入更新后的 eu_motor_py 绑定
 import eu_motor_py 
 from .hardware_interface import HardwareInterface
+from lerobot.utils.monitor_utils import monitor_performance
 
 class EyouMotorHardware(HardwareInterface):
     """
@@ -160,7 +161,7 @@ class EyouMotorHardware(HardwareInterface):
 
         print("Activation successful.")
         return True
-
+    @monitor_performance
     def read(self) -> list[float | None]:
         """
         更新内部状态并返回一份新的状态拷贝。
