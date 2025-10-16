@@ -182,6 +182,7 @@ class SupreRobotFollower(Robot):
         print("current_pos: ", pos_dict)
         return {self.observation_joint_names[i]: positions[i] for i in range(len(self.observation_joint_names))}
 
+    @monitor_performance
     def _prepare_and_clamp_action(self, action: dict[str, Any]) -> Tuple[List[float], Dict[str, Any]]:
         if action is None:
             raise ValueError("Action dictionary must contain 'joint_positions'.")
