@@ -1,11 +1,14 @@
 import yaml
+
+import os
 from typing import List, Dict, Any, Tuple
 
 # 导入你提供的两个硬件类
 # 假设它们在名为 eyou_hardware.py 和 gripper_hardware.py 的文件中
 from lerobot.motors.eyou import EyouMotorHardware,AsyncInterpolator
 from lerobot.motors.gripper import JodellGripperHardware
-import os
+from lerobot.utils.monitor_utils import monitor_performance
+
 class SupreRobotHardwareManager:
     """
     一个聚合器类，用于管理多个异构硬件接口，
@@ -158,6 +161,7 @@ class SupreRobotHardwareManager:
         
         return list(self.positions)
 
+    @monitor_performance
     def write(self, command_positions: List[float]):
         """
         接收全局指令向量，并分发到各个硬件。
