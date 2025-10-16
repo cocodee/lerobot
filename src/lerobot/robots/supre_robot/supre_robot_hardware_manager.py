@@ -129,7 +129,7 @@ class SupreRobotHardwareManager:
         for instance in self._hardware_instances:
             instance.deactivate()
         print("All hardware deactivated.")
-
+    @monitor_performance
     def read(self) ->  List[float]:
         """
         从所有硬件读取数据，并聚合成全局状态向量。
