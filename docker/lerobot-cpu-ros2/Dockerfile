@@ -4,7 +4,6 @@ FROM ubuntu:22.04
 
 
 # Configure environment variables
-ARG PYTHON_VERSION
 ENV DEBIAN_FRONTEND=noninteractive
 ENV MUJOCO_GL="egl"
 ENV PATH="/opt/venv/bin:$PATH"
@@ -22,7 +21,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # Other dependencies for LeRobot
     libprotobuf-dev protobuf-compiler speech-dispatcher libgeos-dev \
     # Python dependencies
-    python${PYTHON_VERSION}-dev python${PYTHON_VERSION}-venv \
+    python3.10-dev python3.10-venv \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 
@@ -37,9 +36,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # Update package list again after adding new repo and install ROS2
     && apt-get update && apt-get install -y --no-install-recommends \
     # Install ROS2 Humble Desktop and Python build tools
-    ros-humble-desktop python3-colcon-common-extensions \
+    ros-humble-desktop python3-colcon-common-extensions ros-humble-control-msgs \
     # Create Python symlink and venv
-    && ln -s /usr/bin/python${PYTHON_VERSION} /usr/bin/python \
+    && ln -s /usr/bin/python3.10 /usr/bin/python \
     # Create a venv that can access system-site-packages (for ROS2 libraries)
     && python -m venv --system-site-packages /opt/venv \
     # Clean up

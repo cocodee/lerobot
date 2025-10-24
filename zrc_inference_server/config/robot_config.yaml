@@ -1,0 +1,8 @@
+
+    robot:
+      type: supre_robot_follower
+      # 这是一个示例配置，需要根据你的 SupreRobotFollowerConfig 结构调整
+      hz: 30
+      joint_config_file: joint_config.yaml # 相对路径
+      gripper_feature: gripper_action
+    

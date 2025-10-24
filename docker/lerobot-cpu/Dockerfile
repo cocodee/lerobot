@@ -3,7 +3,6 @@ ARG PYTHON_VERSION=3.10
 FROM python:${PYTHON_VERSION}-slim
 
 # Configure environment variables
-ARG PYTHON_VERSION
 ENV DEBIAN_FRONTEND=noninteractive
 ENV MUJOCO_GL="egl"
 ENV PATH="/opt/venv/bin:$PATH"
