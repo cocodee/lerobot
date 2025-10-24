@@ -19,7 +19,8 @@ try:
     from lerobot.robots.supre_robot_follower import SupreRobotFollower
     from lerobot.robots.supre_robot_follower import SupreRobotFollowerConfig
 except ImportError as e:
-    print(f"\nERROR: Could not import SupreRobotFollower. Error: {e}\n")
+    # 仅在实际运行时需要这个导入，这里保持结构不变
+    # print(f"\nERROR: Could not import SupreRobotFollower. Error: {e}\n")
     pass
 # ------------------
 
@@ -33,6 +34,16 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger('PolicyInferenceServer')
 
 ACTION_NAME = "policy_inference"
+
+# --- 1. 定义配置类 ---
+class ServerConfig(draccus.Config):
+    """
+    用于命令行参数的配置类。
+    """
+    node_name: str = draccus.field(default="lerobot_inference_server", description="Name of the ZRC Node.")
+    control_freq: int = draccus.field(default=30, description="Robot control frequency (Hz).")
+    robot_config_path: str = draccus.field(description="REQUIRED: Path to the LeRobot robot YAML configuration file.")
+
 
 class PolicyInferenceServer:
 
@@ -54,7 +65,6 @@ class PolicyInferenceServer:
             raise RuntimeError("Configuration Error") from e
 
         # 2. 创建 ZRC Action Server
-        # 注意: ZRC Action Server 只需要一个 execute_callback
         self._action_server = ActionServer(
             self.node, 
             ACTION_NAME,
@@ -96,13 +106,6 @@ class PolicyInferenceServer:
     def execute_callback(self, goal_id: str, goal_data: Dict[str, Any], handle: ActionHandle):
         """
         ZRC Action Server 的执行回调函数。
-        
-        goal_data 对应于 ROS 2 PolicyInference.Goal 的内容，例如:
-        {
-            "policy_repo_id": "org/policy_name",
-            "task_description": "pick up block",
-            "num_inference_steps": 100
-        }
         """
         
         # 解析 Goal 数据
@@ -134,10 +137,9 @@ class PolicyInferenceServer:
             
             for i in range(num_inference_steps):
                 
-                # 检查取消请求 (替代 goal_handle.is_cancel_requested)
+                # 检查取消请求
                 if handle.is_cancel_requested():
                     logger.info(f'Goal {goal_id[:8]}... canceled by client request.')
-                    # 发布取消结果 (替代 goal_handle.canceled())
                     result_data = {"success": False, "message": "Goal was canceled."}
                     handle.publish_result(result_data, ActionStatus.PREEMPTED)
                     return # 退出执行
@@ -157,20 +159,20 @@ class PolicyInferenceServer:
                 action = {key: action_values[i].item() for i, key in enumerate(self.robot.action_features)}
                 self.robot.send_action(action)
                 
-                # 发布 Feedback (替代 goal_handle.publish_feedback)
+                # 发布 Feedback
                 feedback_data = {"current_step": i + 1, "status": f"Running step {i+1}/{num_inference_steps}"}
                 handle.publish_feedback(feedback_data)
                 
-                # 等待 (替代 await rate.sleep())
+                # 等待
                 time.sleep(sleep_time)
 
-            # 成功完成 (替代 goal_handle.succeed())
+            # 成功完成
             result_data = {"success": True, "message": "Inference completed successfully."}
             handle.publish_result(result_data, ActionStatus.SUCCEEDED)
 
         except Exception as e:
             logger.error(f"An error occurred during execution of {goal_id[:8]}...: {e}")
-            # 异常中止 (替代 goal_handle.abort())
+            # 异常中止
             result_data = {"success": False, "message": f"Execution failed: {e}"}
             handle.publish_result(result_data, ActionStatus.ABORTED)
         
@@ -183,34 +185,18 @@ class PolicyInferenceServer:
             logger.info(f"Execution finished for goal {goal_id[:8]}...")
 
 
-def main():
-    # --- 启动 ZRC 节点和服务器 ---
+# --- 2. main 函数接收配置对象 ---
+@draccus.wrap(ServerConfig)
+def main(config: ServerConfig):
+    """
+    使用传入的配置参数启动 ZRC 节点和 Policy Inference 服务器。
+    """
     
-    # 示例配置值（在实际应用中，这些应来自命令行参数或配置文件）
-    NODE_NAME = 'lerobot_inference_server'
-    CONTROL_FREQUENCY = 30
-    
-    # !!! 替换为你的实际配置文件路径 !!!
-    # 假设 robot_config.yaml 位于脚本的 config 目录下
-    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-    # 假设你的配置文件在与脚本同一目录下的 'config' 文件夹内
-    MOCK_CONFIG_PATH = os.path.join(SCRIPT_DIR, 'config', 'robot_config.yaml')
-    
-    # 假设我们没有这个目录，我们使用一个虚构的路径，用户需要修改
-    if not os.path.exists(MOCK_CONFIG_PATH):
-        logger.warning(f"Mock config path not found: {MOCK_CONFIG_PATH}. Please set `ROBOT_CONFIG_PATH`.")
-        # 在实际部署中，你需要确保这个路径是正确的
-        ROBOT_CONFIG_PATH = "path/to/your/robot_config.yaml"
-    else:
-        ROBOT_CONFIG_PATH = MOCK_CONFIG_PATH
-
-
     # 1. 初始化 ZRC 节点
     try:
-        # Zenoh 配置可以为空字典，使用默认设置
         zenoh_config = {} 
-        zrc_node = ZRCNode(NODE_NAME, config=zenoh_config)
-        logger.info(f"ZRC Node '{NODE_NAME}' initialized.")
+        zrc_node = ZRCNode(config.node_name, config=zenoh_config)
+        logger.info(f"ZRC Node '{config.node_name}' initialized.")
     except ZRCError as e:
         logger.fatal(f"Failed to initialize ZRC Node: {e}")
         return
@@ -219,8 +205,8 @@ def main():
     try:
         server = PolicyInferenceServer(
             node=zrc_node,
-            robot_config_path=ROBOT_CONFIG_PATH,
-            control_freq=CONTROL_FREQUENCY
+            robot_config_path=config.robot_config_path,
+            control_freq=config.control_freq
         )
     except Exception as e:
         logger.fatal(f"Server instantiation failed: {e}")
@@ -228,7 +214,6 @@ def main():
         return
 
     # 3. 保持主线程运行
-    # ZRC Action Server 在内部使用线程处理回调，主线程只需保持 Zenoh session 存活
     try:
         logger.info(f"Server is running. Press Ctrl+C to stop.")
         while True:
@@ -240,31 +225,9 @@ def main():
         logger.info("ZRC Session closed.")
 
 if __name__ == '__main__':
-    # 为了让 mock 配置跑通，我们在脚本目录下创建一个临时的配置文件
-    # 开发者需要根据自己的环境修改 ROBOT_CONFIG_PATH
+    # 注意：我们删除了创建 mock 配置文件的代码块。
+    # 运行此脚本时，用户必须通过命令行参数提供 robot_config_path。
+    # 示例运行方式 (假设配置文件在 /path/to/my/config.yaml):
+    # python your_script_name.py --robot_config_path /path/to/my/config.yaml
     
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    config_dir = os.path.join(script_dir, 'config')
-    os.makedirs(config_dir, exist_ok=True)
-    
-    mock_robot_config_content = """
-    robot:
-      type: supre_robot_follower
-      # 这是一个示例配置，需要根据你的 SupreRobotFollowerConfig 结构调整
-      hz: 30
-      joint_config_file: joint_config.yaml # 相对路径
-      gripper_feature: gripper_action
-    """
-    
-    mock_joint_config_content = """
-    joints:
-      joint_1: {min: -1.0, max: 1.0}
-    """
-    
-    with open(os.path.join(config_dir, 'robot_config.yaml'), 'w') as f:
-        f.write(mock_robot_config_content)
-        
-    with open(os.path.join(config_dir, 'joint_config.yaml'), 'w') as f:
-        f.write(mock_joint_config_content)
-        
     main()
