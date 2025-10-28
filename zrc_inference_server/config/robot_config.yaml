@@ -1,8 +1,107 @@
+# ===============================================
+# Robot (Follower) Configuration
+# ===============================================
+robot:
+  # Specifies which subclass of RobotConfig to use.
+  # This matches the name in `@RobotConfig.register_subclass("supre_robot_follower")`
+  type: supre_robot_follower
 
-    robot:
-      type: supre_robot_follower
-      # 这是一个示例配置，需要根据你的 SupreRobotFollowerConfig 结构调整
-      hz: 30
-      joint_config_file: joint_config.yaml # 相对路径
-      gripper_feature: gripper_action
-    
+  # Path to the joint configuration file for the follower robot.
+  # Corresponds to: SupreRobotFollowerConfig.joint_config_path
+  joint_config_file: "joint_config.yaml"
+
+  # Dictionary of camera configurations.
+  # Corresponds to: cameras: dict[str, CameraConfig]
+  cameras: {}
+
+
+
+  # Maximum relative joint movement in degrees per control step.
+  # Corresponds to: max_relative_joint_move: float
+  max_relative_joint_move: 10.0 #30.0
+
+  # Port for the Prometheus monitoring server. Use `null` for None.
+  # Corresponds to: prometheus_port: int | None
+  prometheus_port: 8000
+
+  # Control loop frequency in Hz.
+  # Corresponds to: control_frequency: int
+  control_frequency: 30
+
+  # List of motor calibration settings for each joint.
+  # Corresponds to: calibration: list[MotorCalibration]
+  calibration:
+    # --- Left Arm ---
+    - joint_name: "left_arm_joint_1"
+      min_position: -160.0
+      max_position: 160.0
+    - joint_name: "left_arm_joint_2"
+      min_position: -90.0
+      max_position: 0.0
+    - joint_name: "left_arm_joint_3"
+      min_position: -150.0
+      max_position: 150.0
+    - joint_name: "left_arm_joint_4"
+      min_position: -90.0
+      max_position: 0.0
+    - joint_name: "left_arm_joint_5"
+      min_position: -150.0
+      max_position: 150.0
+    - joint_name: "left_arm_joint_6"
+      min_position: -90.0
+      max_position: 90.0
+    - joint_name: "left_arm_joint_7"
+      min_position: 0.0
+      max_position: 1.0
+
+    # --- Right Arm ---
+    - joint_name: "right_arm_joint_1"
+      min_position: -160.0
+      max_position: 160.0
+    - joint_name: "right_arm_joint_2"
+      min_position: 0.0
+      max_position: 90.0
+    - joint_name: "right_arm_joint_3"
+      min_position: -150.0
+      max_position: 150.0
+    - joint_name: "right_arm_joint_4"
+      min_position: 0.0
+      max_position: 90.0
+    - joint_name: "right_arm_joint_5"
+      min_position: -150.0
+      max_position: 150.0
+    - joint_name: "right_arm_joint_6"
+      min_position: -90.0
+      max_position: 90.0
+    - joint_name: "right_arm_joint_7"
+      min_position: 0.0
+      max_position: 1.0
+      
+    # --- Trunk ---
+    - joint_name: "trunk_joint_1"
+      min_position: -45.0
+      max_position: 45.0
+    - joint_name: "trunk_joint_2"
+      min_position: -45.0
+      max_position: 0.0
+
+env:
+  # 必须指定 EnvConfig 的子类类型
+  type: aloha 
+  
+  # AlohaEnv (AlohaInsertion-v0) 默认配置:
+  task: AlohaInsertion-v0
+  fps: 50
+  episode_length: 400
+  obs_type: pixels_agent_pos # 默认使用图像 ('pixels/top') 和状态 ('agent_pos')
+  render_mode: rgb_array
+
+  # 我们可以覆盖默认的特征配置，但通常不需要，因为 __post_init__ 会处理
+  # features:
+  #   action:
+  #     type: ACTION
+  #     shape: [14]
+
+# --- 3. Policy Configuration (可选: 启动时加载策略) ---
+policy:
+    path:/home/yang/workspace/project/lerobot/policies/supre_robot_follower/policy_supre_robot_follower.zip
