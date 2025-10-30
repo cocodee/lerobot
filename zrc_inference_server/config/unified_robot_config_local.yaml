@@ -110,6 +110,3 @@ local:
     #     type: ACTION
     #     shape: [14]
   
-  # --- 3. Policy Configuration (可选: 启动时加载策略) ---
-  policy:
-      path: "/home/t/workspace/lerobot_jeston/outputs/test/act_1023_2/pretrained_model"
