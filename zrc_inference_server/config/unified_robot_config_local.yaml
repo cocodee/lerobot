@@ -85,23 +85,31 @@ robot:
       min_position: -45.0
       max_position: 0.0
 
-env:
-  # 必须指定 EnvConfig 的子类类型
-  type: aloha 
+zenoh_config:
+  connect:
+    endpoints:
+      - "tcp/localhost:7447"
+
+local:
+  # policy config is provided via CLI (--local.policy=...)
+  # or can be defined here if not using CLI for policy
+  env:
+    # 必须指定 EnvConfig 的子类类型
+    type: aloha 
+    
+    # AlohaEnv (AlohaInsertion-v0) 默认配置:
+    task: AlohaInsertion-v0
+    fps: 50
+    episode_length: 400
+    obs_type: pixels_agent_pos # 默认使用图像 ('pixels/top') 和状态 ('agent_pos')
+    render_mode: rgb_array
   
-  # AlohaEnv (AlohaInsertion-v0) 默认配置:
-  task: AlohaInsertion-v0
-  fps: 50
-  episode_length: 400
-  obs_type: pixels_agent_pos # 默认使用图像 ('pixels/top') 和状态 ('agent_pos')
-  render_mode: rgb_array
-
-  # 我们可以覆盖默认的特征配置，但通常不需要，因为 __post_init__ 会处理
-  # features:
-  #   action:
-  #     type: ACTION
-  #     shape: [14]
-
-# --- 3. Policy Configuration (可选: 启动时加载策略) ---
-policy:
-    path:/home/yang/workspace/project/lerobot/policies/supre_robot_follower/policy_supre_robot_follower.zip
+    # 我们可以覆盖默认的特征配置，但通常不需要，因为 __post_init__ 会处理
+    # features:
+    #   action:
+    #     type: ACTION
+    #     shape: [14]
+  
+  # --- 3. Policy Configuration (可选: 启动时加载策略) ---
+  policy:
+      path: "/home/t/workspace/lerobot_jeston/outputs/test/act_1023_2/pretrained_model"
