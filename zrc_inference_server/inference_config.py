@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from lerobot.configs import parser
 from lerobot.configs.policies import PreTrainedConfig
 
+from typing import Optional
+
 try:
     from lerobot.envs.configs import EnvConfig
 except ImportError:
@@ -14,20 +16,19 @@ class LocalInferenceConfig:
     """Configuration specific to local inference."""
     policy: PreTrainedConfig | None = None
     env: EnvConfig | None = None
+    # 1. Add a dedicated field for the path. It's just a string.
+    policy_path: Optional[str] = None
+    
+    # 2. Make the actual policy object not initializable from the constructor/CLI.
+    #    We will create it ourselves in __post_init__.
 
     def __post_init__(self):
-        policy_path = parser.get_path_arg("policy")
-        if policy_path:
-            cli_overrides = parser.get_cli_overrides("policy")
-            self.policy = PreTrainedConfig.from_pretrained(policy_path, cli_overrides=cli_overrides)
-            self.policy.pretrained_path = policy_path
-        
-        if self.policy is None:
-            raise ValueError("LocalInferenceConfig requires a policy configuration.")
-    @classmethod
-    def __get_path_fields__(cls) -> list[str]:
-        # Allows --local.policy=/path/to/policy from CLI
-        return ["local.policy"]        
+        # 3. Use the dedicated path field to load the policy object.
+        if self.policy_path:
+            # Here you can pass an empty dict for overrides, or decide how to handle them.
+            self.policy = PreTrainedConfig.from_pretrained(self.policy_path, cli_overrides={})
+        else:
+            raise ValueError("LocalInferenceConfig requires a `policy_path` to be set.")  
 
 @dataclass
 class RemoteInferenceConfig:
