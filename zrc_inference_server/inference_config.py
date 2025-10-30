@@ -27,7 +27,7 @@ class LocalInferenceConfig:
     @classmethod
     def __get_path_fields__(cls) -> list[str]:
         # Allows --local.policy=/path/to/policy from CLI
-        return ["policy"]        
+        return ["local.policy"]        
 
 @dataclass
 class RemoteInferenceConfig:
