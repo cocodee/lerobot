@@ -24,6 +24,10 @@ class LocalInferenceConfig:
         
         if self.policy is None:
             raise ValueError("LocalInferenceConfig requires a policy configuration.")
+    @classmethod
+    def __get_path_fields__(cls) -> list[str]:
+        # Allows --local.policy=/path/to/policy from CLI
+        return ["local.policy"]        
 
 @dataclass
 class RemoteInferenceConfig:

@@ -47,10 +47,7 @@ class UnifiedServerConfig:
         if self.inference_mode not in ["local", "remote"]:
             raise ValueError(f"Invalid inference_mode: {self.inference_mode}. Must be 'local' or 'remote'.")
 
-    @classmethod
-    def __get_path_fields__(cls) -> list[str]:
-        # Allows --local.policy=/path/to/policy from CLI
-        return ["local.policy"]
+
 
 
 
