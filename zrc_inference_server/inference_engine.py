@@ -12,7 +12,7 @@ from lerobot.utils.utils import get_safe_torch_device
 
 # --- Remote Client Imports ---
 from lerobot.scripts.server.configs import RobotClientConfig
-from lerobot.scripts.robot_client import RobotClient
+from lerobot.scripts.server.robot_client import RobotClient
 
 # --- Local Imports ---
 from .inference_config import LocalInferenceConfig, RemoteInferenceConfig
