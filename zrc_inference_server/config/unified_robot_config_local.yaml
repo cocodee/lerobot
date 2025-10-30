@@ -86,6 +86,7 @@ robot:
       max_position: 0.0
 
 zenoh_config:
+  mode: "peer"
   connect:
     endpoints:
       - "tcp/localhost:7447"
