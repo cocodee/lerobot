@@ -126,7 +126,7 @@ class UnifiedPolicyInferenceServer:
 #  SECTION 5: MAIN ENTRYPOINT
 # #######################################################
 
-@parser.wrap_for_main()
+@parser.wrap()
 def main(config: UnifiedServerConfig):
     try:
         if not config.zenoh_config:
