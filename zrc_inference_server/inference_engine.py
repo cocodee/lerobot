@@ -76,7 +76,7 @@ class LocalInferenceEngine(InferenceEngine):
             
         observation = self.robot.get_observation()
         
-        policy_meta_features = get_features_from_robot(self.robot)
+        policy_meta_features = self.robot.observation_features
         observation_frame = build_dataset_frame(policy_meta_features, observation, prefix="observation")
         
         action_values = predict_action(
