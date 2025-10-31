@@ -6,6 +6,8 @@ from typing import Optional
 # --- LeRobot Imports ---
 from lerobot.datasets.utils import build_dataset_frame
 from lerobot.policies.factory import make_policy
+from lerobot.policies.factory import get_policy_class
+
 from lerobot.robots import make_robot_from_config, RobotConfig
 from lerobot.utils.control_utils import predict_action
 from lerobot.utils.utils import get_safe_torch_device
@@ -60,7 +62,11 @@ class LocalInferenceEngine(InferenceEngine):
 
         # Instantiate policy
         #self.policy = make_policy(self.config.policy, ds_meta=None, env_cfg=self.config.env)
-        self.policy = self.config.policy
+        policy_class = get_policy_class(self.config.policy.type)
+
+        self.policy = policy_class.from_pretrained(self.config.policy_path)
+        self.policy.to(self.config.policy.device)
+
         self.policy.reset()
         logger.info("Local policy instantiated.")
         
