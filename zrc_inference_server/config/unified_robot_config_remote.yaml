@@ -8,7 +8,7 @@ robot:
 
   # Path to the joint configuration file for the follower robot.
   # Corresponds to: SupreRobotFollowerConfig.joint_config_path
-  joint_config_file: "joint_config.yaml"
+  joint_config_file: "trunk_config_supre_robot_joint.yaml"
 
   # Dictionary of camera configurations.
   # Corresponds to: cameras: dict[str, CameraConfig]
