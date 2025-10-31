@@ -195,6 +195,8 @@ class EyouMotorHardware(HardwareInterface):
                 result = motor.send_csp_target_position(self.hw_commands_positions_[i],0, False)
                 if result != 0:
                     print(f"Error: Failed to send command to joint {self.joint_names_[i]}")
+                if i!=0 and i%5==0:
+                    time.sleep(0.001)
                 any_motor_enabled = True
 
         #if any_motor_enabled:
