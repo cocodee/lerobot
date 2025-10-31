@@ -15,9 +15,10 @@ from lerobot.utils.utils import get_safe_torch_device
 # --- Remote Client Imports ---
 from lerobot.scripts.server.configs import RobotClientConfig
 from lerobot.scripts.server.robot_client import RobotClient
+from lerobot.scripts.server.helpers import map_robot_keys_to_lerobot_features
 
-# --- Local Imports ---
 from .inference_config import LocalInferenceConfig, RemoteInferenceConfig
+
 
 logger = logging.getLogger('InferenceEngine')
 
@@ -76,7 +77,7 @@ class LocalInferenceEngine(InferenceEngine):
             
         observation = self.robot.get_observation()
         
-        policy_meta_features = self.robot.observation_features
+        policy_meta_features = map_robot_keys_to_lerobot_features(self.robot)
         observation_frame = build_dataset_frame(policy_meta_features, observation, prefix="observation")
         
         action_values = predict_action(
