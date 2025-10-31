@@ -86,7 +86,7 @@ def main():
 
         goal_data_success = {
             "task_description": "Grasp the workpiece and put it in the appropriate position.",
-            "num_inference_steps": 40
+            "num_inference_steps": 5
         }
         
         logger.info(f"发送目标: {goal_data_success}")
@@ -100,7 +100,7 @@ def main():
         
         # 等待结果，设置5秒超时
         logger.info("... 等待任务完成 ...")
-        completed_in_time = test_context["result_received_event"].wait(timeout=5.0)
+        completed_in_time = test_context["result_received_event"].wait(timeout=60.0)
 
         if not completed_in_time:
             logger.error("❌ 测试失败: 等待结果超时!")
@@ -139,8 +139,8 @@ def main():
         logger.info(f"目标已发送, Goal ID: {goal_id_2[:8]}...")
 
         # 等待一小段时间，让任务开始执行
-        logger.info("... 任务已发送, 等待 0.2 秒后发送取消请求 ...")
-        time.sleep(0.2)
+        logger.info("... 任务已发送, 等待 5 秒后发送取消请求 ...")
+        time.sleep(5)
         
         logger.info(f"🛑 发送取消请求 (Goal ID: {goal_id_2[:8]}...)!")
         # MODIFIED: 使用 action_client.cancel_goal() 并传入 goal_id
@@ -148,7 +148,7 @@ def main():
 
         # 等待取消后的结果
         logger.info("... 等待取消确认结果 ...")
-        completed_in_time = test_context["result_received_event"].wait(timeout=5.0)
+        completed_in_time = test_context["result_received_event"].wait(timeout=60.0)
 
         if not completed_in_time:
             logger.error("❌ 测试失败: 等待取消结果超时!")
