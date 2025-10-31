@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 # --- LeRobot Imports ---
-from lerobot.datasets.utils import build_dataset_frame
+from lerobot.datasets.utils import build_dataset_frame,get_features_from_robot
 from lerobot.policies.factory import make_policy
 from lerobot.policies.factory import get_policy_class
 
@@ -76,7 +76,7 @@ class LocalInferenceEngine(InferenceEngine):
             
         observation = self.robot.get_observation()
         
-        policy_meta_features = self.policy.config.input_features
+        policy_meta_features = get_features_from_robot(self.robot)
         observation_frame = build_dataset_frame(policy_meta_features, observation, prefix="observation")
         
         action_values = predict_action(
