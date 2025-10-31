@@ -59,7 +59,8 @@ class LocalInferenceEngine(InferenceEngine):
         logger.info("Robot connected.")
 
         # Instantiate policy
-        self.policy = make_policy(self.config.policy, ds_meta=None, env_cfg=self.config.env)
+        #self.policy = make_policy(self.config.policy, ds_meta=None, env_cfg=self.config.env)
+        self.policy = self.config.policy
         self.policy.reset()
         logger.info("Local policy instantiated.")
         

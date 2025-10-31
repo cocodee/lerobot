@@ -5,7 +5,8 @@ import logging
 
 import zenoh
 import zrc
-from zrc.action import ActionClient, ActionStatus, GoalHandle
+# MODIFIED: GoalHandle 不再从客户端返回，因此从 import 中移除
+from zrc.action import ActionClient, ActionStatus
 
 # --- 配置 ---
 # 确保这个配置与你的 Zenoh 网络匹配
@@ -33,9 +34,11 @@ test_context = {
 # --- 回调函数 ---
 def on_result(result: dict):
     """当 Action 完成、失败或被取消时调用的回调函数"""
-    status = result.get('status', 'UNKNOWN')
+    # result['status'] 是一个整数值
+    status_value = result.get('status', -1) 
+    status_name = ActionStatus(status_value).name if status_value in [e.value for e in ActionStatus] else 'UNKNOWN'
     data = result.get('data', {})
-    logger.info(f"🏁 最终结果已收到! 状态: {status}, 数据: {data}")
+    logger.info(f"🏁 最终结果已收到! 状态: {status_name} ({status_value}), 数据: {data}")
     test_context["result"] = result
     test_context["result_received_event"].set() # 发送信号，通知主线程结果已收到
 
@@ -87,11 +90,13 @@ def main():
         }
         
         logger.info(f"发送目标: {goal_data_success}")
-        action_client.send_goal(
+        # action.py 的 send_goal 返回 goal_id 字符串，而不是句柄
+        goal_id_1 = action_client.send_goal(
             goal_data=goal_data_success,
             result_callback=on_result,
             feedback_callback=on_feedback
         )
+        logger.info(f"目标已发送, Goal ID: {goal_id_1[:8]}...")
         
         # 等待结果，设置5秒超时
         logger.info("... 等待任务完成 ...")
@@ -101,10 +106,11 @@ def main():
             logger.error("❌ 测试失败: 等待结果超时!")
         else:
             final_status = test_context["result"].get("status")
-            if final_status == ActionStatus.SUCCEEDED:
+            # MODIFIED: 比较 status 的整数值
+            if final_status == ActionStatus.SUCCEEDED.value:
                 logger.info("✅ 测试成功: 任务按预期完成!")
             else:
-                logger.error(f"❌ 测试失败: 任务状态为 {final_status}, 而不是 SUCCEEDED.")
+                logger.error(f"❌ 测试失败: 任务状态值为 {final_status}, 而不是 {ActionStatus.SUCCEEDED.value}.")
         
         print("\n" + "-"*20 + " 场景 1 结束 " + "-"*20 + "\n")
         time.sleep(2) # 在测试之间留出间隔
@@ -124,18 +130,21 @@ def main():
         }
 
         logger.info(f"发送一个长任务目标: {goal_data_cancel}")
-        goal_handle: GoalHandle = action_client.send_goal(
+        # MODIFIED: send_goal 返回 goal_id 字符串
+        goal_id_2 = action_client.send_goal(
             goal_data=goal_data_cancel,
             result_callback=on_result,
             feedback_callback=on_feedback
         )
+        logger.info(f"目标已发送, Goal ID: {goal_id_2[:8]}...")
 
         # 等待一小段时间，让任务开始执行
         logger.info("... 任务已发送, 等待 0.2 秒后发送取消请求 ...")
         time.sleep(0.2)
         
-        logger.info("🛑 发送取消请求!")
-        goal_handle.cancel()
+        logger.info(f"🛑 发送取消请求 (Goal ID: {goal_id_2[:8]}...)!")
+        # MODIFIED: 使用 action_client.cancel_goal() 并传入 goal_id
+        action_client.cancel_goal(goal_id_2)
 
         # 等待取消后的结果
         logger.info("... 等待取消确认结果 ...")
@@ -145,11 +154,12 @@ def main():
             logger.error("❌ 测试失败: 等待取消结果超时!")
         else:
             final_status = test_context["result"].get("status")
-            if final_status == ActionStatus.PREEMPTED:
+            # MODIFIED: 比较 status 的整数值
+            if final_status == ActionStatus.PREEMPTED.value:
                 logger.info("✅ 测试成功: 任务被成功取消 (状态 PREEMPTED)!")
                 logger.info(f"任务在被取消前执行了 {len(test_context['feedback_list'])} 步。")
             else:
-                logger.error(f"❌ 测试失败: 任务状态为 {final_status}, 而不是 PREEMPTED.")
+                logger.error(f"❌ 测试失败: 任务状态值为 {final_status}, 而不是 {ActionStatus.PREEMPTED.value}.")
 
         print("\n" + "-"*20 + " 场景 2 结束 " + "-"*20 + "\n")
 
