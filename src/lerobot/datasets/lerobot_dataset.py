@@ -1443,98 +1443,12 @@ class LeRobotDataset(torch.utils.data.Dataset):
         """
         temp_path = Path(tempfile.mkdtemp(dir=self.root)) / f"{video_key}_{episode_index:03d}.mp4"
         img_dir = self._get_image_file_dir(episode_index, video_key)
-        encode_video_frames(img_dir, temp_path, self.fps, overwrite=True)
+        if self.gst_encoding:
+            encode_video_frames_gst(img_dir, temp_path, self.fps, overwrite=True)
+        else:
+            encode_video_frames(img_dir, temp_path, self.fps, overwrite=True)
         shutil.rmtree(img_dir)
         return temp_path
-    
-    def encode_videos(self):
-        for ep_idx in range(self.meta.total_episodes):
-            self.encode_episode_videos(ep_idx)
-
-    def encode_episode_videos(self, episode_index: int) -> dict:
-        """
-        Use ffmpeg to convert frames stored as png into mp4 videos.
-        Note: `encode_video_frames` is a blocking call. Making it asynchronous shouldn't speedup encoding,
-        since video encoding with ffmpeg is already using multithreading.
-        """
-        video_paths = {}
-        for key in self.meta.video_keys:
-            video_path = self.root / self.meta.get_video_file_path(episode_index, key)
-            video_paths[key] = str(video_path)
-            if video_path.is_file():
-                # Skip if video is already encoded. Could be the case when resuming data recording.
-                continue
-            img_dir = self._get_image_file_path(
-                episode_index=episode_index, image_key=key, frame_index=0
-            ).parent
-            encode_video_frames(img_dir, video_path, self.fps, overwrite=True)
-
-        return video_paths
-
-    def encode_episode_videos_gst(self, episode_index: int) -> Dict[str, str]:
-        """
-        Converts frames (PNGs) into MP4 videos using a GStreamer-based hardware encoder.
-        
-        This implementation runs encoding tasks for different camera keys (e.g., 'camera_main', 
-        'camera_wrist') in parallel using a process pool, significantly speeding up the 
-        process on multi-encoder hardware like the Jetson Orin.
-        """
-        tasks_to_run = []
-        video_paths = {}
-
-        # Step 1: Gather all encoding tasks that need to be performed.
-        for key in self.meta.video_keys:
-            video_path = self.root / self.meta.get_video_file_path(episode_index, key)
-            video_paths[key] = str(video_path)
-
-            # Skip if the video file already exists and is valid.
-            if video_path.is_file() and video_path.stat().st_size > 0:
-                print(f"Skipping existing video: {video_path}")
-                continue
-
-            # This is a task that needs to be run.
-            img_dir = self._get_image_file_path(
-                episode_index=episode_index, image_key=key, frame_index=0
-            ).parent
-            
-            # Create a dictionary holding all arguments for the encoding function.
-            task_info = {
-                "imgs_dir": img_dir,
-                "video_path": video_path,
-                "fps": self.fps,
-                "overwrite": True,  # Overwrite if file exists but is empty/corrupt
-            }
-            tasks_to_run.append(task_info)
-        
-        # If there are no tasks to run, we can exit early.
-        if not tasks_to_run:
-            return video_paths
-
-        # Step 2: Execute the gathered tasks in parallel using a process pool.
-        print(f"Starting parallel encoding for {len(tasks_to_run)} videos with {self.num_parallel_workers} workers...")
-        with concurrent.futures.ProcessPoolExecutor(max_workers=self.num_parallel_workers) as executor:
-            # Submit each task to the pool. The `**task` syntax unpacks the dictionary
-            # into keyword arguments for the encode_video_frames_gst function.
-            future_to_video = {
-                executor.submit(encode_video_frames_gst, **task): task["video_path"]
-                for task in tasks_to_run
-            }
-
-            # Wait for all futures to complete and handle any exceptions.
-            for future in concurrent.futures.as_completed(future_to_video):
-                video_path = future_to_video[future]
-                try:
-                    # future.result() will re-raise any exception that occurred in the child process.
-                    future.result(timeout=300)
-                    print(f"✅ Successfully encoded: {video_path}")
-                except Exception as exc:
-                    print(f"❌ Failed to encode {video_path}: {exc}")
-                    # Re-raise the exception to halt the entire process, ensuring
-                    # data integrity. If one video fails, the episode is incomplete.
-                    raise RuntimeError(f"Video encoding failed for {video_path}") from exc
-
-        # The function's return value remains unchanged.
-        return video_paths
     @classmethod
     def create(
         cls,
