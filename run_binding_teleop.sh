@@ -12,7 +12,7 @@ python ./src/lerobot/teleop_trajectory_align.py \
     --config_path="$CONFIG_FILE_PATH"
 # 运行 Python 程序
 echo "Using config file: $CONFIG_FILE_PATH"
-python -m lerobot.teleoperate \
+lerobot_teleoperate \
     --robot.type=supre_robot_follower \
     --robot.id=supre_follower \
     --teleop.type=supre_robot_leader \

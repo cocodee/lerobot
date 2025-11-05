@@ -12,7 +12,7 @@ python ./src/lerobot/teleop_trajectory_align.py \
     --robot.type=supre_robot_follower
     --config_path="$CONFIG_FILE_PATH"
 
-python -m lerobot.record \
+lerobot_record \
     --robot.type=supre_robot_follower \
     --robot.id=supre_robot_follower \
     --teleop.type=supre_robot_leader \
