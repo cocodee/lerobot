@@ -97,17 +97,6 @@ class RobotClient:
 
         lerobot_features = map_robot_keys_to_lerobot_features(self.robot)
 
-        if config.verify_robot_cameras:
-            # Load policy config for validation
-            policy_config = PreTrainedConfig.from_pretrained(
-                config.pretrained_name_or_path,
-                local_files_only=True
-                )
-            policy_image_features = policy_config.image_features
-
-            # The cameras specified for inference must match the one supported by the policy chosen
-            validate_robot_cameras_for_policy(lerobot_features, policy_image_features)
-
         # Use environment variable if server_address is not provided in config
         self.server_address = config.server_address
 
