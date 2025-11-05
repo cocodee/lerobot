@@ -177,6 +177,10 @@ class EyouMotorHardware(HardwareInterface):
         # 返回内部状态的拷贝，防止外部代码意外修改
         return list(self.hw_states_positions_)
 
+    def busy_wait(wait_time_s):
+        end_time = time.perf_counter() + wait_time_s
+        while time.perf_counter() < end_time:
+            pass    
     def write(self, commands_positions: List[float]):
         """
         用传入的指令更新内部指令，然后发送到硬件。
@@ -195,6 +199,8 @@ class EyouMotorHardware(HardwareInterface):
                 result = motor.send_csp_target_position(self.hw_commands_positions_[i],0, False)
                 if result != 0:
                     print(f"Error: Failed to send command to joint {self.joint_names_[i]}")
+                if i!=0 and i%6==0:
+                    self.busy_wait(0.001)
                 any_motor_enabled = True
 
         #if any_motor_enabled:
