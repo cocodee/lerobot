@@ -177,7 +177,7 @@ class EyouMotorHardware(HardwareInterface):
         # 返回内部状态的拷贝，防止外部代码意外修改
         return list(self.hw_states_positions_)
 
-    def busy_wait(wait_time_s):
+    def busy_wait(self, wait_time_s):
         end_time = time.perf_counter() + wait_time_s
         while time.perf_counter() < end_time:
             pass    
