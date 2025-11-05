@@ -85,8 +85,8 @@ def teleop_trajectory(
         # action = teleop.get_action()
         action = {
             'left_arm_joint_1.pos': -5.0, 'left_arm_joint_2.pos': -5.0, 'left_arm_joint_3.pos': 0.0, 
-            'left_arm_joint_4.pos': 0.0, 'left_arm_joint_5.pos': 0.0, 'left_arm_joint_6.pos': 0.0, 
-            'left_arm_joint_7.pos': 0.0, 'right_arm_joint_1.pos': 5.0, 'right_arm_joint_2.pos': 5.0, 
+            'left_arm_joint_4.pos': 0.0, 'left_arm_joint_5.pos': 5.0, 'left_arm_joint_6.pos': 0.0, 
+            'left_arm_joint_7.pos': 0.0, 'right_arm_joint_1.pos': 5.0, 'right_arm_joint_2.pos': 10.0, 
             'right_arm_joint_3.pos': 0.0, 'right_arm_joint_4.pos': 0.0, 'right_arm_joint_5.pos': 0.0, 
             'right_arm_joint_6.pos': 0.0, 'right_arm_joint_7.pos': 0.0, 'trunk_joint_1.pos': 0.0, 
             'trunk_joint_2.pos': 0.0
