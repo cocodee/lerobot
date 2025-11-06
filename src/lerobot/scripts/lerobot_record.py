@@ -293,6 +293,7 @@ def record_loop(
     timestamp = 0
     start_episode_t = time.perf_counter()
     while timestamp < control_time_s:
+        print(">>>>>>>>>>>>>>>>Running episode")
         start_loop_t = time.perf_counter()
 
         if events["exit_early"]:
