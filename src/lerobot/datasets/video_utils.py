@@ -477,6 +477,61 @@ def concatenate_video_files(
     shutil.move(tmp_output_video_path, output_video_path)
     Path(tmp_concatenate_path).unlink()
 
+def concatenate_video_files_gst(
+    input_video_paths: list[Path | str], output_video_path: Path, overwrite: bool = True
+):
+    """
+    Concatenate multiple video files into a single video file by re-encoding with ffmpeg.
+    This method is slower than stream copying but more robust against timestamp issues.
+    """
+    output_video_path = Path(output_video_path)
+
+    if output_video_path.exists() and not overwrite:
+        logging.warning(f"Video file already exists: {output_video_path}. Skipping concatenation.")
+        return
+
+    output_video_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if len(input_video_paths) == 0:
+        raise FileNotFoundError("No input video paths provided.")
+
+    # Create a temporary file list for ffmpeg
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as tmp_list_file:
+        for input_path in input_video_paths:
+            # ffmpeg's concat demuxer needs 'file' keyword and single quotes
+            tmp_list_file.write(f"file '{Path(input_path).resolve()}'\n")
+        tmp_list_path = tmp_list_file.name
+
+    try:
+        # Build the ffmpeg command. Note the absence of '-c copy'.
+        # This forces re-encoding, which fixes timestamp issues.
+        # '-y' overwrites the output file if it exists.
+        command = [
+            "ffmpeg",
+            "-y",
+            "-f", "concat",
+            "-safe", "0",
+            "-i", tmp_list_path,
+            # You can add encoding options here if needed, e.g., "-c:v", "libx264", "-preset", "fast"
+            str(output_video_path),
+        ]
+
+        logging.info(f"Executing ffmpeg command: {' '.join(command)}")
+        
+        # Execute the command
+        result = subprocess.run(command, check=True, capture_output=True, text=True)
+        logging.info("ffmpeg concatenation successful.")
+        logging.debug(f"ffmpeg stdout: {result.stdout}")
+        logging.debug(f"ffmpeg stderr: {result.stderr}")
+
+    except subprocess.CalledProcessError as e:
+        logging.error(f"ffmpeg failed with return code {e.returncode}")
+        logging.error(f"ffmpeg stderr: {e.stderr}")
+        # Re-raise the exception so the caller knows something went wrong
+        raise
+    finally:
+        # Clean up the temporary file list
+        Path(tmp_list_path).unlink()
 
 @dataclass
 class VideoFrame:

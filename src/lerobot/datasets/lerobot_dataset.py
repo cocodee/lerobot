@@ -70,6 +70,7 @@ from lerobot.datasets.utils import (
 from lerobot.datasets.video_utils import (
     VideoFrame,
     concatenate_video_files,
+    concatenate_video_files_gst,
     decode_video_frames,
     encode_video_frames,
     get_safe_default_codec,
@@ -1375,10 +1376,16 @@ class LeRobotDataset(torch.utils.data.Dataset):
                 latest_duration_in_s = 0.0
             else:
                 # Update latest video file
-                concatenate_video_files(
-                    [latest_path, ep_path],
-                    latest_path,
-                )
+                if self.gst_encoding:
+                    concatenate_video_files_gst(
+                        [latest_path, ep_path],
+                        latest_path,
+                    )
+                else:
+                    concatenate_video_files(
+                        [latest_path, ep_path],
+                        latest_path,
+                    )
 
         # Remove temporary directory
         shutil.rmtree(str(ep_path.parent))
