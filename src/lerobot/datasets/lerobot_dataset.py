@@ -1089,6 +1089,7 @@ class LeRobotDataset(torch.utils.data.Dataset):
         self.episode_buffer["task"].append(frame.pop("task"))  # Remove task from frame after processing
 
         # Add frame features to episode_buffer
+        print(f"frame keys: {frame.keys()}")
         for key in frame:
             if key not in self.features:
                 raise ValueError(
@@ -1101,6 +1102,7 @@ class LeRobotDataset(torch.utils.data.Dataset):
                 )
                 if frame_index == 0:
                     img_path.parent.mkdir(parents=True, exist_ok=True)
+                print(f"Saving image to {img_path}")
                 self._save_image(frame[key], img_path)
                 self.episode_buffer[key].append(str(img_path))
             else:
