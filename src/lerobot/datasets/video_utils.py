@@ -626,7 +626,7 @@ def encode_video_frames_gst(
     # 查找输入图片文件，用于获取尺寸
     input_files = sorted(glob.glob(str(imgs_dir / "frame-[0-9][0-9][0-9][0-9][0-9][0-9].jpeg")))
     if not input_files:
-        raise FileNotFoundError(f"在目录 {imgs_dir} 中未找到匹配 'frame_xxxxxx.jpeg' 格式的图片。")
+        raise FileNotFoundError(f"在目录 {imgs_dir} 中未找到匹配 'frame-xxxxxx.jpeg' 格式的图片。")
 
     # 2. 从第一张图片获取视频帧的宽度和高度
     with Image.open(input_files[0]) as img:
@@ -645,7 +645,7 @@ def encode_video_frames_gst(
         warnings.warn("参数 'log_level' 被忽略。GStreamer 的日志级别由 GST_DEBUG 等环境变量控制。")
 
     # 4. 构建 GStreamer 命令行字符串
-    location = os.path.join(str(imgs_dir), "frame_%06d.jpeg")
+    location = os.path.join(str(imgs_dir), "frame-%06d.jpeg")
     
     # 根据用户提供的命令设置码率
     bitrate = 5000000  # 5000 kbps
