@@ -1095,7 +1095,7 @@ class LeRobotDataset(torch.utils.data.Dataset):
                 raise ValueError(
                     f"An element of the frame is not in the features. '{key}' not in '{self.features.keys()}'."
                 )
-
+            
             if self.features[key]["dtype"] in ["image", "video"]:
                 img_path = self._get_image_file_path(
                     episode_index=self.episode_buffer["episode_index"], image_key=key, frame_index=frame_index
@@ -1106,6 +1106,7 @@ class LeRobotDataset(torch.utils.data.Dataset):
                 self._save_image(frame[key], img_path)
                 self.episode_buffer[key].append(str(img_path))
             else:
+                print(f"appending {key}")
                 self.episode_buffer[key].append(frame[key])
 
         self.episode_buffer["size"] += 1
