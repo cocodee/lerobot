@@ -358,10 +358,12 @@ def record_loop(
         # TODO(steven, pepijn, adil): we should use a pipeline step to clip the action, so the sent action is the action that we input to the robot.
         _sent_action = robot.send_action(robot_action_to_send)
 
+        logging.info(f"Write to dataset")
         # Write to dataset
         if dataset is not None:
             action_frame = build_dataset_frame(dataset.features, action_values, prefix=ACTION)
             frame = {**observation_frame, **action_frame, "task": single_task}
+            logging.info(f"add_frame")
             dataset.add_frame(frame)
 
         if display_data:
