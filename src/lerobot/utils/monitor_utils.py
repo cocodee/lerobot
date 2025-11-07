@@ -1,7 +1,7 @@
 import time
 from functools import wraps
 import logging
-logger = logging.get_logger(prefix="monitor_utils")
+logger = logging.getLogger(__name__)
 def monitor_performance(func):
     """
     一个监控函数性能的装饰器，会打印调用频率、间隔和时长。
