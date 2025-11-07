@@ -129,6 +129,8 @@ class SupreRobotHardwareManager:
         for instance in self._hardware_instances:
             instance.deactivate()
         print("All hardware deactivated.")
+
+    @monitor_performance
     def read(self) ->  List[float]:
         """
         从所有硬件读取数据，并聚合成全局状态向量。
@@ -159,6 +161,8 @@ class SupreRobotHardwareManager:
                 self.positions[global_index] = pos if pos is not None else self.positions[global_index] # 保持旧值如果读取失败                
         
         return list(self.positions)
+    
+    @monitor_performance
     def write(self, command_positions: List[float]):
         """
         接收全局指令向量，并分发到各个硬件。

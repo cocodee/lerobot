@@ -6,6 +6,9 @@ import datetime
 import eu_motor_py 
 from .hardware_interface import HardwareInterface
 from lerobot.utils.monitor_utils import monitor_performance
+import logging
+
+logger = logging.getLogger(__name__)
 
 class EyouMotorHardware(HardwareInterface):
     """
@@ -38,7 +41,7 @@ class EyouMotorHardware(HardwareInterface):
         初始化硬件接口。
         【已更新以从 'parameters' 中读取 start_enabled】
         """
-        print("Initializing EyouMotorHardware...")
+        logger.info("Initializing EyouMotorHardware...")
         self._config = config
         
         try:
@@ -161,6 +164,7 @@ class EyouMotorHardware(HardwareInterface):
 
         print("Activation successful.")
         return True
+    
     def read(self) -> list[float | None]:
         """
         更新内部状态并返回一份新的状态拷贝。
@@ -198,7 +202,7 @@ class EyouMotorHardware(HardwareInterface):
             if self.hw_start_enabled_[i]:
                 result = motor.send_csp_target_position(self.hw_commands_positions_[i],0, False)
                 if result != 0:
-                    print(f"Error: Failed to send command to joint {self.joint_names_[i]}")
+                    logger.warning(f"Error: Failed to send command to joint {self.joint_names_[i]}")
                 if i!=0 and i%6==0:
                     self.busy_wait(0.001)
                 any_motor_enabled = True
@@ -218,7 +222,7 @@ class EyouMotorHardware(HardwareInterface):
             
         now = time.monotonic()
         if (now - self._last_log_time) >= 1.0:
-            print(f"Max write() duration in last second: {self._max_write_duration_us:.0f} us")
+            logger.warning(f"Max write() duration in last second: {self._max_write_duration_us:.0f} us")
             self._max_write_duration_us = 0.0
             self._last_log_time = now
 

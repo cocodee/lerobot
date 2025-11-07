@@ -3,7 +3,10 @@ import jodell_gripper_py # 导入 pybind11 生成的模块
 import threading # 导入 threading 模块
 from ..eyou.hardware_interface import HardwareInterface
 from lerobot.utils.monitor_utils import monitor_performance
+import logging
 # --- 辅助函数 (保持不变) ---
+
+logger = logging.getLogger(__name__)
 
 def convert_to_gripper_position(position_float: float) -> int:
     """将 0.0-1.0 范围的浮点数位置转换为 0-255 的整数。"""
@@ -188,6 +191,7 @@ class JodellGripperHardware(HardwareInterface):
             # 在完成一轮完整的轮询后，稍作休息
             time.sleep(self._polling_interval_seconds)
 
+    @monitor_performance
     def read(self) -> list[float | None]:
         """
         *** 优化后的非阻塞读取 ***
@@ -198,7 +202,7 @@ class JodellGripperHardware(HardwareInterface):
         with self._state_lock:
             # 返回一个副本，防止外部代码意外修改内部状态
             positions = self.hw_states_position.copy()
-            print(f"read time: {time.perf_counter() - start_t}")
+            logger.info(f"read time: {time.perf_counter() - start_t}")
             return positions
     # --- MODIFICATION ---
     def write(self, commands: list[float | None]) -> bool:
