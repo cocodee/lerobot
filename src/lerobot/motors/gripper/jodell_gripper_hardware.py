@@ -54,7 +54,7 @@ class JodellGripperHardware(HardwareInterface):
             baud_rate = self.config.get("baud_rate", 115200)
             self.default_speed_percent = self.config.get("default_speed_percent", 50)
             self.default_force_percent = self.config.get("default_torque_percent", 50)
-            self._polling_interval_seconds = self.config.get("polling_interval_seconds", 0.01)
+            self._polling_interval_seconds = self.config.get("polling_interval_seconds", 0.02)
                         
             # 2. 验证并解析 "joints"
             if "joints" not in self.config or not self.config["joints"]:
