@@ -163,7 +163,7 @@ class SupreRobotFollower(Robot):
         positions = self._hardware_manager.read()
         
         obs_dict = {f"{self.observation_joint_names[i]}.pos": positions[i] for i in range(len(self.observation_joint_names))}
-        print("obs_dict: ", obs_dict)
+        #print("obs_dict: ", obs_dict)
         for cam_key, cam in self.cameras.items():
             start = time.perf_counter()
             obs_dict[cam_key] = cam.async_read()
@@ -179,7 +179,7 @@ class SupreRobotFollower(Robot):
         positions = self._hardware_manager.read()
         
         pos_dict = {f"{self.observation_joint_names[i]}": positions[i] for i in range(len(self.observation_joint_names))}
-        print("current_pos: ", pos_dict)
+        #print("current_pos: ", pos_dict)
         return {self.observation_joint_names[i]: positions[i] for i in range(len(self.observation_joint_names))}
 
     def _prepare_and_clamp_action(self, action: dict[str, Any]) -> Tuple[List[float], Dict[str, Any]]:
@@ -307,7 +307,7 @@ class SupreRobotFollower(Robot):
         logger.debug(f"Sending action: {action}")
         # 1. 调用辅助方法来完成所有的计算和安全检查
         final_target_positions, final_action_dict = self._prepare_and_clamp_action(action)
-        print("final_target_positions: ",final_target_positions)
+        # print("final_target_positions: ",final_target_positions)
         # 2. 将计算结果发送到硬件
         # 2. 根据是否启用插值，选择不同的发送方式
 
