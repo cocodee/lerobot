@@ -1,6 +1,7 @@
 import time
 from functools import wraps
-
+import logging
+logger = logging.get_logger(prefix="monitor_utils")
 def monitor_performance(func):
     """
     一个监控函数性能的装饰器，会打印调用频率、间隔和时长。
@@ -40,7 +41,7 @@ def monitor_performance(func):
         avg_duration = wrapper.total_duration / wrapper.call_count
 
         # --- 6. 打印报告 ---
-        print(f"--- Function '{func.__qualname__} ' Monitor --- Call #{wrapper.call_count} Duration: {duration:.6f} s Interval: {interval:.6f} s Frequency: {frequency:.2f} Hz Average Duration: {avg_duration:.6f} s")
+        logging.info(f"--- Function '{func.__qualname__} ' Monitor --- Call #{wrapper.call_count} Duration: {duration:.6f} s Interval: {interval:.6f} s Frequency: {frequency:.2f} Hz Average Duration: {avg_duration:.6f} s")
 
         return result
     
