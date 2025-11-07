@@ -235,13 +235,16 @@ def record_loop(
             events["exit_early"] = False
             break
 
+        start_t = time.perf_counter()
         observation = robot.get_observation()
-
+        print(f"get_observation took {time.perf_counter() - start_t:.6f}s")
         if policy is not None or dataset is not None:
             #print(f"Observation: {observation}")
             #print(f"dataset.features: {dataset.features}")
+            start_t = time.perf_counter()
             observation_frame = build_dataset_frame(dataset.features, observation, prefix="observation")
-
+            print(f"build_dataset_frame took {time.perf_counter() - start_t:.6f}s")
+            
         if policy is not None:
             action_values = predict_action(
                 observation_frame,
@@ -253,7 +256,10 @@ def record_loop(
             )
             action = {key: action_values[i].item() for i, key in enumerate(robot.action_features)}
         elif policy is None and isinstance(teleop, Teleoperator):
+            # get action time consuming
+            start_t = time.perf_counter()
             action = teleop.get_action()
+            print(f"get action time: {time.perf_counter() - start_t:.6f}")
         elif policy is None and isinstance(teleop, list):
             # TODO(pepijn, steven): clean the record loop for use of multiple robots (possibly with pipeline)
             arm_action = teleop_arm.get_action()
