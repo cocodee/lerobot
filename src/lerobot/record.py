@@ -227,6 +227,7 @@ def record_loop(
 
     timestamp = 0
     start_episode_t = time.perf_counter()
+    frame_count:int = 0
     while timestamp < control_time_s:
         start_loop_t = time.perf_counter()
 
@@ -288,7 +289,8 @@ def record_loop(
         busy_wait(1 / fps - dt_s)
         print(f"sleep time: {1/fps - dt_s}")
         timestamp = time.perf_counter() - start_episode_t
-        print(f"Time: {timestamp:.2f}s")
+        frame_count += 1
+        print(f"Time: {timestamp:.2f}s,frame count: {frame_count}")
 
 
 @parser.wrap()
