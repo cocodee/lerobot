@@ -200,6 +200,7 @@ def record_loop(
     single_task: str | None = None,
     display_data: bool = False,
 ):
+    print(f"control_time_s: {control_time_s}, fps: {fps}")
     if dataset is not None and dataset.fps != fps:
         raise ValueError(f"The dataset fps should be equal to requested fps ({dataset.fps} != {fps}).")
 
@@ -287,6 +288,7 @@ def record_loop(
         busy_wait(1 / fps - dt_s)
         print(f"sleep time: {1/fps - dt_s}")
         timestamp = time.perf_counter() - start_episode_t
+        print(f"Time: {timestamp:.2f}s")
 
 
 @parser.wrap()
