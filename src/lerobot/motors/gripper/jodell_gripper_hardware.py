@@ -1,5 +1,6 @@
 import time
 import jodell_gripper_py # 导入 pybind11 生成的模块
+import threading # 导入 threading 模块
 from ..eyou.hardware_interface import HardwareInterface
 from lerobot.utils.monitor_utils import monitor_performance
 # --- 辅助函数 (保持不变) ---
@@ -38,13 +39,12 @@ class JodellGripperHardware(HardwareInterface):
         self.hw_commands_position = []
         self.hw_states_position = []
 
-        # --- 新增：缓存相关变量 ---
-        self._cache_duration_seconds = 0.034  # 默认缓存50毫秒
-        self._last_read_time = 0.0           # 上次真实读取的时间戳
-        self._cached_positions = []          # 缓存的位置数据
-
+        # --- 新增：线程相关成员 ---
+        self._polling_thread = None
+        self._stop_event = threading.Event()
+        self._state_lock = threading.Lock() # 用于保护 hw_states_position 的读写
+        self._polling_interval_seconds = 0.01 # 后台轮询所有夹爪的间隔，可根据总线速度调整
     def init(self, config: dict) -> bool:
-        # ... 此方法保持不变 ...
         print("JodellGripperHardware: Running init...")
         self.config = config
 
@@ -54,8 +54,7 @@ class JodellGripperHardware(HardwareInterface):
             baud_rate = self.config.get("baud_rate", 115200)
             self.default_speed_percent = self.config.get("default_speed_percent", 50)
             self.default_force_percent = self.config.get("default_torque_percent", 50)
-            # --- 新增：从配置中读取缓存时间 ---
-            self._cache_duration_seconds = self.config.get("cache_duration_seconds", 0.034)
+            self._polling_interval_seconds = self.config.get("polling_interval_seconds", 0.01)
                         
             # 2. 验证并解析 "joints"
             if "joints" not in self.config or not self.config["joints"]:
@@ -65,10 +64,10 @@ class JodellGripperHardware(HardwareInterface):
             num_joints = len(self.config["joints"])
             self.slave_ids = [0] * num_joints
             self.hw_commands_position = [None] * num_joints
-            self.hw_states_position = [0.0] * num_joints
-
-            # --- 新增：初始化缓存列表 ---
-            self._cached_positions = [None] * num_joints
+            
+            # 初始化状态向量
+            with self._state_lock:
+                self.hw_states_position = [0.0] * num_joints
 
             for i, joint_info in enumerate(self.config["joints"]):
                 slave_id = int(joint_info["parameters"]["slave_id"])
@@ -116,7 +115,13 @@ class JodellGripperHardware(HardwareInterface):
                     print(f"Error: Failed to enable gripper with slave_id {self.slave_ids[i]}.")
                     self.deactivate()
                     return False
-            
+
+            # --- 优化点：启动后台轮询线程 ---
+            self._stop_event.clear()
+            self._polling_thread = threading.Thread(target=self._polling_loop, daemon=True)
+            self._polling_thread.start()
+            print("Background polling thread started.")
+
             print("All grippers activated successfully.")
             return True
 
@@ -129,6 +134,16 @@ class JodellGripperHardware(HardwareInterface):
     def deactivate(self) -> bool:
         # ... 此方法保持不变 ...
         print("JodellGripperHardware: Deactivating...")
+        if self._polling_thread:
+            print("Stopping background polling thread...")
+            self._stop_event.set()
+            # 等待线程结束，设置一个超时以防万一
+            self._polling_thread.join(timeout=1.0) 
+            if self._polling_thread.is_alive():
+                print("Warning: Polling thread did not terminate gracefully.")
+            self._polling_thread = None
+            print("Polling thread stopped.")
+
         for i, client in enumerate(self.gripper_clients):
             try:
                 if not client.disable():
@@ -144,37 +159,44 @@ class JodellGripperHardware(HardwareInterface):
             print("Bus disconnected.")
             
         return True    
+    def _polling_loop(self):
+        """
+        后台线程执行的函数。它在一个循环中持续读取所有夹爪的状态。
+        """
+        while not self._stop_event.is_set():
+            if not self.gripper_clients:
+                # 如果尚未激活或已停用，则短暂休眠
+                time.sleep(0.1)
+                continue
+
+            # 创建一个局部变量来存储本次轮询的结果
+            local_states = [None] * len(self.slave_ids)
+            for i, client in enumerate(self.gripper_clients):
+                try:
+                    # 这部分仍然是阻塞的，但它在后台线程中执行
+                    status = client.get_status()
+                    local_states[i] = convert_from_gripper_position(status.position)
+                except RuntimeError as e:
+                    # 在后台打印警告，不影响主线程
+                    # print(f"Polling Warning: Failed to read from slave {self.slave_ids[i]}: {e}")
+                    local_states[i] = None
+            
+            # --- 关键：使用锁来安全地更新共享状态 ---
+            with self._state_lock:
+                self.hw_states_position = local_states
+            
+            # 在完成一轮完整的轮询后，稍作休息
+            time.sleep(self._polling_interval_seconds)
+
     def read(self) -> list[float | None]:
         """
-        从所有夹爪读取当前位置。
-        此方法实现了缓存机制：如果距离上次真实读取的时间小于 cache_duration_seconds，
-        则直接返回缓存的数据，否则执行硬件读取并更新缓存。
+        *** 优化后的非阻塞读取 ***
+        从内存中快速获取由后台线程更新的最新夹爪位置。
+        这个函数几乎是瞬间完成的。
         """
-        now = time.monotonic()
-        
-        # 1. 检查缓存是否有效
-        if (now - self._last_read_time) < self._cache_duration_seconds:
-            # 缓存命中，直接返回缓存值
-            return self._cached_positions
-
-        # 2. 缓存失效，执行硬件读取
-        if not self.gripper_clients:
-            return [None] * len(self.slave_ids)
-
-        for i, client in enumerate(self.gripper_clients):
-            try:
-                status = client.get_status()
-                self.hw_states_position[i] = convert_from_gripper_position(status.position)
-            except RuntimeError as e:
-                print(f"Warning: Failed to read status from slave_id {self.slave_ids[i]}: {e}")
-                self.hw_states_position[i] = None
-        
-        # 3. 更新缓存和时间戳
-        self._cached_positions = self.hw_states_position.copy() # 使用 .copy() 是个好习惯
-        self._last_read_time = now
-        
-        return self.hw_states_position
-    
+        with self._state_lock:
+            # 返回一个副本，防止外部代码意外修改内部状态
+            return self.hw_states_position.copy()
     # --- MODIFICATION ---
     def write(self, commands: list[float | None]) -> bool:
         """
