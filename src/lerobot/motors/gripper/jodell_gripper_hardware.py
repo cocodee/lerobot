@@ -202,7 +202,7 @@ class JodellGripperHardware(HardwareInterface):
         with self._state_lock:
             # 返回一个副本，防止外部代码意外修改内部状态
             positions = self.hw_states_position.copy()
-            logger.info(f"read time: {time.perf_counter() - start_t}")
+            logger.info(f"read time: {time.perf_counter() - start_t:.6f}")
             return positions
     # --- MODIFICATION ---
     def write(self, commands: list[float | None]) -> bool:

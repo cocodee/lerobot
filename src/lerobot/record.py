@@ -116,7 +116,7 @@ from lerobot.utils.utils import (
 )
 from lerobot.utils.visualization_utils import _init_rerun, log_rerun_data
 
-
+logger = logging.getLogger(__name__)
 @dataclass
 class DatasetRecordConfig:
     # Dataset identifier. By convention it should match '{hf_username}/{dataset_name}' (e.g. `lerobot/test`).
@@ -200,7 +200,7 @@ def record_loop(
     single_task: str | None = None,
     display_data: bool = False,
 ):
-    print(f"control_time_s: {control_time_s}, fps: {fps}")
+    logger.info(f"control_time_s: {control_time_s}, fps: {fps}")
     if dataset is not None and dataset.fps != fps:
         raise ValueError(f"The dataset fps should be equal to requested fps ({dataset.fps} != {fps}).")
 
@@ -237,13 +237,13 @@ def record_loop(
 
         start_t = time.perf_counter()
         observation = robot.get_observation()
-        print(f"get_observation took {time.perf_counter() - start_t:.6f}s")
+        logger.info(f"get_observation took {time.perf_counter() - start_t:.6f}s")
         if policy is not None or dataset is not None:
             #print(f"Observation: {observation}")
             #print(f"dataset.features: {dataset.features}")
             start_t = time.perf_counter()
             observation_frame = build_dataset_frame(dataset.features, observation, prefix="observation")
-            print(f"build_dataset_frame took {time.perf_counter() - start_t:.6f}s")
+            logger.info(f"build_dataset_frame took {time.perf_counter() - start_t:.6f}s")
             
         if policy is not None:
             action_values = predict_action(
@@ -259,7 +259,7 @@ def record_loop(
             # get action time consuming
             start_t = time.perf_counter()
             action = teleop.get_action()
-            print(f"get action time: {time.perf_counter() - start_t:.6f}")
+            logger.info(f"get action time: {time.perf_counter() - start_t:.6f}")
         elif policy is None and isinstance(teleop, list):
             # TODO(pepijn, steven): clean the record loop for use of multiple robots (possibly with pipeline)
             arm_action = teleop_arm.get_action()
@@ -293,10 +293,10 @@ def record_loop(
 
         dt_s = time.perf_counter() - start_loop_t
         busy_wait(1 / fps - dt_s)
-        print(f"sleep time: {1/fps - dt_s}")
+        logger.info(f"sleep time: {1/fps - dt_s}")
         timestamp = time.perf_counter() - start_episode_t
         frame_count += 1
-        print(f"Time: {timestamp:.2f}s,frame count: {frame_count}")
+        logger.info(f"Time: {timestamp:.2f}s,frame count: {frame_count}")
 
 
 @parser.wrap()
