@@ -178,7 +178,7 @@ class JodellGripperHardware(HardwareInterface):
                     local_states[i] = convert_from_gripper_position(status.position)
                 except RuntimeError as e:
                     # 在后台打印警告，不影响主线程
-                    # print(f"Polling Warning: Failed to read from slave {self.slave_ids[i]}: {e}")
+                    print(f"Polling Warning: Failed to read from slave {self.slave_ids[i]}: {e}")
                     local_states[i] = None
             
             # --- 关键：使用锁来安全地更新共享状态 ---
@@ -194,9 +194,12 @@ class JodellGripperHardware(HardwareInterface):
         从内存中快速获取由后台线程更新的最新夹爪位置。
         这个函数几乎是瞬间完成的。
         """
+        start_t = time.perf_counter()
         with self._state_lock:
             # 返回一个副本，防止外部代码意外修改内部状态
-            return self.hw_states_position.copy()
+            positions = self.hw_states_position.copy()
+            print(f"read time: {time.perf_counter() - start_t}")
+            return positions
     # --- MODIFICATION ---
     def write(self, commands: list[float | None]) -> bool:
         """
