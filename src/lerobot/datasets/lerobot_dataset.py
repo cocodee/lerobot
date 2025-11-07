@@ -775,7 +775,6 @@ class LeRobotDataset(torch.utils.data.Dataset):
             self.image_writer.save_image(image=image, fpath=fpath)
 
     def add_frame(self, frame: dict, task: str, timestamp: float | None = None) -> None:
-        print(f"Adding frame to episode {self.episode_index}")
         """
         This function only adds the frame to the episode_buffer. Apart from images — which are written in a
         temporary directory — nothing is written to disk. To save those frames, the 'save_episode()' method
@@ -810,7 +809,6 @@ class LeRobotDataset(torch.utils.data.Dataset):
                 img_path = self._get_image_file_path(
                     episode_index=self.episode_buffer["episode_index"], image_key=key, frame_index=frame_index
                 )
-                print(f"Writing image {img_path}")
                 if frame_index == 0:
                     img_path.parent.mkdir(parents=True, exist_ok=True)
                 self._save_image(frame[key], img_path)
