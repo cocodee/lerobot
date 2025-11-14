@@ -48,7 +48,7 @@ class JodellGripperHardware(HardwareInterface):
         # --- 新增：缓存相关变量 ---
         self._cache_duration_seconds = 0.034  # 默认缓存50毫秒
         self._last_read_time = 0.0           # 上次真实读取的时间戳
-        self._cached_positions = []          # 缓存的位置数据
+        self._cached_values = []          # 缓存的位置数据
 
     def init(self, config: dict) -> bool:
         # ... 此方法保持不变 ...
@@ -76,7 +76,7 @@ class JodellGripperHardware(HardwareInterface):
             self.hw_states_force = [0.0] * num_joints
 
             # --- 新增：初始化缓存列表 ---
-            self._cached_positions = [None] * num_joints
+            self._cached_values = [(None,None)] * num_joints
 
             for i, joint_info in enumerate(self.config["joints"]):
                 slave_id = int(joint_info["parameters"]["slave_id"])
@@ -163,7 +163,7 @@ class JodellGripperHardware(HardwareInterface):
         # 1. 检查缓存是否有效
         if (now - self._last_read_time) < self._cache_duration_seconds:
             # 缓存命中，直接返回缓存值
-            return self._cached_positions
+            return self._cached_values
 
         # 2. 缓存失效，执行硬件读取
         if not self.gripper_clients:
@@ -180,7 +180,7 @@ class JodellGripperHardware(HardwareInterface):
                 self.hw_states_force[i] = [0.0]*len(self.hw_states_force[i])
         
         # 3. 更新缓存和时间戳
-        self._cached_positions = self.hw_states_position.copy() # 使用 .copy() 是个好习惯
+        self._cached_values = list(zip(self.hw_states_position, self.hw_states_force)) # 使用 .copy() 是个好习惯
         self._last_read_time = now
         
         return list(zip(self.hw_states_position, self.hw_states_force))
