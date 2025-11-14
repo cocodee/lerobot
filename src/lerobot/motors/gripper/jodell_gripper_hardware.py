@@ -43,7 +43,7 @@ class JodellGripperHardware(HardwareInterface):
         # 模仿 ros2_control 的状态和命令向量
         self.hw_commands_position = []
         self.hw_states_position = []
-        self.hw_state_force = []    
+        self.hw_states_force = []    
 
         # --- 新增：缓存相关变量 ---
         self._cache_duration_seconds = 0.034  # 默认缓存50毫秒
@@ -73,7 +73,7 @@ class JodellGripperHardware(HardwareInterface):
             self.slave_ids = [0] * num_joints
             self.hw_commands_position = [None] * num_joints
             self.hw_states_position = [0.0] * num_joints
-            self.hw_state_force = [0.0] * num_joints
+            self.hw_states_force = [0.0] * num_joints
 
             # --- 新增：初始化缓存列表 ---
             self._cached_positions = [None] * num_joints
@@ -173,17 +173,17 @@ class JodellGripperHardware(HardwareInterface):
             try:
                 status = client.get_status()
                 self.hw_states_position[i] = convert_from_gripper_position(status.position)
-                self.hw_state_force[i] = convert_from_gripper_force(status.force_current)
+                self.hw_states_force[i] = convert_from_gripper_force(status.force_current)
             except RuntimeError as e:
                 print(f"Warning: Failed to read status from slave_id {self.slave_ids[i]}: {e}")
                 self.hw_states_position[i] = [0.0]*len(self.hw_states_position[i])
-                self.hw_state_force[i] = [0.0]*len(self.hw_state_force[i])
+                self.hw_states_force[i] = [0.0]*len(self.hw_states_force[i])
         
         # 3. 更新缓存和时间戳
         self._cached_positions = self.hw_states_position.copy() # 使用 .copy() 是个好习惯
         self._last_read_time = now
         
-        return list(zip(self.hw_states_positions, self.hw_states_force))
+        return list(zip(self.hw_states_position, self.hw_states_force))
     
     # --- MODIFICATION ---
     def write(self, commands: list[float | None]) -> bool:
