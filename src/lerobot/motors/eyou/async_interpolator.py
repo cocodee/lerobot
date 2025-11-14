@@ -1,7 +1,7 @@
 import queue
 import threading
 import time
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 
 # 假设 HardwareInterface 已定义
 from .hardware_interface import HardwareInterface
@@ -89,7 +89,7 @@ class AsyncInterpolator(HardwareInterface):
         self._base_hardware.deactivate()
         print("AsyncInterpolator: Deactivated.")
 
-    def read(self) -> List[float | None]:
+    def read(self) -> List[Tuple[Optional[float], Optional[float]]]
         # 移除了不必要的 print 语句以减少控制台输出
         return self._base_hardware.read()
 

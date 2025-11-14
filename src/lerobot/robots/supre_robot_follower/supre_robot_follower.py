@@ -160,8 +160,10 @@ class SupreRobotFollower(Robot):
         if not self.is_connected:
             raise RuntimeError("Robot is not connected.")
         
-        positions = self._hardware_manager.read()
-        
+        hd_readings = self._hardware_manager.read()
+        positions = hd_readings[0]
+        forces = hd_readings[1]
+        print("forces: ", forces)
         obs_dict = {f"{self.observation_joint_names[i]}.pos": positions[i] for i in range(len(self.observation_joint_names))}
         print("obs_dict: ", obs_dict)
         for cam_key, cam in self.cameras.items():
@@ -176,7 +178,7 @@ class SupreRobotFollower(Robot):
         if not self.is_connected:
             raise RuntimeError("Robot is not connected.")
         
-        positions = self._hardware_manager.read()
+        positions = self._hardware_manager.read()[0]
         
         pos_dict = {f"{self.observation_joint_names[i]}": positions[i] for i in range(len(self.observation_joint_names))}
         print("current_pos: ", pos_dict)

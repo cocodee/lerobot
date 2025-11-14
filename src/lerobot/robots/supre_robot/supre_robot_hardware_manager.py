@@ -46,6 +46,8 @@ class SupreRobotHardwareManager:
         # 全局状态和指令向量
         self.positions = [0.0] * self.num_joints
         self.velocities = [0.0] * self.num_joints
+        self.forces = [0.0] * self.num_joints
+
         self.commands = [0.0] * self.num_joints
 
         self.use_interpolation = use_interpolation
@@ -129,7 +131,7 @@ class SupreRobotHardwareManager:
         for instance in self._hardware_instances:
             instance.deactivate()
         print("All hardware deactivated.")
-    def read(self) ->  List[float]:
+    def read(self) ->  Tuple[List[float],List[float]]:
         """
         从所有硬件读取数据，并聚合成全局状态向量。
         """
@@ -147,18 +149,25 @@ class SupreRobotHardwareManager:
             # 根据硬件类型适配不同的返回值
             if isinstance(instance, EyouMotorHardware):
                 # EyouMotorHardware.read() -> Tuple[List[float], List[float]]
-                self.positions[global_index] = result[hw_index]
+                self.positions[global_index] = result[hw_index][0]
                 self.velocities[global_index] = 0.0
+                self.forces[global_index] = result[hw_index][1]
+
             elif isinstance(instance, JodellGripperHardware):
                 # JodellGripperHardware.read() -> list[float | None]
-                pos = result[hw_index]
+                pos = result[hw_index][0]
+                force = result[hw_index][1]
                 self.positions[global_index] = pos if pos is not None else self.positions[global_index] # 保持旧值如果读取失败
                 self.velocities[global_index] = 0.0 # 夹爪没有速度反馈
+                self.forces[global_index] = force if force is not None else self.forces[global_index]
             else:
                 pos = result[hw_index]
+                force = result[hw_index][1]
+                self.velocities[global_index] = 0.0
                 self.positions[global_index] = pos if pos is not None else self.positions[global_index] # 保持旧值如果读取失败                
-        
-        return list(self.positions)
+                self.forces[global_index] = force if force is not None else self.forces[global_index]
+       
+        return (list(self.positions),list(self.forces))
     def write(self, command_positions: List[float]):
         """
         接收全局指令向量，并分发到各个硬件。

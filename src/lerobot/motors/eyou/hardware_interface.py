@@ -16,11 +16,9 @@ class HardwareInterface(ABC):
         pass
 
     @abstractmethod
-    def read(self) -> list[float | None]:
+    def read(self) -> List[Tuple[Optional[float], Optional[float]]]:
         """从硬件读取所有关节的当前位置。"""
         pass
-
-
     @abstractmethod
     def write(self, commands_positions: List[float]):
         """向硬件发送目标位置指令。"""

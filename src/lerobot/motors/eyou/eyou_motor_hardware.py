@@ -26,6 +26,8 @@ class EyouMotorHardware(HardwareInterface):
         # --- 恢复内部状态和指令存储 ---
         self.hw_states_positions_: List[float] = []
         self.hw_states_velocities_: List[float] = []
+        self.hw_states_torques_: List[float] = []
+
         self.hw_commands_positions_: List[float] = []
         self.hw_start_enabled_: List[bool] = []
         
@@ -61,6 +63,8 @@ class EyouMotorHardware(HardwareInterface):
             num_joints = len(self._config["joints"])
             self.hw_states_positions_ = [0.0] * num_joints
             self.hw_states_velocities_ = [0.0] * num_joints
+            self.hw_states_torques_ = [0.0] * num_joints
+
             self.hw_commands_positions_ = [0.0] * num_joints
             self.hw_start_enabled_ = [True] * num_joints # 默认全部启用
 
@@ -127,8 +131,12 @@ class EyouMotorHardware(HardwareInterface):
             for i, motor in enumerate(self.motor_nodes_):
                 pos = motor.get_position()
                 vel = motor.get_velocity()
+                torque = motor.get_torque()
+
                 self.hw_states_positions_[i] = pos
                 self.hw_states_velocities_[i] = vel
+                self.hw_states_torques_[i] = float(torque)
+
                 self.hw_commands_positions_[i] = pos # 防止启动时跳动
                 print(f"Initial state for {self.joint_names_[i]}: Pos={pos:.2f}, Vel={vel:.2f}")
 
@@ -161,7 +169,7 @@ class EyouMotorHardware(HardwareInterface):
 
         print("Activation successful.")
         return True
-    def read(self) -> list[float | None]:
+    def read(self) -> List[Tuple[Optional[float], Optional[float]]]:
         """
         更新内部状态并返回一份新的状态拷贝。
         
@@ -173,10 +181,10 @@ class EyouMotorHardware(HardwareInterface):
             if feedback.last_update_time > datetime.timedelta(0):
                 self.hw_states_positions_[i] = feedback.position_deg
                 self.hw_states_velocities_[i] = feedback.velocity_dps
+                self.hw_states_torques_[i] = float(feedback.torque_milli)
         
         # 返回内部状态的拷贝，防止外部代码意外修改
-        return list(self.hw_states_positions_)
-
+        return list(zip(self.hw_states_positions_, self.hw_states_torques_))
     def busy_wait(self, wait_time_s):
         end_time = time.perf_counter() + wait_time_s
         while time.perf_counter() < end_time:

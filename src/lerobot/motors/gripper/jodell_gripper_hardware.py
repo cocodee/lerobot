@@ -2,6 +2,8 @@ import time
 import jodell_gripper_py # 导入 pybind11 生成的模块
 from ..eyou.hardware_interface import HardwareInterface
 from lerobot.utils.monitor_utils import monitor_performance
+from typing import List, Dict, Any, Tuple, Optional
+
 # --- 辅助函数 (保持不变) ---
 
 def convert_to_gripper_position(position_float: float) -> int:
@@ -12,6 +14,10 @@ def convert_to_gripper_position(position_float: float) -> int:
 def convert_from_gripper_position(position_uint8: int) -> float:
     """将 0-255 的整数位置转换为 0.0-1.0 范围的浮点数。"""
     return float(position_uint8) / 255.0
+
+def convert_from_gripper_force(force_uint8: int) -> float:
+    """将 0-255 的整数位置转换为 0.0-1.0 范围的浮点数。"""
+    return float(force_uint8) / 255.0
 
 def convert_to_gripper_percentage(percentage: int) -> int:
     """将 0-100 的百分比转换为 0-255 的整数。"""
@@ -37,6 +43,7 @@ class JodellGripperHardware(HardwareInterface):
         # 模仿 ros2_control 的状态和命令向量
         self.hw_commands_position = []
         self.hw_states_position = []
+        self.hw_state_force = []    
 
         # --- 新增：缓存相关变量 ---
         self._cache_duration_seconds = 0.034  # 默认缓存50毫秒
@@ -66,6 +73,7 @@ class JodellGripperHardware(HardwareInterface):
             self.slave_ids = [0] * num_joints
             self.hw_commands_position = [None] * num_joints
             self.hw_states_position = [0.0] * num_joints
+            self.hw_state_force = [0.0] * num_joints
 
             # --- 新增：初始化缓存列表 ---
             self._cached_positions = [None] * num_joints
@@ -144,7 +152,7 @@ class JodellGripperHardware(HardwareInterface):
             print("Bus disconnected.")
             
         return True    
-    def read(self) -> list[float | None]:
+    def read(self) -> List[Tuple[Optional[float], Optional[float]]]:
         """
         从所有夹爪读取当前位置。
         此方法实现了缓存机制：如果距离上次真实读取的时间小于 cache_duration_seconds，
@@ -165,15 +173,17 @@ class JodellGripperHardware(HardwareInterface):
             try:
                 status = client.get_status()
                 self.hw_states_position[i] = convert_from_gripper_position(status.position)
+                self.hw_state_force[i] = convert_from_gripper_force(status.force_current)
             except RuntimeError as e:
                 print(f"Warning: Failed to read status from slave_id {self.slave_ids[i]}: {e}")
-                self.hw_states_position[i] = None
+                self.hw_states_position[i] = [0.0]*len(self.hw_states_position[i])
+                self.hw_state_force[i] = [0.0]*len(self.hw_state_force[i])
         
         # 3. 更新缓存和时间戳
         self._cached_positions = self.hw_states_position.copy() # 使用 .copy() 是个好习惯
         self._last_read_time = now
         
-        return self.hw_states_position
+        return list(zip(self.hw_states_positions, self.hw_states_force))
     
     # --- MODIFICATION ---
     def write(self, commands: list[float | None]) -> bool:
