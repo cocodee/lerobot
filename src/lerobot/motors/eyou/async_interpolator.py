@@ -89,7 +89,7 @@ class AsyncInterpolator(HardwareInterface):
         self._base_hardware.deactivate()
         print("AsyncInterpolator: Deactivated.")
 
-    def read(self) -> List[Tuple[Optional[float], Optional[float]]]
+    def read(self) -> List[Tuple[Optional[float], Optional[float]]]:
         # 移除了不必要的 print 语句以减少控制台输出
         return self._base_hardware.read()
 
