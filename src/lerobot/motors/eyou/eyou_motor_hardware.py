@@ -181,7 +181,7 @@ class EyouMotorHardware(HardwareInterface):
             if feedback.last_update_time > datetime.timedelta(0):
                 self.hw_states_positions_[i] = feedback.position_deg
                 self.hw_states_velocities_[i] = feedback.velocity_dps
-                self.hw_states_torques_[i] = float(feedback.torque_milli)/100.0
+                self.hw_states_torques_[i] = float(feedback.torque_milli)/1000.0
         
         # 返回内部状态的拷贝，防止外部代码意外修改
         return list(zip(self.hw_states_positions_, self.hw_states_torques_))
