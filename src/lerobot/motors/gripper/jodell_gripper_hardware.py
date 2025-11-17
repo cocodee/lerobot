@@ -176,8 +176,8 @@ class JodellGripperHardware(HardwareInterface):
                 self.hw_states_force[i] = convert_from_gripper_force(status.force_current)
             except RuntimeError as e:
                 print(f"Warning: Failed to read status from slave_id {self.slave_ids[i]}: {e}")
-                self.hw_states_position[i] = [0.0]*len(self.hw_states_position[i])
-                self.hw_states_force[i] = [0.0]*len(self.hw_states_force[i])
+                self.hw_states_position[i] = None
+                self.hw_states_force[i] = None
         
         # 3. 更新缓存和时间戳
         self._cached_values = list(zip(self.hw_states_position, self.hw_states_force)) # 使用 .copy() 是个好习惯
