@@ -164,7 +164,15 @@ class SupreRobotFollower(Robot):
         positions = hd_readings[0]
         forces = hd_readings[1]
         print("forces: ", forces)
-        obs_dict = {f"{self.observation_joint_names[i]}.pos": positions[i] for i in range(len(self.observation_joint_names))}
+        # obs_dict = {f"{self.observation_joint_names[i]}.pos": positions[i] for i in range(len(self.observation_joint_names))}
+        obs_dict = {}
+        for i in range(len(self.observation_joint_names)):
+            joint_name = self.observation_joint_names[i]
+            # 添加关节位置
+            obs_dict[f"{joint_name}.pos"] = positions[i]
+            # 添加关节力/力矩
+            obs_dict[f"{joint_name}.force"] = forces[i]
+
         print("obs_dict: ", obs_dict)
         for cam_key, cam in self.cameras.items():
             start = time.perf_counter()
