@@ -398,8 +398,9 @@ def hw_to_dataset_features(
     hw_features: dict[str, type | tuple], prefix: str, use_video: bool = True
 ) -> dict[str, dict]:
     features = {}
-    joint_fts = {key: ftype for key, ftype in hw_features.items() if ftype is float}
+    joint_fts = {key: ftype for key, ftype in hw_features.items() if ftype is float and key.endswith("pos")}
     cam_fts = {key: shape for key, shape in hw_features.items() if isinstance(shape, tuple)}
+    force_fts = {key: ftype for key, ftype in hw_features.items() if ftype is float and key.endswith("force")}
 
     if joint_fts and prefix == "action":
         features[prefix] = {
@@ -413,6 +414,13 @@ def hw_to_dataset_features(
             "dtype": "float32",
             "shape": (len(joint_fts),),
             "names": list(joint_fts),
+        }
+
+    if force_fts and prefix == "observation":
+        features[f"{prefix}.force"] = {
+            "dtype": "float32",
+            "shape": (len(force_fts),),
+            "names": list(force_fts),
         }
 
     for key, shape in cam_fts.items():

@@ -85,7 +85,8 @@ class SupreRobotFollower(Robot):
 
     @cached_property
     def observation_features(self) -> dict[str, type | tuple]:
-        return {**self._motors_ft, **self._cameras_ft}
+        return {**self._motors_ft, **self._cameras_ft, **self._force_ft}
+        # return {**self._motors_ft, **self._cameras_ft}
     @cached_property
     def action_features(self) -> dict[str, type]:
         return self._motors_ft
@@ -358,6 +359,10 @@ class SupreRobotFollower(Robot):
     @property
     def _motors_ft(self) -> dict[str, type]:
         return {f"{motor}.pos": float for motor in self.observation_joint_names}   
+
+    @property
+    def _force_ft(self) -> dict[str, type]:
+        return {f"{motor}.force": float for motor in self.observation_joint_names}   
         
     def execute_trajectory(self, goal_action: dict[str, Any], duration: float = 1.0) -> None:
         """
