@@ -18,7 +18,7 @@ from dataclasses import dataclass, field
 from lerobot.configs.policies import PreTrainedConfig
 from lerobot.configs.types import NormalizationMode
 from lerobot.optim.optimizers import AdamWConfig
-
+from PIL import Image
 
 @PreTrainedConfig.register_subclass("act")
 @dataclass
@@ -89,6 +89,7 @@ class ACTConfig(PreTrainedConfig):
         kl_weight: The weight to use for the KL-divergence component of the loss if the variational objective
             is enabled. Loss is then calculated as: `reconstruction_loss + kl_weight * kld_loss`.
     """
+    # import pdb; pdb.set_trace()
     # 增加一个cfg用来控制是否用state
     use_state: bool = True
     # 使用state_dropout
@@ -104,10 +105,16 @@ class ACTConfig(PreTrainedConfig):
     n_action_steps: int = 100
 
     normalization_mapping: dict[str, NormalizationMode] = field(
+        # default_factory=lambda: {
+        #     "VISUAL": NormalizationMode.MEAN_STD,
+        #     "STATE": NormalizationMode.MEAN_STD,
+        #     "ACTION": NormalizationMode.MEAN_STD,
+        # }
         default_factory=lambda: {
             "VISUAL": NormalizationMode.MEAN_STD,
             "STATE": NormalizationMode.MEAN_STD,
             "ACTION": NormalizationMode.MEAN_STD,
+            "FORCE": NormalizationMode.MEAN_STD,
         }
     )
 
@@ -122,7 +129,7 @@ class ACTConfig(PreTrainedConfig):
     n_heads: int = 8
     dim_feedforward: int = 3200
     feedforward_activation: str = "relu"
-    n_encoder_layers: int = 4
+    n_encoder_layers: int = 8
     # Note: Although the original ACT implementation has 7 for `n_decoder_layers`, there is a bug in the code
     # that means only the first layer is used. Here we match the original implementation by setting this to 1.
     # See this issue https://github.com/tonyzhaozh/act/issues/25#issue-2258740521.
@@ -147,7 +154,6 @@ class ACTConfig(PreTrainedConfig):
 
     def __post_init__(self):
         super().__post_init__()
-
         """Input validation (not exhaustive)."""
         if not self.vision_backbone.startswith("resnet"):
             raise ValueError(

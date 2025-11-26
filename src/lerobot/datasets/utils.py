@@ -475,8 +475,10 @@ def dataset_to_policy_features(features: dict[str, dict]) -> dict[str, PolicyFea
                 shape = (shape[2], shape[0], shape[1])
         elif key == "observation.environment_state":
             type = FeatureType.ENV
-        elif key.startswith("observation"):
+        elif key.startswith("observation.state"):
             type = FeatureType.STATE
+        elif key.startswith("observation.force"):
+            type = FeatureType.FORCE
         elif key.startswith("action"):
             type = FeatureType.ACTION
         else:
