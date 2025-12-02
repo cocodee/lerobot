@@ -116,7 +116,7 @@ class SupreRobotFollowerHilConfig(SupreRobotFollowerConfig):
         }
     )
 
-    max_gripper_pos: float = 50
+    max_gripper_pos: float = 1.0
 
     end_effector_step_sizes: dict[str, float] = field(
         default_factory=lambda: {

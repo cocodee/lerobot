@@ -151,7 +151,8 @@ class SupreRobotFollowerHil(SupreRobotFollower):
         # Gripper delta action is in the range 0 - 2,
         # We need to shift the action to the range -1, 1 so that we can expand it to -Max_gripper_pos, Max_gripper_pos
         #TODO:gripper
-        joint_action["gripper.pos"] = np.clip(
+        gripper_pos_name = self.config.gripper_joint_name+'.pos'
+        joint_action[gripper_pos_name] = np.clip(
             self.current_joint_pos[-1] + (action[-1] - 1) * self.config.max_gripper_pos,
             5,
             self.config.max_gripper_pos,
@@ -159,7 +160,7 @@ class SupreRobotFollowerHil(SupreRobotFollower):
 
         self.current_ee_pos = desired_ee_pos.copy()
         self.current_joint_pos = target_joint_values_in_degrees.copy()
-        self.current_joint_pos[-1] = joint_action["gripper.pos"]
+        self.current_joint_pos[-1] = joint_action[gripper_pos_name]
 
         # Send joint space action to parent class
         return super().send_action(joint_action)
