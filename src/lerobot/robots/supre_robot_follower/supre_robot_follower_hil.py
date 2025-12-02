@@ -253,7 +253,7 @@ class SupreRobotFollowerHil(SupreRobotFollower):
     def get_max_gripper_position(self) -> float:
         """从配置中获取最大夹爪位置"""
         # 确保 SupreRobotFollowerConfig 中定义了 max_gripper_pos
-        return getattr(self.config, "max_gripper_pos", 100.0) # 默认值防止崩溃
+        return getattr(self.config, "max_gripper_pos", 1.0) # 默认值防止崩溃
 
     def get_urdf_path(self) -> str:
         """获取 URDF 文件路径"""

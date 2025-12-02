@@ -98,7 +98,7 @@ def get_urdf_path(robot_arm):
 
 def reset_follower_position(robot_arm, target_position):
     #DONE: read
-    current_position_dict = get_gripper_position(robot_arm)
+    current_position_dict = get_present_position(robot_arm)
     current_position = np.array(
         [current_position_dict[name] for name in current_position_dict], dtype=np.float32
     )
