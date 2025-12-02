@@ -71,23 +71,29 @@ from lerobot.utils.utils import log_say
 logging.basicConfig(level=logging.INFO)
 
 def get_present_position(robot_arm):
-    pass
+    #leader and follower
+    return robot_arm.get_present_position()
 def write_goal_position(robot_arm, target_position):
-    pass
+    #leader and follower
+    return robot_arm.write_goal_position(target_position)
 def get_joint_names(robot_arm):
-    pass
+    #follower?
+    return robot_arm.get_joint_names()
 def get_present_current(robot_arm):
-    pass
-def get_present_current(robot_arm):
-    pass
+    #follower?
+    return robot_arm.get_present_current()
 def set_enable_torque(robot_arm, enable):
-    pass
+    #leader?
+    return robot_arm.set_enable_torque(enable)
 def get_gripper_position(robot_arm):
-    pass
+    #leader and follower
+    return robot_arm.get_gripper_position()
 def get_max_gripper_position(robot_arm):
-    pass
+    #follower?
+    return robot_arm.get_max_gripper_position()
 def get_urdf_path(robot_arm):
-    pass
+    #follower?
+    return robot_arm.get_urdf_path()
 
 
 def reset_follower_position(robot_arm, target_position):

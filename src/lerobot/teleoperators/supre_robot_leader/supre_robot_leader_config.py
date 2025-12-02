@@ -12,3 +12,9 @@ class SupreRobotLeaderConfig(TeleoperatorConfig):
     """Configuration for the SupreRobot."""
     joint_config_file: str = _DEFAULT_JOINT_CONFIG_PATH
     joint_direction: list= field(default_factory=lambda: [-1, -1, 1, 1, 1, -1,1, -1, -1, 1, 1, 1, -1,1])
+
+@TeleoperatorConfig.register_subclass("supre_robot_leader_hil")
+@dataclass
+class SupreRobotLeaderHilConfig(SupreRobotLeaderConfig):
+    """Configuration for the SupreRobot."""
+    max_gripper_pos: float = 50

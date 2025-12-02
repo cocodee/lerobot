@@ -97,7 +97,7 @@ class SupreRobotFollowerConfig(RobotConfig):
     ])    
 
 
-@RobotConfig.register_subclass("supre_robot_follower_end_effector")
+@RobotConfig.register_subclass("supre_robot_follower_hil")
 @dataclass
 class SupreRobotFollowerHilConfig(SupreRobotFollowerConfig):
     """Configuration for the SupreRobotFollowerEndEffector robot."""

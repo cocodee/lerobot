@@ -116,8 +116,8 @@ class SupreRobotFollowerHil(SupreRobotFollower):
         if self.current_joint_pos is None:
             # Read current joint positions
             #TODO:获取当前关节位置
-            current_joint_pos = self.bus.sync_read("Present_Position")
-            self.current_joint_pos = np.array([current_joint_pos[name] for name in self.bus.motors])
+            current_joint_pos = self.get_present_position()
+            self.current_joint_pos = np.array([current_joint_pos[name] for name in self.get_joint_names()])
 
         # Calculate current end-effector position using forward kinematics
         if self.current_ee_pos is None:
@@ -144,7 +144,7 @@ class SupreRobotFollowerHil(SupreRobotFollower):
         # Create joint space action dictionary
         #TODO: joint names
         joint_action = {
-            f"{key}.pos": target_joint_values_in_degrees[i] for i, key in enumerate(self.bus.motors.keys())
+            f"{key}.pos": target_joint_values_in_degrees[i] for i, key in enumerate(self.get_joint_names())
         }
 
         # Handle gripper separately if included in action
