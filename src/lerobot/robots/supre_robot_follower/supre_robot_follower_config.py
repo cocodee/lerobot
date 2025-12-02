@@ -95,3 +95,33 @@ class SupreRobotFollowerConfig(RobotConfig):
             max_position=1.0,
         ),           
     ])    
+
+
+@RobotConfig.register_subclass("supre_robot_follower_end_effector")
+@dataclass
+class SupreRobotFollowerEndEffectorConfig(SupreRobotFollowerConfig):
+    """Configuration for the SupreRobotFollowerEndEffector robot."""
+
+    # Path to URDF file for kinematics
+    urdf_path: str | None = None
+
+    # End-effector frame name in the URDF
+    target_frame_name: str = "gripper_frame_link"
+
+    # Default bounds for the end-effector position (in meters)
+    end_effector_bounds: dict[str, list[float]] = field(
+        default_factory=lambda: {
+            "min": [-1.0, -1.0, -1.0],  # min x, y, z
+            "max": [1.0, 1.0, 1.0],  # max x, y, z
+        }
+    )
+
+    max_gripper_pos: float = 50
+
+    end_effector_step_sizes: dict[str, float] = field(
+        default_factory=lambda: {
+            "x": 0.02,
+            "y": 0.02,
+            "z": 0.02,
+        }
+    )
