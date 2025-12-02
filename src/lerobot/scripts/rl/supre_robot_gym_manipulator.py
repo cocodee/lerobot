@@ -547,7 +547,7 @@ class AddCurrentToObservation(gym.ObservationWrapper):
         #DONE get robot current
         present_current_dict = get_present_current(self.env.unwrapped.robot)
         present_current_observation = np.array(
-            [present_current_dict[name] for name in self.env.unwrapped.robot.bus.motors]
+            [present_current_dict[name] for name in get_joint_names(self.env.unwrapped.robot)]
         )
         observation["agent_pos"] = np.concatenate(
             [observation["agent_pos"], present_current_observation], axis=-1
