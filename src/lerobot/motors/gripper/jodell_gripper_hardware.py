@@ -236,6 +236,9 @@ class JodellGripperHardware(HardwareInterface):
     def get_joint_count(self) -> int:
         return len(self.slave_ids)
 
+    def set_enable_torque(self, enable: bool):
+        print(f"JodellGripperHardware: Setting enable torque to {enable} no action.")
+        return
 # --- 使用示例 (与第一个版本相同) ---
 if __name__ == "__main__":
     gripper_config = {

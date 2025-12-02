@@ -107,6 +107,8 @@ class AsyncInterpolator(HardwareInterface):
     def get_joint_count(self) -> int:
         return self._base_hardware.get_joint_count()
 
+    def set_enable_torque(self, enable: bool):
+        self._base_hardware.set_enable_torque(enable)
     # --- ✨ 内部写入线程 (核心修改区) ✨ ---
     def _writer_loop(self):
         """

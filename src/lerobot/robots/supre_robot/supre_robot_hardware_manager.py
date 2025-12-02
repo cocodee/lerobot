@@ -201,3 +201,10 @@ class SupreRobotHardwareManager:
             # 我们的分发逻辑保证了 Eyou 的列表是完整的。
             print(f"Sending command to {instance.__class__.__name__}: {commands}")
             instance.write(commands)
+
+    def set_enable_torque(self, enable: bool):
+        """
+        启用或禁用所有硬件的扭矩。
+        """
+        for instance in self._hardware_instances:
+            instance.set_enable_torque(enable)        

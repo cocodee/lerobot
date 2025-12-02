@@ -99,7 +99,7 @@ class SupreRobotFollowerConfig(RobotConfig):
 
 @RobotConfig.register_subclass("supre_robot_follower_end_effector")
 @dataclass
-class SupreRobotFollowerEndEffectorConfig(SupreRobotFollowerConfig):
+class SupreRobotFollowerHilConfig(SupreRobotFollowerConfig):
     """Configuration for the SupreRobotFollowerEndEffector robot."""
 
     # Path to URDF file for kinematics
@@ -125,3 +125,4 @@ class SupreRobotFollowerEndEffectorConfig(SupreRobotFollowerConfig):
             "z": 0.02,
         }
     )
+    gripper_joint_name: str = "gripper_joint"

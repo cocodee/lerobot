@@ -16,7 +16,7 @@
 
 import logging
 import time
-from typing import Any
+from typing import Any,List,Dict
 
 import numpy as np
 
@@ -25,12 +25,12 @@ from lerobot.errors import DeviceNotConnectedError
 from lerobot.model.kinematics import RobotKinematics
 
 from .supre_robot_follower import SupreRobotFollower
-from .supre_robot_follower_config import SupreRobotFollowerEndEffectorConfig
+from .supre_robot_follower_config import SupreRobotFollowerHilConfig
 
 logger = logging.getLogger(__name__)
 
 
-class SupreRobotFollowerEndEffector(SupreRobotFollower):
+class SupreRobotFollowerHil(SupreRobotFollower):
     """
     SO100Follower robot with end-effector space control.
 
@@ -38,10 +38,10 @@ class SupreRobotFollowerEndEffector(SupreRobotFollower):
     end-effector space to joint space before sending them to the motors.
     """
 
-    config_class = SupreRobotFollowerEndEffectorConfig
-    name = "supre_robot_follower_end_effector"
+    config_class = SupreRobotFollowerHilConfig
+    name = "supre_robot_follower_hil"
 
-    def __init__(self, config: SupreRobotFollowerEndEffectorConfig):
+    def __init__(self, config: SupreRobotFollowerHilConfig):
         super().__init__(config)
 
         self.cameras = make_cameras_from_configs(config.cameras)
@@ -174,3 +174,87 @@ class SupreRobotFollowerEndEffector(SupreRobotFollower):
     def reset(self):
         self.current_ee_pos = None
         self.current_joint_pos = None
+
+    def get_joint_names(self) -> List[str]:
+        """返回所有关节的名称列表"""
+        return self.observation_joint_names
+
+    def get_present_position(self) -> Dict[str, float]:
+        """
+        获取当前关节位置。
+        返回格式: {'joint_name': position, ...}
+        """
+        if not self.is_connected:
+            raise RuntimeError("Robot is not connected.")
+        # 复用已有的 get_current_position 方法
+        return self.get_current_position()
+
+    def write_goal_position(self, target_position: Dict[str, float]) -> None:
+        """
+        向机器人写入目标位置。
+        Args:
+            target_position: 包含 {'joint_name': target_pos} 的字典
+        """
+        if not self.is_connected:
+            raise RuntimeError("Robot is not connected.")
+
+        # 将字典转换为按照 joint_order 排序的列表，因为硬件管理器通常接受列表
+        try:
+            target_list = [target_position[name] for name in self.observation_joint_names]
+            self._hardware_manager.write(target_list)
+        except KeyError as e:
+            logger.error(f"Target position dict is missing joint: {e}")
+            raise ValueError(f"Missing joint {e} in target_position")
+
+    def get_present_current(self) -> Dict[str, float]:
+        """
+        获取当前关节电流（或力/力矩，取决于硬件实现）。
+        返回格式: {'joint_name': current, ...}
+        """
+        if not self.is_connected:
+            raise RuntimeError("Robot is not connected.")
+        
+        # read() 返回 (positions, forces)
+        _, forces = self._hardware_manager.read()
+        
+        # 将力列表打包成字典
+        return {
+            name: force 
+            for name, force in zip(self.observation_joint_names, forces)
+        }
+
+    def set_enable_torque(self, enable: bool) -> None:
+        """
+        启用或禁用关节扭矩。
+        注意：这取决于 SupreRobotHardwareManager 是否暴露了相应的接口。
+        """
+        if not self.is_connected:
+            return
+
+        # 尝试调用硬件管理器上的方法（如果存在）
+        if hasattr(self._hardware_manager, "set_enable_torque"):
+            self._hardware_manager.set_enable_torque(enable)
+        else:
+            # 如果硬件管理器没有显式的方法，记录警告
+            logger.warning(f"Hardware manager does not support explicit torque control (set_enable_torque={enable}).")
+
+    def get_gripper_position(self) -> float:
+        """获取夹爪的当前位置"""
+        positions = self.get_present_position()
+
+        gripper_joint_name = self.config.gripper_joint_name
+        if gripper_joint_name in positions:
+            return positions[gripper_joint_name]
+        
+        logger.warning("Gripper joint not found in present positions.")
+        return 0.0
+
+    def get_max_gripper_position(self) -> float:
+        """从配置中获取最大夹爪位置"""
+        # 确保 SupreRobotFollowerConfig 中定义了 max_gripper_pos
+        return getattr(self.config, "max_gripper_pos", 100.0) # 默认值防止崩溃
+
+    def get_urdf_path(self) -> str:
+        """获取 URDF 文件路径"""
+        # 确保 SupreRobotFollowerConfig 中定义了 urdf_path
+        return getattr(self.config, "urdf_path", None)

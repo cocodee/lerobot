@@ -244,6 +244,58 @@ class EyouMotorHardware(HardwareInterface):
         """返回硬件中的电机数量。"""
         return len(self.motor_nodes_)
 
+    def set_enable_torque(self, enable: bool):
+        """
+        启用或禁用所有电机的扭矩输出。
+        
+        Args:
+            enable (bool): True 启用扭矩, False 禁用扭矩 (进入零力矩/下电模式).
+        """
+        action = "Enabling" if enable else "Disabling"
+        print(f"[{self.__class__.__name__}] {action} torque for all motors...")
+
+        for i, motor in enumerate(self.motor_nodes_):
+            if enable:
+                # -------------------------------------------------------------
+                # 关键步骤：防止猛烈回弹
+                # 在启用扭矩前，必须将命令位置同步到当前的实际位置。
+                # 否则，如果机械臂在禁用期间移动了，启用瞬间会试图跳回旧的命令位置。
+                # -------------------------------------------------------------
+                try:
+                    # 直接从电机读取最新位置，比使用缓存的 hw_states_positions_ 更安全
+                    current_real_pos = motor.get_position()
+                    self.hw_commands_positions_[i] = current_real_pos
+                    # 同时更新状态缓存，保持一致性
+                    self.hw_states_positions_[i] = current_real_pos
+                    
+                    # 1. 清除可能存在的故障
+                    motor.clear_fault()
+                    
+                    # 2. 发送配置命令进入 CSP 模式 (这将使能电机并维持在当前位置)
+                    # 第二个参数 0 通常代表默认速度/加速度限制
+                    motor.configure_csp_mode(0, False)
+                    
+                    # 3. 允许 write() 方法发送指令
+                    self.hw_start_enabled_[i] = True
+                    # print(f"  -> Joint {self.joint_names_[i]} enabled at {current_real_pos:.2f}")
+
+                except Exception as e:
+                    print(f"Error enabling joint {self.joint_names_[i]}: {e}")
+
+            else:
+                # -------------------------------------------------------------
+                # 禁用扭矩
+                # -------------------------------------------------------------
+                try:
+                    motor.disable()
+                    # 阻止 write() 方法发送指令，减少总线负载
+                    self.hw_start_enabled_[i] = False
+                    # print(f"  -> Joint {self.joint_names_[i]} disabled.")
+
+                except Exception as e:
+                    print(f"Error disabling joint {self.joint_names_[i]}: {e}")
+        
+        print(f"[{self.__class__.__name__}] Torque {action} complete.")
 # --- 主程序：演示如何使用混合模式的硬件接口 ---
 if __name__ == "__main__":
     # ==================== 配置修改开始 ====================
@@ -359,3 +411,4 @@ if __name__ == "__main__":
         traceback.print_exc()
     finally:
         robot.deactivate()
+
