@@ -120,10 +120,10 @@ wrapper:
     - 0.0
     - 0.0
   reset_time_s: 2.5
-  control_mode: gamepad
+  control_mode: leader
 name: real_robot
 #mode record/replay
-mode: null
+mode: record
 repo_id: null
 dataset_root: null
 task: ""
@@ -131,8 +131,8 @@ num_episodes: 2
 episode: 0
 pretrained_policy_name_or_path: null
 device: cpu
-push_to_hub: true
-fps: 10
+push_to_hub: false
+fps: 20
 features:
   observation.images.front:
     type: VISUAL
