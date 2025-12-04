@@ -122,6 +122,7 @@ wrapper:
   reset_time_s: 2.5
   control_mode: gamepad
 name: real_robot
+#mode record/replay
 mode: null
 repo_id: null
 dataset_root: null
