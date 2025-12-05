@@ -26,7 +26,7 @@ robot:
     z: 0.025  
   # Path to the joint configuration file for the follower robot.
   # Corresponds to: SupreRobotFollowerConfig.joint_config_path
-  joint_config_file: "trunk_config_supre_robot_follower_joint.yaml"
+  joint_config_file: "trunk_config_supre_robot_follower_joint_hil.yaml"
   # Dictionary of camera configurations.
   # Corresponds to: cameras: dict[str, CameraConfig]
   cameras: 
@@ -87,7 +87,7 @@ teleop:
 
   # Path to the joint configuration file for the leader robot.
   # Corresponds to: SupreRobotLeaderConfig.joint_config_path
-  joint_config_file: "trunk_config_supre_robot_leader_joint.yaml"
+  joint_config_file: "trunk_config_supre_robot_leader_joint_hil.yaml"
 
   # Direction multipliers for each joint.
   # Corresponds to: joint_direction: list
