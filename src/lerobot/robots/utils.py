@@ -73,6 +73,9 @@ def make_robot_from_config(config: RobotConfig) -> Robot:
         from .supre_robot_follower import SupreRobotFollower
         
         return SupreRobotFollower(config)
+    elif config.type == "supre_robot_follower_hil":
+        from .supre_robot_follower import SupreRobotFollowerHil
+        return SupreRobotFollowerHil(config)
     elif config.type == "mock_robot":
         from tests.mocks.mock_robot import MockRobot
 

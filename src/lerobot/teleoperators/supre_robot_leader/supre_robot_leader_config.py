@@ -17,4 +17,4 @@ class SupreRobotLeaderConfig(TeleoperatorConfig):
 @dataclass
 class SupreRobotLeaderHilConfig(SupreRobotLeaderConfig):
     """Configuration for the SupreRobot."""
-    max_gripper_pos: float = 50
+    max_gripper_pos: float = 1.0

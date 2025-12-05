@@ -77,5 +77,9 @@ def make_teleoperator_from_config(config: TeleoperatorConfig) -> Teleoperator:
         from .supre_robot_leader import SupreRobotLeader
         
         return SupreRobotLeader(config)
+    elif config.type == "supre_robot_leader_hil":
+        from .supre_robot_leader import SupreRobotLeaderHil
+        
+        return SupreRobotLeaderHil(config)
     else:
         raise ValueError(config.type)
