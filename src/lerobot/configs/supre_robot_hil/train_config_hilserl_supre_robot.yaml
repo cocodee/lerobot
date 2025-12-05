@@ -174,7 +174,7 @@ env:
     type: supre_robot_follower_hil
   
   #hil new fields
-    urdf_path: path/to/your/robot.urdf
+    urdf_path: "/home/t/workspace/gitprj/lerobot-env/supre_robot_urdf/RJ2506-20251125-all-13-std.urdf"
     target_frame_name: left_arm_joint_7
     end_effector_bounds:
       min:
