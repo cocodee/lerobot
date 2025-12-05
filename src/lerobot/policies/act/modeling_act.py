@@ -140,7 +140,15 @@ class ACTPolicy(PreTrainedPolicy):
         batch = self.normalize_inputs(batch)
         if self.config.image_features:
             batch = dict(batch)  # shallow copy so that adding a key doesn't modify the original
-            batch[OBS_IMAGES] = [batch[key] for key in self.config.image_features]
+            # batch[OBS_IMAGES] = [batch[key] for key in self.config.image_features]
+            if self.config.use_head_img:
+                print("use head")
+                batch[OBS_IMAGES] = [batch[key] for key in self.config.image_features]
+            else:
+                # 不需要头部
+                print("no use head")
+                batch[OBS_IMAGES] = [batch[key] for key in self.config.image_features if 'head_cam' not in key]
+
 
         actions = self.model(batch)[0]
         actions = self.unnormalize_outputs({ACTION: actions})[ACTION]
@@ -151,7 +159,11 @@ class ACTPolicy(PreTrainedPolicy):
         batch = self.normalize_inputs(batch)
         if self.config.image_features:
             batch = dict(batch)  # shallow copy so that adding a key doesn't modify the original
-            batch[OBS_IMAGES] = [batch[key] for key in self.config.image_features]
+            if self.config.use_head_img:
+                batch[OBS_IMAGES] = [batch[key] for key in self.config.image_features]
+            else:
+                # 不需要头部
+                batch[OBS_IMAGES] = [batch[key] for key in self.config.image_features if 'head_cam' not in key]
 
         batch = self.normalize_targets(batch)
         actions_hat, (mu_hat, log_sigma_x2_hat) = self.model(batch)
@@ -727,8 +739,7 @@ class ACT(nn.Module):
         # add force using
         if self.config.robot_force_feature:
             encoder_in_tokens.append(
-                # self.encoder_robot_force_input_proj(batch["observation.force"])
-                self.encoder_robot_state_input_proj(batch["observation.force"])
+                self.encoder_robot_force_input_proj(batch["observation.force"])
                 )
 
         if self.config.image_features and not self.config.img_cross_atten:
