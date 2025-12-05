@@ -29,7 +29,19 @@ robot:
   joint_config_file: "trunk_config_supre_robot_follower_joint.yaml"
   # Dictionary of camera configurations.
   # Corresponds to: cameras: dict[str, CameraConfig]
-  cameras: {}
+  cameras: 
+    head_cam:
+      type: opencv
+      index_or_path: 2
+      width: 640
+      height: 480
+      fps: 30
+    left_wrist_cam:
+      type: opencv
+      index_or_path: 0
+      width: 640
+      height: 480
+      fps: 30
 
   # Maximum relative joint movement in degrees per control step.
   # Corresponds to: max_relative_joint_move: float
@@ -93,12 +105,12 @@ wrapper:
   add_current_to_observation: true
   add_ee_pose_to_observation: true
   crop_params_dict:
-    observation.images.front:
+    observation.images.head_cam:
       - 270
       - 170
       - 90
       - 190
-    observation.images.wrist:
+    observation.images.left_wrist_cam:
       - 0
       - 0
       - 480
@@ -134,13 +146,13 @@ device: cpu
 push_to_hub: false
 fps: 20
 features:
-  observation.images.front:
+  observation.images.head_cam:
     type: VISUAL
     shape:
       - 3
       - 128
       - 128
-  observation.images.wrist:
+  observation.images.left_wrist_cam:
     type: VISUAL
     shape:
       - 3
@@ -155,8 +167,8 @@ features:
     shape:
       - 3
 features_map:
-  observation.images.front: observation.images.side
-  observation.images.wrist: observation.images.wrist
+  observation.images.head_cam: observation.images.head_cam
+  observation.images.left_wrist_cam: observation.images.left_wrist_cam
   observation.state: observation.state
   action: action
 reward_classifier_pretrained_path: null

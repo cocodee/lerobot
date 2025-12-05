@@ -10,7 +10,7 @@ save_checkpoint: true
 save_freq: 2000000
 wandb:
   enable: true
-  project: so100_real
+  project: supre_robot_real
   disable_artifact: true
 dataset:
   repo_id: hf_username/dataset_name
@@ -25,13 +25,13 @@ policy:
     ENV: MIN_MAX
     ACTION: MIN_MAX
   input_features:
-    observation.images.side:
+    observation.images.left_wrist_cam:
       type: VISUAL
       shape:
         - 3
         - 128
         - 128
-    observation.images.front:
+    observation.images.head_cam:
       type: VISUAL
       shape:
         - 3
@@ -44,7 +44,7 @@ policy:
   device: cuda
   use_amp: false
   dataset_stats:
-    observation.images.side:
+    observation.images.head_cam:
       mean:
         - 0.485
         - 0.456
@@ -53,7 +53,7 @@ policy:
         - 0.229
         - 0.224
         - 0.225
-    observation.images.front:
+    observation.images.left_wrist_cam:
       mean:
         - 0.485
         - 0.456
@@ -169,23 +169,13 @@ policy:
 env:
   type: gym_manipulator
   robot:
-    type: so100_follower_end_effector
-    port: /dev/ttyACM0
+    # Specifies which subclass of RobotConfig to use.
+    # This matches the name in `@RobotConfig.register_subclass("supre_robot_follower")`
+    type: supre_robot_follower_hil
+  
+  #hil new fields
     urdf_path: path/to/your/robot.urdf
-    target_frame_name: gripper_frame_link
-    cameras:
-      front:
-        type: opencv
-        index_or_path: 2
-        height: 480
-        width: 640
-        fps: 30
-      wrist:
-        type: opencv
-        index_or_path: 8
-        height: 480
-        width: 640
-        fps: 30
+    target_frame_name: left_arm_joint_7
     end_effector_bounds:
       min:
         - -1.0
@@ -195,22 +185,97 @@ env:
         - 1.0
         - 1.0
         - 1.0
-    max_gripper_pos: 30
+    end_effector_step_sizes:
+      x: 0.025
+      y: 0.025
+      z: 0.025  
+    # Path to the joint configuration file for the follower robot.
+    # Corresponds to: SupreRobotFollowerConfig.joint_config_path
+    joint_config_file: "trunk_config_supre_robot_follower_joint.yaml"
+    # Dictionary of camera configurations.
+    # Corresponds to: cameras: dict[str, CameraConfig]
+    cameras: 
+      head_cam:
+        type: opencv
+        index_or_path: 2
+        width: 640
+        height: 480
+        fps: 30
+      left_wrist_cam:
+        type: opencv
+        index_or_path: 0
+        width: 640
+        height: 480
+        fps: 30
+  
+    # Maximum relative joint movement in degrees per control step.
+    # Corresponds to: max_relative_joint_move: float
+    max_relative_joint_move: 10.0 #30.0
+  
+    # Port for the Prometheus monitoring server. Use `null` for None.
+    # Corresponds to: prometheus_port: int | None
+    prometheus_port: 8000
+  
+    # Control loop frequency in Hz.
+    # Corresponds to: control_frequency: int
+    control_frequency: 30
+  
+    # List of motor calibration settings for each joint.
+    # Corresponds to: calibration: list[MotorCalibration]
+    calibration:
+      # --- Left Arm ---
+      - joint_name: "left_arm_joint_1"
+        min_position: -160.0
+        max_position: 160.0
+      - joint_name: "left_arm_joint_2"
+        min_position: -90.0
+        max_position: 0.0
+      - joint_name: "left_arm_joint_3"
+        min_position: -150.0
+        max_position: 150.0
+      - joint_name: "left_arm_joint_4"
+        min_position: -90.0
+        max_position: 0.0
+      - joint_name: "left_arm_joint_5"
+        min_position: -150.0
+        max_position: 150.0
+      - joint_name: "left_arm_joint_6"
+        min_position: -90.0
+        max_position: 90.0
+      - joint_name: "left_arm_joint_7"
+        min_position: 0.0
+        max_position: 1.0
   teleop:
-    type: gamepad
-    use_gripper: true
+    # Specifies which subclass of TeleoperatorConfig to use.
+    # This matches the name in `@TeleoperatorConfig.register_subclass("supre_robot_leader")`
+    type: supre_robot_leader
+  
+    # Path to the joint configuration file for the leader robot.
+    # Corresponds to: SupreRobotLeaderConfig.joint_config_path
+    joint_config_file: "trunk_config_supre_robot_leader_joint.yaml"
+  
+    # Direction multipliers for each joint.
+    # Corresponds to: joint_direction: list
+    joint_direction:
+      - -1
+      - -1
+      - 1
+      - 1
+      - 1
+      - -1
+      - 1
   wrapper:
     display_cameras: false
     add_joint_velocity_to_observation: true
     add_current_to_observation: true
     add_ee_pose_to_observation: true
     crop_params_dict:
-      observation.images.front:
+      observation.images.head_cam:
         - 270
         - 170
         - 90
         - 190
-      observation.images.wrist:
+      observation.images.left_wrist_cam:
         - 0
         - 0
         - 480
@@ -225,32 +290,34 @@ env:
     gripper_penalty_in_reward: false
     fixed_reset_joint_positions:
       - 0.0
-      - -20.0
-      - 20.0
-      - 90.0
       - 0.0
-      - 30.0
+      - 0.0
+      - 0.0
+      - 0.0
+      - 0.0
+      - 0.0
     reset_time_s: 2.5
-    control_mode: gamepad
+    control_mode: leader
   name: real_robot
-  mode: null
+  #mode record/replay
+  mode: record
   repo_id: null
   dataset_root: null
   task: ""
-  num_episodes: 0
+  num_episodes: 2
   episode: 0
   pretrained_policy_name_or_path: null
-  device: cuda
-  push_to_hub: true
-  fps: 10
+  device: cpu
+  push_to_hub: false
+  fps: 20
   features:
-    observation.images.front:
+    observation.images.head_cam:
       type: VISUAL
       shape:
         - 3
         - 128
         - 128
-    observation.images.wrist:
+    observation.images.left_wrist_cam:
       type: VISUAL
       shape:
         - 3
@@ -265,7 +332,8 @@ env:
       shape:
         - 3
   features_map:
-    observation.images.front: observation.images.side
-    observation.images.wrist: observation.images.wrist
+    observation.images.head_cam: observation.images.head_cam
+    observation.images.left_wrist_cam: observation.images.left_wrist_cam
     observation.state: observation.state
     action: action
+  reward_classifier_pretrained_path: null

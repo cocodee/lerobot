@@ -15,7 +15,7 @@
         "device": "cuda",
         "use_amp": true,
         "input_features": {
-            "observation.images.side": {
+            "observation.images.head_cam": {
                 "type": "VISUAL",
                 "shape": [
                     3,
@@ -23,7 +23,7 @@
                     128
                 ]
             },
-            "observation.images.front": {
+            "observation.images.left_wrist_cam": {
                 "type": "VISUAL",
                 "shape": [
                     3,
