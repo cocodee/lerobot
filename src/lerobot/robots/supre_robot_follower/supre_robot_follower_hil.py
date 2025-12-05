@@ -29,7 +29,15 @@ from .supre_robot_follower_config import SupreRobotFollowerHilConfig
 
 logger = logging.getLogger(__name__)
 
-
+URDF_JOINT_NAMES = [
+    "left_arm_joint0",
+    "left_arm_joint1",
+    "left_arm_joint2",
+    "left_arm_joint3",
+    "left_arm_joint4",
+    "left_arm_joint5",
+    "left_arm_joint6",
+]
 class SupreRobotFollowerHil(SupreRobotFollower):
     """
     SO100Follower robot with end-effector space control.
@@ -58,6 +66,7 @@ class SupreRobotFollowerHil(SupreRobotFollower):
         self.kinematics = RobotKinematics(
             urdf_path=self.config.urdf_path,
             target_frame_name=self.config.target_frame_name,
+            joint_names=URDF_JOINT_NAMES,
         )
 
         # Store the bounds for end-effector position
