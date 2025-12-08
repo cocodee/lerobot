@@ -77,7 +77,6 @@ URDF_JOINT_NAMES = [
     "left_arm_joint3",
     "left_arm_joint4",
     "left_arm_joint5",
-    "left_arm_joint6",
 ]
 def get_present_position(robot_arm):
     #leader and follower
