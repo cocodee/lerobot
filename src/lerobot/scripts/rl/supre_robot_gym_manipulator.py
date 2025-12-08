@@ -1931,7 +1931,7 @@ def make_robot_env(cfg: EnvConfig) -> gym.Env:
     # Add observation and image processing
     if cfg.wrapper:
         if cfg.wrapper.add_joint_velocity_to_observation:
-            env = AddJointVelocityToObservation(env=env, fps=cfg.fps)
+            env = AddJointVelocityToObservation(env=env, fps=cfg.fps,num_dof=7)
         if cfg.wrapper.add_current_to_observation:
             env = AddCurrentToObservation(env=env)
         if cfg.wrapper.add_ee_pose_to_observation:
