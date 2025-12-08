@@ -197,13 +197,13 @@ env:
     cameras: 
       head_cam:
         type: opencv
-        index_or_path: 2
+        index_or_path: 1
         width: 640
         height: 480
         fps: 30
       left_wrist_cam:
         type: opencv
-        index_or_path: 0
+        index_or_path: 5
         width: 640
         height: 480
         fps: 30
