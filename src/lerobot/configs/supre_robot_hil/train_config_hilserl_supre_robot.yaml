@@ -175,7 +175,7 @@ env:
   
   #hil new fields
     urdf_path: "/home/t/workspace/gitprj/lerobot-env/supre_robot_urdf/RJ2506-20251125-all-13-std.urdf"
-    target_frame_name: left_arm_joint_7
+    target_frame_name: left_hand_base
     end_effector_bounds:
       min:
         - -1.0
