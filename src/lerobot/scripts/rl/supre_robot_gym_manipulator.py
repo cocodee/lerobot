@@ -1204,7 +1204,7 @@ class BaseLeaderControlWrapper(gym.Wrapper):
         # With higher gains, it would be dangerous and difficult to modify the leader's pose while torque is enabled
         # Default value for P_coeff is 32
         #DONE: adapt to robot
-        set_enable_torque(self.robot_leader)
+        set_enable_torque(self.robot_leader,False)
         #TODO4:ignore
         #for motor in self.robot_leader.bus.motors:
         #    self.robot_leader.bus.write("P_Coefficient", motor, 16)
