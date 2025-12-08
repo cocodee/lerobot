@@ -1943,7 +1943,7 @@ def make_robot_env(cfg: EnvConfig) -> gym.Env:
         if cfg.wrapper.add_joint_velocity_to_observation:
             env = AddJointVelocityToObservation(env=env, fps=cfg.fps,num_dof=7)
         if cfg.wrapper.add_current_to_observation:
-            env = AddCurrentToObservation(env=env)
+            env = AddCurrentToObservation(env=env,num_dof=7)
         if cfg.wrapper.add_ee_pose_to_observation:
             env = EEObservationWrapper(env=env, ee_pose_limits=robot.end_effector_bounds)
 
