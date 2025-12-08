@@ -70,6 +70,15 @@ from lerobot.utils.utils import log_say
 
 logging.basicConfig(level=logging.INFO)
 
+URDF_JOINT_NAMES = [
+    "left_arm_joint0",
+    "left_arm_joint1",
+    "left_arm_joint2",
+    "left_arm_joint3",
+    "left_arm_joint4",
+    "left_arm_joint5",
+    "left_arm_joint6",
+]
 def get_present_position(robot_arm):
     #leader and follower
     return robot_arm.get_present_position()
@@ -1128,6 +1137,7 @@ class EEObservationWrapper(gym.ObservationWrapper):
         self.kinematics = RobotKinematics(
             urdf_path=get_urdf_path(env.unwrapped.robot),
             target_frame_name=env.unwrapped.robot.config.target_frame_name,
+            joint_names=URDF_JOINT_NAMES,
         )
 
     def observation(self, observation):
@@ -1194,6 +1204,7 @@ class BaseLeaderControlWrapper(gym.Wrapper):
         self.kinematics = RobotKinematics(
             urdf_path=env.unwrapped.robot.config.urdf_path,
             target_frame_name=env.unwrapped.robot.config.target_frame_name,
+            joint_names=URDF_JOINT_NAMES,
         )
         self.leader_torque_enabled = True
         self.prev_leader_gripper = None
