@@ -18,3 +18,4 @@ class SupreRobotLeaderConfig(TeleoperatorConfig):
 class SupreRobotLeaderHilConfig(SupreRobotLeaderConfig):
     """Configuration for the SupreRobot."""
     max_gripper_pos: float = 1.0
+    gripper_joint_name: str = "left_arm_joint_7"

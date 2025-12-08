@@ -125,4 +125,4 @@ class SupreRobotFollowerHilConfig(SupreRobotFollowerConfig):
             "z": 0.02,
         }
     )
-    gripper_joint_name: str = "gripper_joint"
+    gripper_joint_name: str = "left_arm_joint_7"
