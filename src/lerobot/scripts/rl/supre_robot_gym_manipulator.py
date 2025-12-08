@@ -2145,7 +2145,9 @@ def record_dataset(env, policy, cfg):
 
             # Step environment
             obs, reward, terminated, truncated, info = env.step(action)
-
+            
+            for k, v in obs.items():
+                print(f"observation key:{k, v.shape}")
             # Check if episode needs to be rerecorded
             if info.get("rerecord_episode", False):
                 break
