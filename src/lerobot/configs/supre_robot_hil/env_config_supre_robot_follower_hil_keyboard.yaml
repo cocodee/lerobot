@@ -132,7 +132,7 @@ wrapper:
     - 0.0
     - 0.0
   reset_time_s: 2.5
-  control_mode: leader
+  control_mode: keyboard_ee
 name: real_robot
 #mode record/replay
 mode: record
