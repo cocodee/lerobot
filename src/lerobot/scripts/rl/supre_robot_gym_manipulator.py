@@ -1827,7 +1827,8 @@ class KeyboardControlWrapper(GamepadControlWrapper):
             action_list.append(float(gripper_val))
 
         gamepad_action_np = np.array(action_list, dtype=np.float32)
-        print(f"is_intervention_active: {self.is_intervention_active},action_list: {action_list}")
+        print("hello")
+        print(f"is_intervention_active: {self.is_intervention_active},action_dict: {action_dict}")
         return (
             self.is_intervention_active,
             gamepad_action_np,
