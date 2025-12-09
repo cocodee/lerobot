@@ -102,6 +102,7 @@ class KeyboardTeleop(Teleoperator):
 
     def _on_press(self, key):
         if hasattr(key, "char"):
+            print(f"Key pressed: {key.char}")
             self.event_queue.put((key.char, True))
 
     def _on_release(self, key):
