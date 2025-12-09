@@ -207,12 +207,16 @@ class KeyboardEndEffectorTeleop(KeyboardTeleop):
             val = 1
             if key == keyboard.Key.up:
                 delta_y = -int(val)
+                print(f"delta_y: {delta_y}")
             elif key == keyboard.Key.down:
                 delta_y = int(val)
+                print(f"delta_y: {delta_y}")
             elif key == keyboard.Key.left:
                 delta_x = int(val)
+                print(f"delta_x: {delta_x}")
             elif key == keyboard.Key.right:
                 delta_x = -int(val)
+                print(f"delta_x: {delta_x}")
             elif key == keyboard.Key.shift:
                 delta_z = -int(val)
             elif key == keyboard.Key.shift_r:
