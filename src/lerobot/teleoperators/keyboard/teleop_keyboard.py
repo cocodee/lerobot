@@ -179,7 +179,9 @@ class KeyboardEndEffectorTeleop(KeyboardTeleop):
     def _on_press(self, key):
         if hasattr(key, "char"):
             key = key.char
-            print(f"Key pressed: {key}")            
+            print(f"Key pressed: {key}")  
+        else:
+            print(f"Special Key pressed: {key}")          
         self.event_queue.put((key, True))
 
     def _on_release(self, key):
