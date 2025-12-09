@@ -83,22 +83,7 @@ robot:
 teleop:
   # Specifies which subclass of TeleoperatorConfig to use.
   # This matches the name in `@TeleoperatorConfig.register_subclass("supre_robot_leader")`
-  type: supre_robot_leader_hil
-
-  # Path to the joint configuration file for the leader robot.
-  # Corresponds to: SupreRobotLeaderConfig.joint_config_path
-  joint_config_file: "trunk_config_supre_robot_leader_joint_hil.yaml"
-
-  # Direction multipliers for each joint.
-  # Corresponds to: joint_direction: list
-  joint_direction:
-    - -1
-    - -1
-    - 1
-    - 1
-    - 1
-    - -1
-    - 1
+  type: keyboard
 wrapper:
   display_cameras: false
   add_joint_velocity_to_observation: true
