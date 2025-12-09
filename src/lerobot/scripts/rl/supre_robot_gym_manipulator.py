@@ -1805,6 +1805,7 @@ class KeyboardControlWrapper(GamepadControlWrapper):
             print(f"[ACTOR] Misc key: {key}")
             if key == "i":
                 self.is_intervention_active = not self.is_intervention_active
+                print(f"[ACTOR] Intervention active: {self.is_intervention_active}")
             elif key == "f":
                 episode_end_status = "failure"
             elif key == "s":
