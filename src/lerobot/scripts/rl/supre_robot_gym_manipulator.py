@@ -1802,6 +1802,7 @@ class KeyboardControlWrapper(GamepadControlWrapper):
         # Unroll the misc_keys_queue to check for events related to intervention, episode success, etc.
         while not self.teleop_device.misc_keys_queue.empty():
             key = self.teleop_device.misc_keys_queue.get()
+            print(f"[ACTOR] Misc key: {key}")
             if key == "i":
                 self.is_intervention_active = not self.is_intervention_active
             elif key == "f":
