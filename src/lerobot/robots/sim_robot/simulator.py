@@ -72,9 +72,6 @@ class Simulator:
         self.flexible_name = [
             "shoulder_roll_left", "shoulder_lift_left", "elbow_roll_left", 
             "elbow_flex_left", "wrist_roll_left", "gripper_flex_left", "gripper_left",
-            "shoulder_roll_right", "shoulder_lift_right", "elbow_roll_right", 
-            "elbow_flex_right", "wrist_roll_right", "gripper_flex_right", "gripper_right",
-            "body_roll", "waist_flex"
         ]
 
         # idx2joint 这个是对应真机的关节序号

@@ -31,9 +31,6 @@ class SimRobot(Robot):
         self.joint_names = [
             "shoulder_roll_left", "shoulder_lift_left", "elbow_roll_left", 
             "elbow_flex_left", "wrist_roll_left", "gripper_flex_left", "gripper_left",
-            "shoulder_roll_right", "shoulder_lift_right", "elbow_roll_right", 
-            "elbow_flex_right", "wrist_roll_right", "gripper_flex_right", "gripper_right",
-            "body_roll", "waist_flex"
         ]
 
         self.robot2sim = {
@@ -202,3 +199,81 @@ class SimRobot(Robot):
             cam.disconnect()
 
         logger.info(f"{self} disconnected from simulator")
+
+    def get_joint_names(self) -> List[str]:
+        """返回所有关节的名称列表"""
+        return self.joint_names
+
+    def get_present_position(self) -> Dict[str, float]:
+        """
+        获取当前关节位置。
+        返回格式: {'joint_name': position_in_degrees, ...}
+        """
+        if not self.is_connected:
+            raise DeviceNotConnectedError(f"{self} is not connected")
+        
+        # simulator.get_joint_states 返回的是弧度
+        joint_positions, _ = self.simulator.get_joint_states()
+        
+        return {
+            name: math.degrees(joint_positions[i])
+            for i, name in enumerate(self.joint_names)
+        }
+
+    def write_goal_position(self, target_position: Dict[str, float]) -> None:
+        """
+        向机器人写入目标位置。
+        通过调用 send_action 实现，包含重映射、安全检查和仿真步进。
+        Args:
+            target_position: 包含 {'joint_name': target_pos_degrees} 的字典
+        """
+        if not self.is_connected:
+            raise DeviceNotConnectedError(f"{self} is not connected")
+
+        # 构造符合 send_action 预期的字典 (确保带 .pos 后缀)
+        action = {}
+        for name, value in target_position.items():
+            # 如果键名已经是 'joint.pos' 格式则保持，否则添加后缀
+            key = name if name.endswith(".pos") else f"{name}.pos"
+            action[key] = value
+
+        # 直接调用 send_action，复用其内部的名称映射(robot2sim)和单位转换逻辑
+        self.send_action(action)
+    def get_present_current(self) -> Dict[str, float]:
+        """
+        获取当前关节电流 (仿真中通常返回 0 或力矩)。
+        """
+        if not self.is_connected:
+            raise DeviceNotConnectedError(f"{self} is not connected")
+        
+        # 仿真通常不模拟电流，或者可以通过 getJointStates 的第4个返回值获取 torque
+        # 这里为了简单起见，返回 0.0，或者你可以修改 Simulator 获取 torque
+        return {name: 0.0 for name in self.joint_names}
+
+    def set_enable_torque(self, enable: bool) -> None:
+        """
+        仿真中通常总是启用扭矩，此为兼容性空方法。
+        """
+        pass
+
+    def get_gripper_position(self) -> float:
+        """获取夹爪的当前位置"""
+        positions = self.get_present_position()
+        
+        # 假设 gripper 关节名称包含 'gripper'
+        # 根据 self.joint_names 查找
+        gripper_name = "gripper_left" # 默认假设
+        for name in self.joint_names:
+            if "gripper" in name and "flex" not in name: # 排除 flex 关节
+                gripper_name = name
+                break
+        
+        return positions.get(gripper_name, 0.0)
+
+    def get_max_gripper_position(self) -> float:
+        """从配置中获取最大夹爪位置"""
+        return getattr(self.config, "max_gripper_pos", 1.0) # 默认值
+
+    def get_urdf_path(self) -> str:
+        """获取 URDF 文件路径"""
+        return getattr(self.config, "urdf_path", None)

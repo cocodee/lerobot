@@ -204,7 +204,6 @@ class KeyboardEndEffectorTeleop(KeyboardTeleop):
         # Generate action based on current key states
         for key, val in self.current_pressed.items():
             print(f"key: {key}, val: {val}")
-            val = 1
             if key == keyboard.Key.up:
                 delta_y = -int(val)
                 print(f"delta_y: {delta_y}")
