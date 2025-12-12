@@ -17,12 +17,6 @@ def sim_robot_cameras_config() -> dict[str, CameraConfig]:
             width=640,
             height=480
         ),
-        "right_wrist_cam": PyBulletCameraConfig(
-            position=(0.6, 0, 0.9),  # 调整相机位置
-            orientation=(0.5, -0.5, -0.5, 0.5),  # 调整朝向
-            width=640,
-            height=480
-        ),
         "left_wrist_cam": PyBulletCameraConfig(
             position=(0.6, 0, 0.9),  # 调整相机位置
             orientation=(0.5, -0.5, -0.5, 0.5),  # 调整朝向

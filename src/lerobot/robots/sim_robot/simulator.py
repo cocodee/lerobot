@@ -116,7 +116,7 @@ class Simulator:
 
         # 加载机器人模型（使用配置中的路径）
         self.robot_id = p.loadURDF(
-            SimRobotConfig().urdf_path,
+            SimRobotConfig().urdf_path1,
             basePosition=[0, 0, 0.05],
             useFixedBase=True
         )

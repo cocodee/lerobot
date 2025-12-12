@@ -6,10 +6,11 @@ type: gym_manipulator
 robot:
   # Specifies which subclass of RobotConfig to use.
   # This matches the name in `@RobotConfig.register_subclass("supre_robot_follower")`
-  type: supre_robot_follower_hil
+  type: sim_robot
 
 #hil new fields
-  urdf_path: "/home/t/workspace/gitprj/lerobot-env/supre_robot_urdf/RJ2506-20251125-all-13-std.urdf"
+  urdf_path: "/home/smai/workspace/dikeke/webxr/urdf/RJ2506-20251125-all-13-std.urdf"
+  urdf_path1: "/home/smai/workspace/dc_dir/sim_lerobot/rf2502_new_3/urdf/rf2502_new_3.urdf"
   target_frame_name: left_hand_base
   end_effector_bounds:
     min:
@@ -24,62 +25,7 @@ robot:
     x: 0.025
     y: 0.025
     z: 0.025  
-  # Path to the joint configuration file for the follower robot.
-  # Corresponds to: SupreRobotFollowerConfig.joint_config_path
-  joint_config_file: "trunk_config_supre_robot_follower_joint_hil.yaml"
-  # Dictionary of camera configurations.
-  # Corresponds to: cameras: dict[str, CameraConfig]
-  cameras: 
-    head_cam:
-      type: opencv
-      index_or_path: 5
-      width: 640
-      height: 480
-      fps: 30
-    left_wrist_cam:
-      type: opencv
-      index_or_path: 1
-      width: 640
-      height: 480
-      fps: 30
 
-  # Maximum relative joint movement in degrees per control step.
-  # Corresponds to: max_relative_joint_move: float
-  max_relative_joint_move: 10.0 #30.0
-
-  # Port for the Prometheus monitoring server. Use `null` for None.
-  # Corresponds to: prometheus_port: int | None
-  prometheus_port: 8000
-
-  # Control loop frequency in Hz.
-  # Corresponds to: control_frequency: int
-  control_frequency: 30
-
-  # List of motor calibration settings for each joint.
-  # Corresponds to: calibration: list[MotorCalibration]
-  calibration:
-    # --- Left Arm ---
-    - joint_name: "left_arm_joint_1"
-      min_position: -160.0
-      max_position: 160.0
-    - joint_name: "left_arm_joint_2"
-      min_position: -90.0
-      max_position: 0.0
-    - joint_name: "left_arm_joint_3"
-      min_position: -150.0
-      max_position: 150.0
-    - joint_name: "left_arm_joint_4"
-      min_position: -90.0
-      max_position: 0.0
-    - joint_name: "left_arm_joint_5"
-      min_position: -150.0
-      max_position: 150.0
-    - joint_name: "left_arm_joint_6"
-      min_position: -90.0
-      max_position: 90.0
-    - joint_name: "left_arm_joint_7"
-      min_position: 0.0
-      max_position: 1.0
 teleop:
   # Specifies which subclass of TeleoperatorConfig to use.
   # This matches the name in `@TeleoperatorConfig.register_subclass("supre_robot_leader")`
