@@ -20,14 +20,14 @@ teleop:
   # Direction multipliers for each joint.
   # Corresponds to: joint_direction: list
   joint_direction:
-    - -1
-    - -1
     - 1
     - 1
     - 1
     - -1
     - 1
     - -1
+    - 1
+    - 1
     - -1
     - 1
     - 1
