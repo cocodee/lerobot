@@ -16,6 +16,7 @@ from .config_sim_robot import SimRobotConfig, SimRobotHilConfig
 from .sim_robot import SimRobot
 from ..utils import ensure_safe_goal_position
 
+import traceback
 logger = logging.getLogger(__name__)
 
 URDF_JOINT_NAMES = [
@@ -99,6 +100,7 @@ class SimRobotHil(SimRobot):
                 logger.warning(
                     f"Expected action keys 'delta_x', 'delta_y', 'delta_z', got {list(action.keys())}"
                 )
+                traceback.print_stack()
                 action = np.zeros(4, dtype=np.float32)
 
         if self.current_joint_pos is None:
