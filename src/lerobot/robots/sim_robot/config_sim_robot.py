@@ -63,7 +63,8 @@ def obj_conf() -> list:
 class SimRobotConfig(RobotConfig):
     # 仿真环境参数
     headless: bool = False
-    urdf_path: str = "/home/smai/workspace/dc_dir/sim_lerobot/rf2502_new_3/urdf/rf2502_new_3.urdf"
+    urdf_path1: str = "/home/smai/workspace/dc_dir/sim_lerobot/rf2502_new_3/urdf/rf2502_new_3.urdf"
+    urdf_path: str = "/home/smai/workspace/dikeke/webxr/urdf/RJ2506-20251125-all-13-std.urdf"
     obj_cfg: list = field(default_factory=obj_conf)
     
     # 相机配置
