@@ -33,7 +33,7 @@ class SimRobotHil(SimRobot):
 
     def __init__(self, config: SimRobotHilConfig):
         super().__init__(config)
-
+        self.config = config
         # Initialize the kinematics module for the supre robot
         if self.config.urdf_path is None:
             raise ValueError(
