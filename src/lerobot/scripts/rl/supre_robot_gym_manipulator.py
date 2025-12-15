@@ -105,7 +105,7 @@ def get_urdf_path(robot_arm):
 
 def reset_follower_position(robot_arm, target_position):
     #DONE: read
-    log_say("Resetting follower position...")
+    log_say("Resetting follower position...",play_sounds=True)
     current_position_dict = get_present_position(robot_arm)
     current_position = np.array(
         [current_position_dict[name] for name in current_position_dict], dtype=np.float32
@@ -1808,9 +1808,9 @@ class KeyboardControlWrapper(GamepadControlWrapper):
                 self.is_intervention_active = not self.is_intervention_active
                 print(f"[ACTOR] Intervention active: {self.is_intervention_active}")
                 if self.is_intervention_active:
-                    log_say("Intervention started",play_sound=True)
+                    log_say("Intervention started",play_sounds=True)
                 else:
-                    log_say("Intervention ended",play_sound=True)
+                    log_say("Intervention ended",play_sounds=True)
             elif key == "f":
                 episode_end_status = "failure"
             elif key == "s":
