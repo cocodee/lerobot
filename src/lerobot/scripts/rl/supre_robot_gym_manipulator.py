@@ -896,6 +896,7 @@ class ResetWrapper(gym.Wrapper):
             start_time = time.perf_counter()
             while time.perf_counter() - start_time < self.reset_time_s:
                 action = self.env.robot_leader.get_action()
+                print(f"robot_leader action: {action}")
                 self.unwrapped.robot.send_action(action)
 
             log_say("Manual reset of the environment done.", play_sounds=True)
