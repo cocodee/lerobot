@@ -207,16 +207,29 @@ class KeyboardEndEffectorTeleop(KeyboardTeleop):
         # Generate action based on current key states
         for key, val in self.current_pressed.items():
             print(f"key: {key}, val: {val}")
-            if key == keyboard.Key.up:
+            val = 1
+            #if key == keyboard.Key.up:
+            #    delta_y = -int(val)
+            #    print(f"delta_y: {delta_y}")
+            #elif key == keyboard.Key.down:
+            #    delta_y = int(val)
+            #    print(f"delta_y: {delta_y}")
+            #elif key == keyboard.Key.left:
+            #    delta_x = int(val)
+            #    print(f"delta_x: {delta_x}")
+            #elif key == keyboard.Key.right:
+            #    delta_x = -int(val)
+            #    print(f"delta_x: {delta_x}")
+            if hasattr(key, "char") and key.char == "w":
                 delta_y = -int(val)
                 print(f"delta_y: {delta_y}")
-            elif key == keyboard.Key.down:
+            elif hasattr(key, "char") and key.char == "s":
                 delta_y = int(val)
                 print(f"delta_y: {delta_y}")
-            elif key == keyboard.Key.left:
+            elif hasattr(key, "char") and key.char == "a":
                 delta_x = int(val)
                 print(f"delta_x: {delta_x}")
-            elif key == keyboard.Key.right:
+            elif hasattr(key, "char") and key.char == "d":
                 delta_x = -int(val)
                 print(f"delta_x: {delta_x}")
             elif key == keyboard.Key.shift:
