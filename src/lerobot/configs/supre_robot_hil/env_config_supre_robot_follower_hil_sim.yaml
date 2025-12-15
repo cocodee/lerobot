@@ -6,7 +6,7 @@ type: gym_manipulator
 robot:
   # Specifies which subclass of RobotConfig to use.
   # This matches the name in `@RobotConfig.register_subclass("supre_robot_follower")`
-  type: sim_robot
+  type: sim_robot_hil
 
 #hil new fields
   urdf_path: "/home/smai/workspace/dikeke/webxr/urdf/RJ2506-20251125-all-13-std.urdf"
