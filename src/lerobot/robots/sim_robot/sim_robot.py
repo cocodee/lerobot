@@ -6,7 +6,8 @@ import pybullet as p
 import pybullet_data
 import numpy as np
 from functools import cached_property
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Type
+
 
 from lerobot.cameras.utils import make_cameras_from_configs
 from lerobot.errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
