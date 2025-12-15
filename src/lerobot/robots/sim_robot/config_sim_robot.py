@@ -75,6 +75,6 @@ class SimRobotConfig(RobotConfig):
 
 @RobotConfig.register_subclass("sim_robot_hil")
 @dataclass
-class SimRobotConfig(SimRobotConfig):
+class SimRobotHilConfig(SimRobotConfig):
     # 仿真环境参数
     urdf_path: str = "/home/smai/workspace/dikeke/webxr/urdf/RJ2506-20251125-all-13-std.urdf"
