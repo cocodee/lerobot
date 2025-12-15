@@ -160,7 +160,63 @@ class KeyboardEndEffectorTeleop(KeyboardTeleop):
         super().__init__(config)
         self.config = config
         self.misc_keys_queue = Queue()
+        self.continuous_keys = {
+                #keyboard.Key.up,
+                #keyboard.Key.down,
+                #keyboard.Key.left,
+                #keyboard.Key.right,
+                keyboard.Key.shift,
+                keyboard.Key.shift_l,
+                keyboard.Key.shift_r,
+                keyboard.Key.ctrl_l,
+                keyboard.Key.ctrl_r,
+                # 如果有 WASD 控制，也要加在这里，注意要用字符
+                'w', 'a', 's', 'd' 
+        }
+        self.pending_releases = {}
+        self.DEBOUNCE_THRESHOLD = 0.05 
 
+    def _drain_pressed_keys(self):
+        """
+        混合处理模式：
+        1. 对 self.continuous_keys 里的键：使用防抖逻辑（解决 Linux 长按闪烁问题）。
+        2. 对其他键：使用原始逻辑（直接赋值，无延迟）。
+        """
+        curr_time = time.perf_counter()
+
+        # 1. 消费事件队列
+        while not self.event_queue.empty():
+            key, is_pressed = self.event_queue.get_nowait()
+            
+            # 判断是否为需要长按防抖的连续键
+            if key in self.continuous_keys:
+                # === 新方式 (Debounce) ===
+                if is_pressed:
+                    self.current_pressed[key] = True
+                    if key in self.pending_releases:
+                        del self.pending_releases[key]
+                else:
+                    # 释放时不立即移除，而是放入待定区
+                    self.pending_releases[key] = curr_time
+            else:
+                # === 原始方式 (Direct) ===
+                # 不需要防抖，直接反映当前状态
+                # 任何待定的释放操作如果涉及此键，直接清除，以最新状态为准             
+                if is_pressed:
+                    self.current_pressed[key] = True
+                else:
+                    self.current_pressed[key] = False
+
+        # 2. 处理防抖键的延迟释放
+        keys_to_remove = []
+        for key, release_time in self.pending_releases.items():
+            if curr_time - release_time > self.DEBOUNCE_THRESHOLD:
+                if key in self.current_pressed:
+                    del self.current_pressed[key]
+                keys_to_remove.append(key)
+        
+        for key in keys_to_remove:
+            del self.pending_releases[key]
     @property
     def action_features(self) -> dict:
         if self.config.use_gripper:
@@ -247,7 +303,8 @@ class KeyboardEndEffectorTeleop(KeyboardTeleop):
                 # this is useful for retrieving other events like interventions for RL, episode success, etc.
                 self.misc_keys_queue.put(key)
 
-        self.current_pressed.clear()
+        for key in self.continuous_keys:
+            self.current_pressed.pop(key)
 
         action_dict = {
             "delta_x": delta_x,
