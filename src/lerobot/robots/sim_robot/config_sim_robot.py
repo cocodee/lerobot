@@ -27,36 +27,37 @@ def sim_robot_cameras_config() -> dict[str, CameraConfig]:
 
 def obj_conf() -> list:
     """目标物件的参数"""
-    return [
-        {"name" : "desk", # 位置和高度都有问题，需要调整
-         "path" : "/home/smai/workspace/dc_dir/sim_lerobot/rf_object_workspace/Assemfinal_dest/urdf/Assemfinal_dest.urdf",
-         "basePosition" : [0.0, -0.63, 0.0],
-         "globalScaling": 0.00085,
-         "useFixedBase" : True,
-         "color": (1.0, 1.0, 1.0, 1.0)
-         },
-        #  {"name" : "workdesk", # 这个可以不加，目前没有调好
-        #  "path" : "/home/smai/workspace/dc_dir/sim_lerobot/rf_object_workspace/Assemfinal_workdesk/urdf/Assemfinal_workdesk.urdf",
-        #  "basePosition" : [0.0, -0.6, 0.05],
-        #  "globalScaling": 100.5,
-        #  "useFixedBase" : True,
-        #  "color": (0.8, 0.8, 0.8, 1.0)
-        #  },
-        #  {"name" : "stick2", # 短件
-        #  "path" : "/home/smai/workspace/dc_dir/sim_lerobot/rf_object_workspace/Assem6--finalone2-stick2/urdf/Assem6--finalone2-stick2.urdf",
-        #  "basePosition" : [0.0, -0.5, 0.72],
-        #  "globalScaling": 1.0,
-        #  "useFixedBase" : False,
-        #  "color": (0.0, 0.0, 0.0, 1.0)
-        #  },
-         {"name" : "items2", #长件
-         "path" : "/home/smai/workspace/dc_dir/sim_lerobot/rf_object_workspace/Assemfinal_items2/urdf/Assemfinal_items2.urdf",
-         "basePosition" : [0.2, -0.55, 0.8],
-         "globalScaling": 1.0,
-         "useFixedBase" : False,
-         "color": (0.0, 0.0, 0.0, 1.0)
-         },
-    ]
+    return []
+    #return [
+    #    {"name" : "desk", # 位置和高度都有问题，需要调整
+    #     "path" : "/home/smai/workspace/dc_dir/sim_lerobot/rf_object_workspace/Assemfinal_dest/urdf/Assemfinal_dest.urdf",
+    #     "basePosition" : [0.0, -0.63, 0.0],
+    #     "globalScaling": 0.00085,
+    #     "useFixedBase" : True,
+    #     "color": (1.0, 1.0, 1.0, 1.0)
+    #     },
+    #    #  {"name" : "workdesk", # 这个可以不加，目前没有调好
+    #    #  "path" : "/home/smai/workspace/dc_dir/sim_lerobot/rf_object_workspace/Assemfinal_workdesk/urdf/Assemfinal_workdesk.urdf",
+    #    #  "basePosition" : [0.0, -0.6, 0.05],
+    #    #  "globalScaling": 100.5,
+    #    #  "useFixedBase" : True,
+    #    #  "color": (0.8, 0.8, 0.8, 1.0)
+    #    #  },
+    #    #  {"name" : "stick2", # 短件
+    #    #  "path" : "/home/smai/workspace/dc_dir/sim_lerobot/rf_object_workspace/Assem6--finalone2-stick2/urdf/Assem6--finalone2-stick2.urdf",
+    #    #  "basePosition" : [0.0, -0.5, 0.72],
+    #    #  "globalScaling": 1.0,
+    #    #  "useFixedBase" : False,
+    #    #  "color": (0.0, 0.0, 0.0, 1.0)
+    #    #  },
+    #     {"name" : "items2", #长件
+    #     "path" : "/home/smai/workspace/dc_dir/sim_lerobot/rf_object_workspace/Assemfinal_items2/urdf/Assemfinal_items2.urdf",
+    #     "basePosition" : [0.2, -0.55, 0.8],
+    #     "globalScaling": 1.0,
+    #     "useFixedBase" : False,
+    #     "color": (0.0, 0.0, 0.0, 1.0)
+    #     },
+    #]
 
 @RobotConfig.register_subclass("sim_robot")
 @dataclass
