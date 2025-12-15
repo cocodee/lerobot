@@ -202,7 +202,7 @@ class SimRobotHil(SimRobot):
             action[key] = value
 
         # 直接调用 send_action，复用其内部的名称映射(robot2sim)和单位转换逻辑
-        super.send_action(action)
+        super().send_action(action)
     def get_present_current(self) -> Dict[str, float]:
         """
         获取当前关节电流 (仿真中通常返回 0 或力矩)。
