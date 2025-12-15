@@ -64,7 +64,6 @@ class SimRobotConfig(RobotConfig):
     # 仿真环境参数
     headless: bool = False
     urdf_path1: str = "/home/smai/workspace/dc_dir/sim_lerobot/rf2502_new_3/urdf/rf2502_new_3.urdf"
-    urdf_path: str = "/home/smai/workspace/dikeke/webxr/urdf/RJ2506-20251125-all-13-std.urdf"
     obj_cfg: list = field(default_factory=obj_conf)
     
     # 相机配置
@@ -73,3 +72,9 @@ class SimRobotConfig(RobotConfig):
     # 安全参数
     max_relative_target: float = None #10.0 #0.1 改角度为了和机器对应 弧度 # 关节最大相对移动量
     disable_torque_on_disconnect: bool = True
+
+@RobotConfig.register_subclass("sim_robot_hil")
+@dataclass
+class SimRobotConfig(SimRobotConfig):
+    # 仿真环境参数
+    urdf_path: str = "/home/smai/workspace/dikeke/webxr/urdf/RJ2506-20251125-all-13-std.urdf"
