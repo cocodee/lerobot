@@ -78,3 +78,25 @@ class SimRobotConfig(RobotConfig):
 class SimRobotHilConfig(SimRobotConfig):
     # 仿真环境参数
     urdf_path: str = "/home/smai/workspace/dikeke/webxr/urdf/RJ2506-20251125-all-13-std.urdf"
+
+    # End-effector frame name in the URDF
+    target_frame_name: str = "gripper_frame_link"
+
+    # Default bounds for the end-effector position (in meters)
+    end_effector_bounds: dict[str, list[float]] = field(
+        default_factory=lambda: {
+            "min": [-1.0, -1.0, -1.0],  # min x, y, z
+            "max": [1.0, 1.0, 1.0],  # max x, y, z
+        }
+    )
+
+    max_gripper_pos: float = 1.0
+
+    end_effector_step_sizes: dict[str, float] = field(
+        default_factory=lambda: {
+            "x": 0.02,
+            "y": 0.02,
+            "z": 0.02,
+        }
+    )
+    gripper_joint_name: str = "left_arm_joint_7"    
