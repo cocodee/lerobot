@@ -55,13 +55,12 @@ from lerobot.model.kinematics import RobotKinematics
 from lerobot.robots import (  # noqa: F401
     RobotConfig,
     make_robot_from_config,
-    supre_robot_follower
+    sim_robot,
 )
 from lerobot.teleoperators import (
     gamepad,  # noqa: F401
     keyboard,  # noqa: F401
     make_teleoperator_from_config,
-    supre_robot_leader
 )
 from lerobot.teleoperators.gamepad.teleop_gamepad import GamepadTeleop
 from lerobot.teleoperators.keyboard.teleop_keyboard import KeyboardEndEffectorTeleop
