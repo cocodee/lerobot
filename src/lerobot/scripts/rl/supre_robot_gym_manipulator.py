@@ -105,6 +105,7 @@ def get_urdf_path(robot_arm):
 
 def reset_follower_position(robot_arm, target_position):
     #DONE: read
+    log_say("Resetting follower position...")
     current_position_dict = get_present_position(robot_arm)
     current_position = np.array(
         [current_position_dict[name] for name in current_position_dict], dtype=np.float32
@@ -116,7 +117,7 @@ def reset_follower_position(robot_arm, target_position):
         action_dict = dict(zip(current_position_dict, pose, strict=False))
         #DONE: write
         write_goal_position(robot_arm, action_dict)
-        busy_wait(0.015)
+        busy_wait(0.15)
 
 
 class TorchBox(gym.spaces.Box):
@@ -1806,6 +1807,10 @@ class KeyboardControlWrapper(GamepadControlWrapper):
             if key == "i":
                 self.is_intervention_active = not self.is_intervention_active
                 print(f"[ACTOR] Intervention active: {self.is_intervention_active}")
+                if self.is_intervention_active:
+                    log_say("Intervention started",play_sound=True)
+                else:
+                    log_say("Intervention ended",play_sound=True)
             elif key == "f":
                 episode_end_status = "failure"
             elif key == "s":
