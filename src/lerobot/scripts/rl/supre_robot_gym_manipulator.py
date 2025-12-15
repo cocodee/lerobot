@@ -55,7 +55,7 @@ from lerobot.model.kinematics import RobotKinematics
 from lerobot.robots import (  # noqa: F401
     RobotConfig,
     make_robot_from_config,
-    sim_robot_hil,
+    sim_robot,
 )
 from lerobot.teleoperators import (
     gamepad,  # noqa: F401
