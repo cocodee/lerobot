@@ -303,7 +303,7 @@ class KeyboardEndEffectorTeleop(KeyboardTeleop):
                 # this is useful for retrieving other events like interventions for RL, episode success, etc.
                 self.misc_keys_queue.put(key)
 
-        for key in self.current_pressed.keys():
+        for key in list(self.current_pressed.keys()):
             if not key in self.continuous_keys:
                 self.current_pressed.pop(key)
 
