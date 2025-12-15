@@ -187,6 +187,7 @@ class KeyboardEndEffectorTeleop(KeyboardTeleop):
     def _on_release(self, key):
         if hasattr(key, "char"):
             key = key.char
+            print(f"Key released: {key}")
         self.event_queue.put((key, False))
 
     def get_action(self) -> dict[str, Any]:
