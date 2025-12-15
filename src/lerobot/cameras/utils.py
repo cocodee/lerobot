@@ -37,8 +37,12 @@ def make_cameras_from_configs(camera_configs: dict[str, CameraConfig]) -> dict[s
             from .realsense.camera_realsense import RealSenseCamera
 
             cameras[key] = RealSenseCamera(cfg)
+        elif cfg.type == "pybullet":  # 新增PyBullet相机支持
+            from .pybullet import PyBulletCamera
+            
+            cameras[key] = PyBulletCamera(cfg)            
         else:
-            raise ValueError(f"The motor type '{cfg.type}' is not valid.")
+            raise ValueError(f"The camera type '{cfg.type}' is not valid.")
 
     return cameras
 
