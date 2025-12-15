@@ -225,7 +225,7 @@ class KeyboardEndEffectorTeleop(KeyboardTeleop):
                 gripper_action = int(val) + 1
             elif key == keyboard.Key.ctrl_l:
                 gripper_action = int(val) - 1
-            elif val:
+            else:
                 # If the key is pressed, add it to the misc_keys_queue
                 # this will record key presses that are not part of the delta_x, delta_y, delta_z
                 # this is useful for retrieving other events like interventions for RL, episode success, etc.
