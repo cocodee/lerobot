@@ -304,7 +304,7 @@ class KeyboardEndEffectorTeleop(KeyboardTeleop):
                 self.misc_keys_queue.put(key)
 
         for key in self.continuous_keys:
-            self.current_pressed.pop(key)
+            self.current_pressed.pop(key, None)
 
         action_dict = {
             "delta_x": delta_x,
