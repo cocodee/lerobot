@@ -167,6 +167,7 @@ class SimRobot(Robot):
 
         else:
             # 转换动作格式（从字典到数组）
+            print(f"using action:{action},joint_names:{self.joint_names}")
             action_array = np.array([
                 math.radians(action[f"{name}.pos"]) for name in self.joint_names
                 # action[f"{name}.pos"] for name in self.joint_names
