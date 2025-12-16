@@ -264,16 +264,18 @@ class Simulator:
                 print(joint+" ia: "+ str(ia) +" action="+ str(action_pos)+" 超最高限位 new_action="+str(self.action_low[ia]))
                 action_pos = self.action_high[ia]
 
-            p.setJointMotorControl2(
-                self.robot_id,
-                idx,
-                controlMode=p.POSITION_CONTROL,
-                targetPosition=action_pos,
-                force=500
-            )
+            #p.setJointMotorControl2(
+            #    self.robot_id,
+            #    idx,
+            #    controlMode=p.POSITION_CONTROL,
+            #    targetPosition=action_pos,
+            #    force=500
+            #)
             # ia += 1
             # print(joint+" : "+str(idx)+" : "+str(action_pos))
-        
+
+            p.resetJointState(self.robot_id, idx, targetValue=action_pos, targetVelocity=0)
+                    
         p.stepSimulation()
         next_obs = self.get_observation()
         
