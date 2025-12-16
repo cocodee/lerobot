@@ -7,8 +7,8 @@ from typing import List, Dict
 
 # 引入你的类 (假设都在正确路径下)
 # 请根据实际文件结构调整 import 路径
-from lerobot.robots.sim_robot.sim_robot import SimRobotHil
-from lerobot.robots.sim_robot.config_sim_robot import SimRobotHilConfig
+from lerobot.robots.sim_robot import SimRobotHil
+from lerobot.robots.sim_robot import SimRobotHilConfig
 
 # --- 1. 配置部分 ---
 @dataclass
