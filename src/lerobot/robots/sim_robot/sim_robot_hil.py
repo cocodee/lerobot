@@ -106,7 +106,7 @@ class SimRobotHil(SimRobot):
         if self.current_joint_pos is None:
             # Read current joint positions
             #TODO:获取当前关节位置
-            current_joint_pos = self.get_present_position()[:-1]
+            current_joint_pos = self.get_present_position()
             self.current_joint_pos = np.array([current_joint_pos[name] for name in self.get_joint_names()[:-1]])
 
         # Calculate current end-effector position using forward kinematics
