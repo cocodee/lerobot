@@ -144,7 +144,7 @@ class SimRobot(Robot):
                 name = self.robot2sim[key.split(".")[0]]
                 new_action[f"{name}.pos"] = val
             action = new_action
-        print(f"new_action: {new_action}")
+        print(f"new_action: {action}")
         # import pdb; pdb.set_trace()
         goal_pos = {key.removesuffix(".pos"): val for key, val in action.items() if key.endswith(".pos")}
         # Cap goal position when too far away from present position.
