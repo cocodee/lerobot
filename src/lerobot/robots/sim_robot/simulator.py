@@ -123,6 +123,7 @@ class Simulator:
 
         # 加载场景物体（保持用户定义）
         self.objects = self._load_objects()
+        p.setGravity(0, 0, 0)
         # self.is_manual = is_manual
         # self.cube_hight = 0.5  # 从_load_objects中提取为类属性
 
@@ -275,8 +276,10 @@ class Simulator:
             # print(joint+" : "+str(idx)+" : "+str(action_pos))
 
             p.resetJointState(self.robot_id, idx, targetValue=action_pos, targetVelocity=0)
-                    
-        p.stepSimulation()
+
+        #p.stepSimulation()
+        p.performCollisionDetection() 
+
         next_obs = self.get_observation()
         
         # ee_pos = next_obs[-15:-3]

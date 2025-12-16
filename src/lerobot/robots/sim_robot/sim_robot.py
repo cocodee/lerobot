@@ -177,8 +177,7 @@ class SimRobot(Robot):
         # import pdb; pdb.set_trace()
         # 执行仿真步骤
         # _, _, done, _ = self.simulator.step(action_array)
-        #next_obs = self.simulator.step(action_array)
-        p.performCollisionDetection() 
+        next_obs = self.simulator.step(action_array)
         # if done:
         #     logger.info("Simulation episode completed")
         logger.info("Simulation episode completed")
