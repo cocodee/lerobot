@@ -21,102 +21,125 @@ class TestConfig(SimRobotHilConfig):
     # 定义测试用的相机（可选）
     cameras: Dict = field(default_factory=lambda: {})
 
+# --- 2. 核心黑魔法：禁用物理，强制设置位置 ---
 def override_simulator_step_no_physics(simulator_instance):
     """
-    [核心黑魔法]
-    动态修改 simulator 实例的 step 方法。
-    将原本的电机控制(setJointMotorControl2) 替换为 强制位置重置(resetJointState)。
-    这样可以完全消除重力、惯性和阻力的影响，实现“指哪打哪”的可视化。
+    替换 simulator 的 step 方法。
+    使用 resetJointState 代替 setJointMotorControl2。
+    效果：无视重力、无视阻力，绝对位置控制。
     """
     def no_physics_step(action: np.ndarray):
-        # 遍历所有活动关节
         for joint_name, idx in simulator_instance.flexible_joint.items():
             ia = simulator_instance.joint2idx[joint_name]
             
-            # 获取目标弧度 (保持原有的方向处理逻辑)
-            target_pos = action[ia] * simulator_instance.joint_direction[ia]
+            # 原始 Action 处理（保持方向乘法）
+            target_pos_rad = action[ia] * simulator_instance.joint_direction[ia]
             
-            # 限位保护
-            if target_pos < simulator_instance.action_low[ia]:
-                target_pos = simulator_instance.action_low[ia]
-            if target_pos > simulator_instance.action_high[ia]:
-                target_pos = simulator_instance.action_high[ia]
+            # 简单的限位保护 (防止超出 URDF 定义的极限报错)
+            low = simulator_instance.action_low[ia]
+            high = simulator_instance.action_high[ia]
+            target_pos_rad = max(low, min(target_pos_rad, high))
 
-            # 关键：使用 resetJointState 直接设置位置，绕过物理引擎
-            p.resetJointState(simulator_instance.robot_id, idx, targetValue=target_pos)
+            # 强制设置位置 (Teleport)
+            p.resetJointState(simulator_instance.robot_id, idx, targetValue=target_pos_rad)
         
-        # 刷新渲染，不进行物理步进
+        # 必须调用这个来更新画面和碰撞体位置
         p.performCollisionDetection() 
         return simulator_instance.get_observation()
 
-    # 将实例的方法替换掉
     simulator_instance.step = no_physics_step
-    print(">>> 已启用无物理模式 (Direct Kinematics Mode)")
+    print(">>> [模式] 已启用无物理运动学模式")
 
+# --- 3. 辅助函数：在屏幕上显示文字 ---
+def draw_debug_text(text, life_time=0.5):
+    # 在机器人头顶位置显示文字
+    p.addUserDebugText(
+        text=text,
+        textPosition=[0, 0, 0.8],
+        textColorRGB=[1, 0, 0], # 红色
+        textSize=2.0,
+        lifeTime=life_time
+    )
+
+# --- 4. 主逻辑 ---
 def main():
-    # 1. 初始化配置
-    # 注意：如果你的 SimRobotHilConfig 需要特定参数，请在这里补充
     cfg = TestConfig()
     
-    print("正在初始化机器人...")
     try:
+        print(f"正在加载模型: {cfg.urdf_path}")
         robot = SimRobotHil(cfg)
         robot.connect()
     except Exception as e:
-        print(f"初始化失败，请检查 URDF 路径或配置: {e}")
+        print(f"错误: 无法加载机器人，请检查路径。\n{e}")
         return
 
-    # 2. 调整 PyBullet 视角 (放大看清细节)
-    p.resetDebugVisualizerCamera(
-        cameraDistance=1.0, 
-        cameraYaw=0, 
-        cameraPitch=-20, 
-        cameraTargetPosition=[0, 0, 0.5]
-    )
-
-    # 3. [关键] 替换 step 方法以去除物理影响
-    # 这样即使你没有修改 simulator.py 的源码，运行此脚本时也是无重力的
-    override_simulator_step_no_physics(robot.simulator)
+    # 调整相机
+    p.resetDebugVisualizerCamera(1.2, 0, -20, [0, 0, 0.5])
     
-    # 额外保险：将全局重力设为0
+    # 启用无物理模式
+    override_simulator_step_no_physics(robot.simulator)
     p.setGravity(0, 0, 0)
 
-    # 4. 获取关节名称列表
     joint_names = robot.get_joint_names()
-    print(f"检测到的关节: {joint_names}")
+    print(f"\n检测到关节列表: {joint_names}\n")
 
-    print("开始正弦波动作测试 (按 Ctrl+C 停止)...")
-    
-    start_time = time.time()
-    
+    # 初始化所有关节为 0
+    current_positions = {name: 0.0 for name in joint_names}
+    robot.write_goal_position(current_positions)
+    time.sleep(1)
+
     try:
+        # === 阶段 1: 逐个关节独立测试 ===
+        print("=== 开始单关节测试 (每个关节转动 +/- 45度) ===")
+        
+        for idx, active_joint in enumerate(joint_names):
+            print(f"--> 正在测试第 {idx+1} 个关节: {active_joint}")
+            
+            # 生成测试轨迹：0 -> 45 -> -45 -> 0 (总共涵盖 90 度范围)
+            # 使用 linspace 生成平滑轨迹点
+            traj_p1 = np.linspace(0, 45, 30)   # 0 到 45
+            traj_p2 = np.linspace(45, -45, 60) # 45 到 -45
+            traj_p3 = np.linspace(-45, 0, 30)  # -45 到 0
+            full_traj = np.concatenate([traj_p1, traj_p2, traj_p3])
+
+            for angle in full_traj:
+                # 只有当前测试的关节动，其他保持 0
+                target_pos = current_positions.copy() # 全 0
+                target_pos[active_joint] = float(angle)
+                
+                robot.write_goal_position(target_pos)
+                
+                # 屏幕显示
+                draw_debug_text(f"{active_joint}: {angle:.1f} deg", life_time=0.05)
+                time.sleep(0.01) # 控制动画速度
+
+            # 复位休息一下
+            robot.write_goal_position(current_positions)
+            time.sleep(0.5)
+
+        # === 阶段 2: 组合运动测试 ===
+        print("\n=== 单关节测试结束，开始组合演示 ===")
+        draw_debug_text("COMBINED TEST", life_time=2)
+        start_time = time.time()
         while True:
             t = time.time() - start_time
             
-            # 构造目标位置字典
-            target_positions = {}
-            
+            pos_dict = {}
             for i, name in enumerate(joint_names):
-                # 生成一个 -30度 到 +30度 的正弦波运动
-                # 不同关节加上相位差(i * 0.5)，让动作看起来像波浪
-                angle_deg = 30.0 * math.sin(2.0 * t + i * 0.5)
-                
-                # 如果是 gripper (通常范围较小)，特殊处理
+                # 简单的正弦波，不同关节有相位差
+                # 夹爪通常行程短，给小一点幅度
                 if "gripper" in name:
-                    # 假设夹爪范围 0-100 或类似，这里简单设为正弦变化
-                    angle_deg = 50 + 40 * math.sin(3.0 * t)
+                    angle = 45 + 45 * math.sin(t * 2) # 0~90
+                else:
+                    angle = 30 * math.sin(t * 1.5 + i * 0.5) # -30~30
                 
-                target_positions[name] = angle_deg
-
-            # 5. 写入目标位置
-            # SimRobotHil 会将角度转换为弧度，并通过 step (已被我们要替换) 执行
-            robot.write_goal_position(target_positions)
+                pos_dict[name] = angle
             
-            # 控制循环频率，大约 50Hz
+            robot.write_goal_position(pos_dict)
             time.sleep(0.02)
 
     except KeyboardInterrupt:
-        print("\n测试停止")
+        print("\n测试已停止。")
     finally:
         robot.disconnect()
 
