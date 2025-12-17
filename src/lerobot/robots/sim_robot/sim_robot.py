@@ -164,9 +164,9 @@ class SimRobot(Robot):
             }
             goal_present_pos = {key: (g_pos, present_pos[key]) for key, g_pos in goal_pos.items()}
             goal_pos = ensure_safe_goal_position(goal_present_pos, self.config.max_relative_target)
-            action_array = np.array([
-                math.radians(goal_pos[name]) for name in self.joint_names
-            ])
+            action_array = np.zeros(len(self.joint_names), dtype=np.float64)
+            for i, name in enumerate(self.joint_names):
+                action_array[i]= math.radians(goal_pos[name])*self.joint_direction[i]
             #logger.info(f"using actiong:{ np.array([ goal_pos[name] for name in self.joint_names])}")
 
         else:
