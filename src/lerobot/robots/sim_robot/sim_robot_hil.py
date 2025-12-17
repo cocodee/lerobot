@@ -29,10 +29,9 @@ URDF_JOINT_NAMES = [
 ]
 
 URDF_JOINT_NAMES = [
-            "armr_Link", "armr_Link1", "armr_Link2", 
-            "armr_Link3", "armr_Link4", "armr_Link5",
+            "arml_joint", "arml_joint1", "arml_joint2", 
+            "arml_joint3", "arml_joint4", "arml_joint5",
         ]
-
 class SimRobotHil(SimRobot):
     config_class = SimRobotHilConfig
     name = "sim_robot_hil"
