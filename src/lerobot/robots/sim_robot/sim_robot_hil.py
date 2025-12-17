@@ -28,6 +28,11 @@ URDF_JOINT_NAMES = [
     "left_arm_joint5",
 ]
 
+URDF_JOINT_NAMES = [
+            "shoulder_roll_left", "shoulder_lift_left", "elbow_roll_left", 
+            "elbow_flex_left", "wrist_roll_left", "gripper_flex_left", "gripper_left",
+        ]
+
 class SimRobotHil(SimRobot):
     config_class = SimRobotHilConfig
     name = "sim_robot_hil"
@@ -93,6 +98,7 @@ class SimRobotHil(SimRobot):
                     ],
                     dtype=np.float32,
                 )
+                logger.info(f"delta_ee: {delta_ee}")
                 if "gripper" not in action:
                     action["gripper"] = [1.0]
                 action = np.append(delta_ee, action["gripper"])
