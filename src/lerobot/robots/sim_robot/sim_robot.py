@@ -32,7 +32,9 @@ class SimRobot(Robot):
             "shoulder_roll_left", "shoulder_lift_left", "elbow_roll_left", 
             "elbow_flex_left", "wrist_roll_left", "gripper_flex_left", "gripper_left",
         ]
-
+        self.joint_direction = [
+            -1,1,-1,-1,1,-1,1,
+            ]
         self.robot2sim = {
             "left_arm_joint_1": "shoulder_roll_left", "left_arm_joint_2":"shoulder_lift_left",
             "left_arm_joint_3": "elbow_roll_left", "left_arm_joint_4": "elbow_flex_left",
@@ -124,7 +126,7 @@ class SimRobot(Robot):
         for i, sim_name in enumerate(self.joint_names):
             # 如果 sim_name 在映射表中，使用 robot_name，否则保留原名
             robot_name = self.sim2robot.get(sim_name, sim_name)
-            obs_dict[f"{robot_name}.pos"] = math.degrees(joint_positions[i])
+            obs_dict[f"{robot_name}.pos"] = math.degrees(joint_positions[i])*self.joint_direction[i]
         # logger.info("obs_action: ", obs_dict)
         logger.info(f"obs_action rad: {joint_positions}")
 
@@ -171,7 +173,7 @@ class SimRobot(Robot):
             # 转换动作格式（从字典到数组）
             #logger.info(f"using action:{action},joint_names:{self.joint_names}") 
             action_array = np.array([
-                math.radians(action[f"{name}.pos"]) for name in self.joint_names
+                math.radians(action[f"{name}.pos"])*self.joint_direction[i] for i,name in self.joint_names
                 # action[f"{name}.pos"] for name in self.joint_names
             ])
 

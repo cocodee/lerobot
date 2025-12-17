@@ -256,9 +256,8 @@ class Simulator:
         # import pdb; pdb.set_trace()
         for joint, idx in self.flexible_joint.items():
             ia = self.joint2idx[joint]
-            # action_pos = math.radians(action[ia]) * self.joint_direction[ia]
-            action_pos = action[ia] * self.joint_direction[ia]
-
+            #action_pos = action[ia] * self.joint_direction[ia]
+            action_pos = action[ia]
             # 超限位处理
             if action_pos < self.action_low[ia]:
                 logger.info(joint+" ia: "+ str(ia) +" action="+ str(action_pos)+" 超最低限位 new_action="+str(self.action_low[ia]))
@@ -386,8 +385,10 @@ class Simulator:
             # velocities.append(vel)
             # 加上电机转动方向
             ia = self.joint2idx[name]
-            positions.append(pos*self.joint_direction[ia])
-            velocities.append(vel*self.joint_direction[ia])
+            #positions.append(pos*self.joint_direction[ia])
+            #velocities.append(vel*self.joint_direction[ia])
+            positions.append(pos)
+            velocities.append(vel)
         return np.array(positions), np.array(velocities)
 
     def close(self):
