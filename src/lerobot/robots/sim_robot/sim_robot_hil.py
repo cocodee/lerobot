@@ -107,11 +107,11 @@ class SimRobotHil(SimRobot):
             # Read current joint positions
             #TODO:获取当前关节位置
             current_joint_pos = self.get_present_position()
-            self.current_joint_pos = np.array([current_joint_pos[name] for name in self.get_joint_names()[:-1]])
+            self.current_joint_pos = np.array([current_joint_pos[name] for name in self.get_joint_names()])
 
         # Calculate current end-effector position using forward kinematics
         if self.current_ee_pos is None:
-            self.current_ee_pos = self.kinematics.forward_kinematics(self.current_joint_pos)
+            self.current_ee_pos = self.kinematics.forward_kinematics(self.current_joint_pos[:-1])
 
         # Set desired end-effector position by adding delta
         desired_ee_pos = np.eye(4)
@@ -128,7 +128,7 @@ class SimRobotHil(SimRobot):
 
         # Compute inverse kinematics to get joint positions
         target_joint_values_in_degrees = self.kinematics.inverse_kinematics(
-            self.current_joint_pos, desired_ee_pos
+            self.current_joint_pos[:-1], desired_ee_pos
         )
 
         # Create joint space action dictionary
@@ -148,9 +148,15 @@ class SimRobotHil(SimRobot):
             self.config.max_gripper_pos,
         )
 
+        logger.info(f"current_ee_pos: {self.current_ee_pos}")
+        logger.info(f"desired_ee_pos: {desired_ee_pos}")
+        logger.info(f"current_joint_pos: {self.current_joint_pos}")
+        logger.info(f"target_joint_values_in_degrees: {target_joint_values_in_degrees}")
         self.current_ee_pos = desired_ee_pos.copy()
-        self.current_joint_pos = target_joint_values_in_degrees.copy()
-        self.current_joint_pos[-1] = joint_action[gripper_pos_name]
+        self.current_joint_pos = np.append(
+            target_joint_values_in_degrees.copy(), 
+            joint_action[gripper_pos_name]
+        )
 
         # Send joint space action to parent class
         return super().send_action(joint_action)        
