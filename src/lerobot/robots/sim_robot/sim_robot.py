@@ -175,7 +175,6 @@ class SimRobot(Robot):
                 # action[f"{name}.pos"] for name in self.joint_names
             ])
 
-            logger.info(f"using actiong: {np.array([action[f"{name}.pos"] for name in self.joint_names])}")
         # import pdb; pdb.set_trace()
         # 执行仿真步骤
         # _, _, done, _ = self.simulator.step(action_array)
