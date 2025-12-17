@@ -13,7 +13,9 @@
 # limitations under the License.
 
 import numpy as np
+import logging
 
+logger = logging.getLogger(__name__)
 
 class RobotKinematics:
     """Robot kinematics using placo library for forward and inverse kinematics."""
@@ -109,6 +111,23 @@ class RobotKinematics:
         self.solver.solve(True)
         self.robot.update_kinematics()
 
+        # === 新增：误差分析 ===
+        # 1. 获取 IK 算出来的末端实际位置 (Actual Pose)
+        actual_pose = self.robot.get_T_world_frame(self.target_frame_name)
+        
+        # 2. 计算位置误差 (Position Error) - 欧几里得距离
+        # 提取 desired 和 actual 的位置向量 (前3行第4列)
+        pos_error = np.linalg.norm(desired_ee_pose[:3, 3] - actual_pose[:3, 3])
+        
+        # 3. 计算旋转误差 (Orientation Error) - 简单的近似
+        # 计算两个旋转矩阵的迹(Trace)的差异，或者计算轴角差
+        # 这里用更直观的方式：打印 Z 轴朝向的偏差
+        desired_z = desired_ee_pose[:3, 2]
+        actual_z = actual_pose[:3, 2]
+        # 计算点积，1.0 表示完全重合，0 表示垂直，-1 表示反向
+        alignment = np.dot(desired_z, actual_z) 
+        
+        logger.info(f"[IK Debug] Pos Error: {pos_error*1000:.2f} mm | Z-Align: {alignment:.4f}")
         # Extract joint positions
         joint_pos_rad = []
         for joint_name in self.joint_names:
