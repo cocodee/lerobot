@@ -37,6 +37,10 @@ URDF_JOINT_NAMES = [
     "left_arm_joint4",
     "left_arm_joint5",
 ]
+URDF_JOINT_NAMES = [
+            "shoulder_roll_left", "shoulder_lift_left", "elbow_roll_left", 
+            "elbow_flex_left", "wrist_roll_left", "gripper_flex_left",
+        ]
 class SupreRobotFollowerHil(SupreRobotFollower):
     """
     SO100Follower robot with end-effector space control.
