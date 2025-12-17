@@ -126,6 +126,7 @@ class Simulator:
         # 加载场景物体（保持用户定义）
         self.objects = self._load_objects()
         p.setGravity(0, 0, 0)
+        self.draw_base_frame(self.robot_id)
         # self.is_manual = is_manual
         # self.cube_hight = 0.5  # 从_load_objects中提取为类属性
 
@@ -393,3 +394,54 @@ class Simulator:
 
     def close(self):
         p.disconnect(self.physics_client)
+
+    def draw_base_frame(self, robot_id, axis_length=0.3, line_width=3, life_time=0):
+        """
+        在机器人的 Base Link 上画出 RGB 坐标轴。
+        红色 = X轴
+        绿色 = Y轴
+        蓝色 = Z轴
+        """
+        # Base Link 的索引通常是 -1
+        base_link_index = -1
+        
+        # 起点：基座的中心 (局部坐标系原点)
+        origin_local = [0, 0, 0]
+        
+        # 终点：分别沿 X, Y, Z 轴延伸
+        x_end_local = [axis_length, 0, 0]
+        y_end_local = [0, axis_length, 0]
+        z_end_local = [0, 0, axis_length]
+        
+        # 画 X 轴 (红色)
+        p.addUserDebugLine(
+            lineFromXYZ=origin_local, 
+            lineToXYZ=x_end_local, 
+            lineColorRGB=[1, 0, 0], # Red
+            lineWidth=line_width, 
+            lifeTime=life_time,     # 0 表示永久显示
+            parentObjectUniqueId=robot_id, 
+            parentLinkIndex=base_link_index
+        )
+        
+        # 画 Y 轴 (绿色)
+        p.addUserDebugLine(
+            lineFromXYZ=origin_local, 
+            lineToXYZ=y_end_local, 
+            lineColorRGB=[0, 1, 0], # Green
+            lineWidth=line_width, 
+            lifeTime=life_time,
+            parentObjectUniqueId=robot_id, 
+            parentLinkIndex=base_link_index
+        )
+        
+        # 画 Z 轴 (蓝色)
+        p.addUserDebugLine(
+            lineFromXYZ=origin_local, 
+            lineToXYZ=z_end_local, 
+            lineColorRGB=[0, 0, 1], # Blue
+            lineWidth=line_width, 
+            lifeTime=life_time,
+            parentObjectUniqueId=robot_id, 
+            parentLinkIndex=base_link_index
+        )
