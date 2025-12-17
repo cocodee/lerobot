@@ -141,7 +141,7 @@ class SimRobotHil(SimRobot):
         # Create joint space action dictionary
         #TODO: joint names
         joint_action = {
-            f"{key}.pos": target_joint_values_in_degrees[i] for i, key in enumerate(self.get_joint_names()[:-1])
+            f"{key}.pos": target_joint_values_in_degrees[i]*self.joint_direction[i] for i, key in enumerate(self.get_joint_names()[:-1])
         }
 
         # Handle gripper separately if included in action
