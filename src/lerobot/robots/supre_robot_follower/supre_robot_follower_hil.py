@@ -38,8 +38,8 @@ URDF_JOINT_NAMES = [
     "left_arm_joint5",
 ]
 URDF_JOINT_NAMES = [
-            "shoulder_roll_left", "shoulder_lift_left", "elbow_roll_left", 
-            "elbow_flex_left", "wrist_roll_left", "gripper_flex_left",
+            "arml_joint", "arml_joint1", "arml_joint2", 
+            "arml_joint3", "arml_joint4", "arml_joint5",
         ]
 class SupreRobotFollowerHil(SupreRobotFollower):
     """
