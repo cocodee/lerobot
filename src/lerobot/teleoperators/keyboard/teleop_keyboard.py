@@ -148,7 +148,17 @@ class KeyboardTeleop(Teleoperator):
             )
         if self.listener is not None:
             self.listener.stop()
-
+    def reset(self) -> None:
+        """Resets the teleoperator state."""
+        # 清空当前按下的键
+        self.current_pressed.clear()
+        
+        # 清空事件队列 (使用 mutex 确保线程安全)
+        with self.event_queue.mutex:
+            self.event_queue.queue.clear()
+            
+        self.logs.clear()
+        logger.info(f"{self.name} teleoperator state reset.")
 
 class KeyboardEndEffectorTeleop(KeyboardTeleop):
     """
@@ -320,3 +330,17 @@ class KeyboardEndEffectorTeleop(KeyboardTeleop):
             action_dict["gripper"] = gripper_action
 
         return action_dict
+
+    def reset(self) -> None:
+        """Resets the teleoperator state including debounce buffers and misc queues."""
+        # 调用父类 reset 清除 current_pressed 和 event_queue
+        super().reset()
+        
+        # 清除杂项按键队列 (如用于记录成功的键)
+        with self.misc_keys_queue.mutex:
+            self.misc_keys_queue.queue.clear()
+            
+        # 清除防抖等待字典
+        self.pending_releases.clear()
+        
+        logger.info(f"{self.name} extended state reset.")
