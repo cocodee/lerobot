@@ -237,8 +237,8 @@ class Simulator:
             # joint_vel.append(vel)
             # 加上电机转动方向
             ia = self.joint2idx[name]
-            joint_pos.append(pos*self.joint_direction[ia])
-            joint_vel.append(vel*self.joint_direction[ia])
+            joint_pos.append(pos)
+            joint_vel.append(vel)
         
         # cube_pos, _ = p.getBasePositionAndOrientation(self.objects["cube"])
         # idx_list = [self.flexible_joint[name] for name in self.flexible_name 
