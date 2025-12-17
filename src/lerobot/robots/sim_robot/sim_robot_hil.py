@@ -111,7 +111,8 @@ class SimRobotHil(SimRobot):
             self.current_joint_pos = np.array([current_joint_pos[name] for name in self.get_joint_names()])
 
         # Calculate current end-effector position using forward kinematics
-        if self.current_ee_pos is None:
+        #if self.current_ee_pos is None:
+        if True:
             self.current_ee_pos = self.kinematics.forward_kinematics(self.current_joint_pos[:-1])
 
         # Set desired end-effector position by adding delta
