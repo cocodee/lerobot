@@ -1862,6 +1862,7 @@ class KeyboardControlWrapper(GamepadControlWrapper):
             The initial observation and info.
         """
         self.teleop_device.reset()
+        return super().reset(**kwargs)
 
 class GymHilDeviceWrapper(gym.Wrapper):
     def __init__(self, env, device="cpu"):
