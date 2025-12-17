@@ -159,7 +159,7 @@ class SimRobotHil(SimRobot):
         logger.info(f"desired_ee_pos: {desired_ee_pos}")
         logger.info(f"current_joint_pos: {self.current_joint_pos}")
         logger.info(f"target_joint_values_in_degrees: {target_joint_values_in_degrees}")
-        
+
         self._debug_draw_frame(desired_ee_pos, label="Target", life_time=0.1)
         
         # 2. 画出当前的实际位置 (Actual)
@@ -266,7 +266,7 @@ class SimRobotHil(SimRobot):
         """获取 URDF 文件路径"""
         return getattr(self.config, "urdf_path", None)
 
-   def _debug_draw_frame(self, frame_matrix, label="frame", life_time=0.1, line_width=2):
+    def _debug_draw_frame(self, frame_matrix, label="frame", life_time=0.1, line_width=2):
         """
         在 PyBullet 中画出一个 4x4 矩阵代表的坐标系。
         红色=X轴, 绿色=Y轴, 蓝色=Z轴
