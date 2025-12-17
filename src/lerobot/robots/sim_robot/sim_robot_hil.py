@@ -218,7 +218,7 @@ class SimRobotHil(SimRobot):
         
         # 仿真通常不模拟电流，或者可以通过 getJointStates 的第4个返回值获取 torque
         # 这里为了简单起见，返回 0.0，或者你可以修改 Simulator 获取 torque
-        return {name: 0.0 for name in self.joint_names}
+        return {self.sim2robot[name]: 0.0 for name in self.joint_names}
 
     def set_enable_torque(self, enable: bool) -> None:
         """
@@ -232,7 +232,7 @@ class SimRobotHil(SimRobot):
         
         # 假设 gripper 关节名称包含 'gripper'
         # 根据 self.joint_names 查找
-        gripper_name = "gripper_left" # 默认假设
+        gripper_name = "left_arm_joint_7" # 默认假设
         for name in self.joint_names:
             if "gripper" in name and "flex" not in name: # 排除 flex 关节
                 gripper_name = name
