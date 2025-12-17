@@ -186,7 +186,7 @@ class SimRobotHil(SimRobot):
         joint_positions, _ = self.simulator.get_joint_states()
         
         return {
-            self.robot2sim[name]: math.degrees(joint_positions[i])
+            self.sim2robot[name]: math.degrees(joint_positions[i])
             for i, name in enumerate(self.joint_names)
         }
 
