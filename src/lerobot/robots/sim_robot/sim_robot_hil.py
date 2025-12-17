@@ -112,7 +112,7 @@ class SimRobotHil(SimRobot):
         if True:
             # Read current joint positions
             #TODO:获取当前关节位置
-            current_joint_pos = self.get_present_position()
+            current_joint_pos = self.get_present_joint_state()
             self.current_joint_pos = np.array([current_joint_pos[name] for name in self.get_joint_names()])
 
         # Calculate current end-effector position using forward kinematics
@@ -204,10 +204,25 @@ class SimRobotHil(SimRobot):
         joint_positions, _ = self.simulator.get_joint_states()
         
         return {
-            self.sim2robot[name]: math.degrees(joint_positions[i])
+            self.sim2robot[name]: math.degrees(joint_positions[i])*self.joint_direction[name]
             for i, name in enumerate(self.joint_names)
         }
 
+    def get_present_joint_state(self) -> Dict[str, float]:
+        """
+        获取当前关节位置。
+        返回格式: {'joint_name': position_in_degrees, ...}
+        """
+        if not self.is_connected:
+            raise DeviceNotConnectedError(f"{self} is not connected")
+        
+        # simulator.get_joint_states 返回的是弧度
+        joint_positions, _ = self.simulator.get_joint_states()
+        
+        return {
+            self.sim2robot[name]: math.degrees(joint_positions[i])
+            for i, name in enumerate(self.joint_names)
+        }
     def write_goal_position(self, target_position: Dict[str, float]) -> None:
         """
         向机器人写入目标位置。
