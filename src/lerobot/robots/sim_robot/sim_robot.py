@@ -125,8 +125,8 @@ class SimRobot(Robot):
             # 如果 sim_name 在映射表中，使用 robot_name，否则保留原名
             robot_name = self.sim2robot.get(sim_name, sim_name)
             obs_dict[f"{robot_name}.pos"] = math.degrees(joint_positions[i])
-        # print("obs_action: ", obs_dict)
-        print("obs_action rad: ", joint_positions)
+        # logger.info("obs_action: ", obs_dict)
+        logger.info("obs_action rad: ", joint_positions)
 
         # 获取相机图像
         images = self.simulator.get_camera_images()
@@ -141,14 +141,14 @@ class SimRobot(Robot):
 
         # import pdb; pdb.set_trace()
         # 机器人关节名称和仿真名称映射
-        print(f"action: {action}")
+        logger.info(f"action: {action}")
         if "left_arm_joint_1.pos" in action:
             new_action = {}
             for key, val in action.items():
                 name = self.robot2sim[key.split(".")[0]]
                 new_action[f"{name}.pos"] = val
             action = new_action
-        print(f"new_action: {action}")
+        logger.info(f"new_action: {action}")
         # import pdb; pdb.set_trace()
         goal_pos = {key.removesuffix(".pos"): val for key, val in action.items() if key.endswith(".pos")}
         # Cap goal position when too far away from present position.
@@ -165,19 +165,19 @@ class SimRobot(Robot):
             action_array = np.array([
                 math.radians(goal_pos[name]) for name in self.joint_names
             ])
-            print("using actiong:", np.array([
+            logger.info("using actiong:", np.array([
                 goal_pos[name] for name in self.joint_names
             ]))
 
         else:
             # 转换动作格式（从字典到数组）
-            print(f"using action:{action},joint_names:{self.joint_names}")
+            logger.info(f"using action:{action},joint_names:{self.joint_names}")
             action_array = np.array([
                 math.radians(action[f"{name}.pos"]) for name in self.joint_names
                 # action[f"{name}.pos"] for name in self.joint_names
             ])
 
-            print("using actiong:", np.array([
+            logger.info("using actiong:", np.array([
                 action[f"{name}.pos"] for name in self.joint_names
             ]))
         # import pdb; pdb.set_trace()
@@ -188,7 +188,7 @@ class SimRobot(Robot):
         #     logger.info("Simulation episode completed")
         logger.info("Simulation episode completed")
        
-        # print("using act rad:",action_array)
+        # logger.info("using act rad:",action_array)
 
         return action
 

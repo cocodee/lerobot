@@ -69,6 +69,8 @@ from lerobot.utils.utils import log_say
 
 logging.basicConfig(level=logging.INFO)
 
+logger = logging.getLogger(__name__)
+
 URDF_JOINT_NAMES = [
     "left_arm_joint0",
     "left_arm_joint1",
@@ -723,8 +725,8 @@ class ImageCropResizeWrapper(gym.Wrapper):
         super().__init__(env)
         self.env = env
         self.crop_params_dict = crop_params_dict
-        print(f"obs_keys , {self.env.observation_space}")
-        print(f"crop params dict {crop_params_dict.keys()}")
+        logger.info(f"obs_keys , {self.env.observation_space}")
+        logger.info(f"crop params dict {crop_params_dict.keys()}")
         for key_crop in crop_params_dict:
             if key_crop not in self.env.observation_space.keys():  # noqa: SIM118
                 raise ValueError(f"Key {key_crop} not in observation space")
@@ -897,7 +899,7 @@ class ResetWrapper(gym.Wrapper):
             start_time = time.perf_counter()
             while time.perf_counter() - start_time < self.reset_time_s:
                 action = self.env.robot_leader.get_action()
-                print(f"robot_leader action: {action}")
+                logger.info(f"robot_leader action: {action}")
                 self.unwrapped.robot.send_action(action)
 
             log_say("Manual reset of the environment done.", play_sounds=True)
@@ -1619,14 +1621,14 @@ class GamepadControlWrapper(gym.Wrapper):
         self.use_gripper = use_gripper
 
         logging.info("Gamepad control wrapper initialized with provided teleop_device.")
-        print(
+        logger.info(
             "Gamepad controls (managed by the provided teleop_device - specific button mappings might vary):"
         )
-        print("  Left analog stick: Move in X-Y plane")
-        print("  Right analog stick: Move in Z axis (up/down)")
-        print("  X/Square button: End episode (FAILURE)")
-        print("  Y/Triangle button: End episode (SUCCESS)")
-        print("  B/Circle button: Exit program")
+        logger.info("  Left analog stick: Move in X-Y plane")
+        logger.info("  Right analog stick: Move in Z axis (up/down)")
+        logger.info("  X/Square button: End episode (FAILURE)")
+        logger.info("  Y/Triangle button: End episode (SUCCESS)")
+        logger.info("  B/Circle button: Exit program")
 
     def get_teleop_commands(
         self,
@@ -1785,14 +1787,14 @@ class KeyboardControlWrapper(GamepadControlWrapper):
         self.is_intervention_active = False
 
         logging.info("Keyboard control wrapper initialized with provided teleop_device.")
-        print("Keyboard controls:")
-        print("  Arrow keys: Move in X-Y plane")
-        print("  Shift and Shift_R: Move in Z axis")
-        print("  Right Ctrl and Left Ctrl: Open and close gripper")
-        print("  f: End episode with FAILURE")
-        print("  s: End episode with SUCCESS")
-        print("  r: End episode with RERECORD")
-        print("  i: Start/Stop Intervention")
+        logger.info("Keyboard controls:")
+        logger.info("  Arrow keys: Move in X-Y plane")
+        logger.info("  Shift and Shift_R: Move in Z axis")
+        logger.info("  Right Ctrl and Left Ctrl: Open and close gripper")
+        logger.info("  f: End episode with FAILURE")
+        logger.info("  s: End episode with SUCCESS")
+        logger.info("  r: End episode with RERECORD")
+        logger.info("  i: Start/Stop Intervention")
 
     def get_teleop_commands(
         self,
@@ -1803,10 +1805,10 @@ class KeyboardControlWrapper(GamepadControlWrapper):
         # Unroll the misc_keys_queue to check for events related to intervention, episode success, etc.
         while not self.teleop_device.misc_keys_queue.empty():
             key = self.teleop_device.misc_keys_queue.get()
-            print(f"[ACTOR] Misc key: {key}")
+            logger.info(f"[ACTOR] Misc key: {key}")
             if key == "i":
                 self.is_intervention_active = not self.is_intervention_active
-                print(f"[ACTOR] Intervention active: {self.is_intervention_active}")
+                logger.info(f"[ACTOR] Intervention active: {self.is_intervention_active}")
                 if self.is_intervention_active:
                     log_say("Intervention started",play_sounds=True)
                 else:
@@ -1834,8 +1836,8 @@ class KeyboardControlWrapper(GamepadControlWrapper):
             action_list.append(float(gripper_val))
 
         gamepad_action_np = np.array(action_list, dtype=np.float32)
-        print("hello")
-        print(f"is_intervention_active: {self.is_intervention_active},action_dict: {action_dict}")
+        logger.info("hello")
+        logger.info(f"is_intervention_active: {self.is_intervention_active},action_dict: {action_dict}")
         return (
             self.is_intervention_active,
             gamepad_action_np,
@@ -2155,7 +2157,7 @@ def record_dataset(env, policy, cfg):
             obs, reward, terminated, truncated, info = env.step(action)
             
             for k, v in obs.items():
-                print(f"observation key:{k, v.shape}")
+                logger.info(f"observation key:{k, v.shape}")
             # Check if episode needs to be rerecorded
             if info.get("rerecord_episode", False):
                 break

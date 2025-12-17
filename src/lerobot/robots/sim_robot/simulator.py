@@ -5,7 +5,9 @@ import numpy as np
 import math
 from typing import List, Dict, Any, Tuple
 from .config_sim_robot import SimRobotConfig
+import logging
 
+logger = logging.getLogger(__name__)
 # 保持用户提供的camera_cfg配置
 camera_cfg = {
     "head_cam": {
@@ -259,10 +261,10 @@ class Simulator:
 
             # 超限位处理
             if action_pos < self.action_low[ia]:
-                print(joint+" ia: "+ str(ia) +" action="+ str(action_pos)+" 超最低限位 new_action="+str(self.action_low[ia]))
+                logger.info(joint+" ia: "+ str(ia) +" action="+ str(action_pos)+" 超最低限位 new_action="+str(self.action_low[ia]))
                 action_pos = self.action_low[ia]
             if action_pos > self.action_high[ia]:
-                print(joint+" ia: "+ str(ia) +" action="+ str(action_pos)+" 超最高限位 new_action="+str(self.action_low[ia]))
+                logger.info(joint+" ia: "+ str(ia) +" action="+ str(action_pos)+" 超最高限位 new_action="+str(self.action_low[ia]))
                 action_pos = self.action_high[ia]
 
             #p.setJointMotorControl2(
@@ -273,7 +275,7 @@ class Simulator:
             #    force=500
             #)
             # ia += 1
-            # print(joint+" : "+str(idx)+" : "+str(action_pos))
+            # logger.info(joint+" : "+str(idx)+" : "+str(action_pos))
 
             p.resetJointState(self.robot_id, idx, targetValue=action_pos, targetVelocity=0)
 
