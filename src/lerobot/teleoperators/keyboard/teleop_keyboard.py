@@ -25,7 +25,10 @@ from lerobot.errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
 
 from ..teleoperator import Teleoperator
 from .configuration_keyboard import KeyboardEndEffectorTeleopConfig, KeyboardTeleopConfig
+import logging
 
+
+logger =  logging.getLogger(__name__)
 PYNPUT_AVAILABLE = True
 try:
     if ("DISPLAY" not in os.environ) and ("linux" in sys.platform):
@@ -235,17 +238,17 @@ class KeyboardEndEffectorTeleop(KeyboardTeleop):
     def _on_press(self, key):
         if hasattr(key, "char"):
             key = key.char
-            print(f"Key pressed: {key}")  
+            logger.info(f"Key pressed: {key}")  
         else:
-            print(f"Special Key pressed: {key}")          
+            logger.info(f"Special Key pressed: {key}")          
         self.event_queue.put((key, True))
 
     def _on_release(self, key):
         if hasattr(key, "char"):
             key = key.char
-            print(f"Key released: {key}")
+            logger.info(f"Key released: {key}")
         else:
-            print(f"Special Key released: {key}")
+            logger.info(f"Special Key released: {key}")
         self.event_queue.put((key, False))
 
     def get_action(self) -> dict[str, Any]:
@@ -262,32 +265,32 @@ class KeyboardEndEffectorTeleop(KeyboardTeleop):
 
         # Generate action based on current key states
         for key, val in self.current_pressed.items():
-            print(f"key: {key}, val: {val}")
+            logger.info(f"key: {key}, val: {val}")
             val = 1
             #if key == keyboard.Key.up:
             #    delta_y = -int(val)
-            #    print(f"delta_y: {delta_y}")
+            #    logger.info(f"delta_y: {delta_y}")
             #elif key == keyboard.Key.down:
             #    delta_y = int(val)
-            #    print(f"delta_y: {delta_y}")
+            #    logger.info(f"delta_y: {delta_y}")
             #elif key == keyboard.Key.left:
             #    delta_x = int(val)
-            #    print(f"delta_x: {delta_x}")
+            #    logger.info(f"delta_x: {delta_x}")
             #elif key == keyboard.Key.right:
             #    delta_x = -int(val)
-            #    print(f"delta_x: {delta_x}")
+            #    logger.info(f"delta_x: {delta_x}")
             if key == "w":
                 delta_y = -int(val)
-                print(f"delta_y: {delta_y}")
+                logger.info(f"delta_y: {delta_y}")
             elif key == "s":
                 delta_y = int(val)
-                print(f"delta_y: {delta_y}")
+                logger.info(f"delta_y: {delta_y}")
             elif key == "a":
                 delta_x = int(val)
-                print(f"delta_x: {delta_x}")
+                logger.info(f"delta_x: {delta_x}")
             elif key == "d":
                 delta_x = -int(val)
-                print(f"delta_x: {delta_x}")
+                logger.info(f"delta_x: {delta_x}")
             elif key == keyboard.Key.shift:
                 delta_z = -int(val)
             elif key == keyboard.Key.shift_r:
