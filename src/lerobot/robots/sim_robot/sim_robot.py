@@ -45,13 +45,17 @@ class SimRobot(Robot):
             "trunk_joint_1":"body_roll", "trunk_joint_2":"waist_flex"
         }
 
+        self.sim2robot = {v: k for k, v in self.robot2sim.items()}
         # 相机配置（从config转换）
         self.cameras = make_cameras_from_configs(config.cameras)
 
     @property
     def _motors_ft(self) -> dict[str, type]:
         """电机特征定义（遵循仓库格式）"""
-        return {f"{motor}.pos": float for motor in self.joint_names}
+        return {
+            f"{self.sim2robot.get(motor, motor)}.pos": float 
+            for motor in self.joint_names
+        }
 
     @property
     def _cameras_ft(self) -> dict[str, tuple]:
@@ -116,11 +120,11 @@ class SimRobot(Robot):
 
         # 获取关节状态
         joint_positions, _ = self.simulator.get_joint_states()
-        obs_dict = {
-            f"{name}.pos": math.degrees(joint_positions[i])
-            # f"{name}.pos": joint_positions[i]
-            for i, name in enumerate(self.joint_names)
-        }
+        obs_dict = {}
+        for i, sim_name in enumerate(self.joint_names):
+            # 如果 sim_name 在映射表中，使用 robot_name，否则保留原名
+            robot_name = self.sim2robot.get(sim_name, sim_name)
+            obs_dict[f"{robot_name}.pos"] = math.degrees(joint_positions[i])
         # print("obs_action: ", obs_dict)
         print("obs_action rad: ", joint_positions)
 
