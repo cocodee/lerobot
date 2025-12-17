@@ -159,6 +159,11 @@ class SimRobotHil(SimRobot):
         logger.info(f"desired_ee_pos: {desired_ee_pos}")
         logger.info(f"current_joint_pos: {self.current_joint_pos}")
         logger.info(f"target_joint_values_in_degrees: {target_joint_values_in_degrees}")
+        
+        self._debug_draw_frame(desired_ee_pos, label="Target", life_time=0.1)
+        
+        # 2. 画出当前的实际位置 (Actual)
+        self._debug_draw_frame(self.current_ee_pos, label="Current", life_time=0.1)        
         self.current_ee_pos = desired_ee_pos.copy()
         self.current_joint_pos = np.append(
             target_joint_values_in_degrees.copy(), 
@@ -260,3 +265,27 @@ class SimRobotHil(SimRobot):
     def get_urdf_path(self) -> str:
         """获取 URDF 文件路径"""
         return getattr(self.config, "urdf_path", None)
+
+   def _debug_draw_frame(self, frame_matrix, label="frame", life_time=0.1, line_width=2):
+        """
+        在 PyBullet 中画出一个 4x4 矩阵代表的坐标系。
+        红色=X轴, 绿色=Y轴, 蓝色=Z轴
+        """
+        origin = frame_matrix[:3, 3]
+        rotation = frame_matrix[:3, :3]
+        
+        # 轴的长度 (例如 10cm)
+        length = 0.1
+        
+        # 本地坐标系的轴
+        x_axis = np.array([length, 0, 0])
+        y_axis = np.array([0, length, 0])
+        z_axis = np.array([0, 0, length])
+        
+        # 转换到世界坐标系: origin + R @ axis
+        p.addUserDebugLine(origin, origin + rotation @ x_axis, [1, 0, 0], lifeTime=life_time, lineWidth=line_width)
+        p.addUserDebugLine(origin, origin + rotation @ y_axis, [0, 1, 0], lifeTime=life_time, lineWidth=line_width)
+        p.addUserDebugLine(origin, origin + rotation @ z_axis, [0, 0, 1], lifeTime=life_time, lineWidth=line_width)
+        
+        # 可选：显示文字标签
+        p.addUserDebugText(label, origin, [0, 0, 0], lifeTime=life_time)

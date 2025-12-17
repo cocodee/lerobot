@@ -200,4 +200,3 @@ class SimRobot(Robot):
             cam.disconnect()
 
         logger.info(f"{self} disconnected from simulator")
-
