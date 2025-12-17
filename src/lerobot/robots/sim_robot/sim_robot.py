@@ -165,20 +165,20 @@ class SimRobot(Robot):
             action_array = np.array([
                 math.radians(goal_pos[name]) for name in self.joint_names
             ])
-            logger.info(f"using actiong:{ np.array([
-                goal_pos[name] for name in self.joint_names
+            logger.info(f"using actiong:{ np.array([ \
+                goal_pos[name] for name in self.joint_names \
             ])}")
 
         else:
             # 转换动作格式（从字典到数组）
-            logger.info(f"using action:{action},joint_names:{self.joint_names}")
+            logger.info(f"using action:{action},joint_names:{self.joint_names}") 
             action_array = np.array([
                 math.radians(action[f"{name}.pos"]) for name in self.joint_names
                 # action[f"{name}.pos"] for name in self.joint_names
             ])
 
-            logger.info(f"using actiong: {np.array([
-                action[f"{name}.pos"] for name in self.joint_names
+            logger.info(f"using actiong: {np.array([ \
+                action[f"{name}.pos"] for name in self.joint_names \
             ])}")
         # import pdb; pdb.set_trace()
         # 执行仿真步骤
