@@ -160,10 +160,10 @@ class SimRobotHil(SimRobot):
         logger.info(f"current_joint_pos: {self.current_joint_pos}")
         logger.info(f"target_joint_values_in_degrees: {target_joint_values_in_degrees}")
 
-        self._debug_draw_frame(desired_ee_pos, label="Target", life_time=0.1)
+        #self._debug_draw_frame(desired_ee_pos, label="Target", life_time=0.1)
         
         # 2. 画出当前的实际位置 (Actual)
-        self._debug_draw_frame(self.current_ee_pos, label="Current", life_time=0.1)        
+        #self._debug_draw_frame(self.current_ee_pos, label="Current", life_time=0.1)        
         self.current_ee_pos = desired_ee_pos.copy()
         self.current_joint_pos = np.append(
             target_joint_values_in_degrees.copy(), 
