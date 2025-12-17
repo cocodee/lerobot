@@ -166,7 +166,7 @@ class SimRobotHil(SimRobot):
         self.current_joint_pos = None
     def get_joint_names(self) -> List[str]:
         """返回所有关节的名称列表"""
-        return self.joint_names
+        return URDF_JOINT_NAMES + ["left_arm_joint_7"]
 
     def get_present_position(self) -> Dict[str, float]:
         """
