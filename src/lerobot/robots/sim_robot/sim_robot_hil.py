@@ -30,7 +30,7 @@ URDF_JOINT_NAMES = [
 
 URDF_JOINT_NAMES = [
             "shoulder_roll_left", "shoulder_lift_left", "elbow_roll_left", 
-            "elbow_flex_left", "wrist_roll_left", "gripper_flex_left", "gripper_left",
+            "elbow_flex_left", "wrist_roll_left", "gripper_flex_left",
         ]
 
 class SimRobotHil(SimRobot):
