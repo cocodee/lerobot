@@ -126,7 +126,7 @@ class SimRobot(Robot):
             robot_name = self.sim2robot.get(sim_name, sim_name)
             obs_dict[f"{robot_name}.pos"] = math.degrees(joint_positions[i])
         # logger.info("obs_action: ", obs_dict)
-        logger.info("obs_action rad: ", joint_positions)
+        logger.info(f"obs_action rad: {joint_positions}")
 
         # 获取相机图像
         images = self.simulator.get_camera_images()
@@ -165,9 +165,9 @@ class SimRobot(Robot):
             action_array = np.array([
                 math.radians(goal_pos[name]) for name in self.joint_names
             ])
-            logger.info("using actiong:", np.array([
+            logger.info(f"using actiong:{ np.array([
                 goal_pos[name] for name in self.joint_names
-            ]))
+            ])}")
 
         else:
             # 转换动作格式（从字典到数组）
@@ -177,9 +177,9 @@ class SimRobot(Robot):
                 # action[f"{name}.pos"] for name in self.joint_names
             ])
 
-            logger.info("using actiong:", np.array([
+            logger.info(f"using actiong: {np.array([
                 action[f"{name}.pos"] for name in self.joint_names
-            ]))
+            ])}")
         # import pdb; pdb.set_trace()
         # 执行仿真步骤
         # _, _, done, _ = self.simulator.step(action_array)
