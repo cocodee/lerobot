@@ -172,10 +172,13 @@ class SimRobot(Robot):
         else:
             # 转换动作格式（从字典到数组）
             #logger.info(f"using action:{action},joint_names:{self.joint_names}") 
-            action_array = np.array([
-                math.radians(action[f"{name}.pos"])*self.joint_direction[i] for i,name in self.joint_names
-                # action[f"{name}.pos"] for name in self.joint_names
-            ])
+            action_array = np.zeros(len(self.joint_names), dtype=np.float64)
+            for i, name in enumerate(self.joint_names):
+                action_array[i] = math.radians(action[f"{name}.pos"])*self.joint_direction[i]
+            #action_array = np.array([
+            #    math.radians(action[f"{name}.pos"]) for name in self.joint_names
+            #    # action[f"{name}.pos"] for name in self.joint_names
+            #])
 
         # import pdb; pdb.set_trace()
         # 执行仿真步骤
