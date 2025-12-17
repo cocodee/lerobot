@@ -104,7 +104,7 @@ class SimRobotHil(SimRobot):
                 action = np.zeros(4, dtype=np.float32)
 
         #if self.current_joint_pos is None:
-        if Ture:
+        if True:
             # Read current joint positions
             #TODO:获取当前关节位置
             current_joint_pos = self.get_present_position()
