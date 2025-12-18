@@ -127,6 +127,7 @@ class SimRobotHil(SimRobot):
         # Add delta to position and clip to bounds
         desired_ee_pos[:3, 3] = self.current_ee_pos[:3, 3] + action[:3]
         if self.end_effector_bounds is not None:
+            logger.info(f"Clip desired end-effector position to bounds {self.end_effector_bounds}")
             desired_ee_pos[:3, 3] = np.clip(
                 desired_ee_pos[:3, 3],
                 self.end_effector_bounds["min"],
