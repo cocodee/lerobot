@@ -63,7 +63,9 @@ class WebxrTeleop(Teleoperator):
                 "shape": (3,),
                 "names": {"delta_x": 0, "delta_y": 1, "delta_z": 2},
             }
-    
+
+    def send_feedback(self, feedback: dict[str, Any]) -> None:
+        pass    
     @property
     def feedback_features(self) -> dict:
         return {}
