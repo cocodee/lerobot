@@ -60,6 +60,7 @@ from lerobot.robots import (  # noqa: F401
 from lerobot.teleoperators import (
     gamepad,  # noqa: F401
     keyboard,  # noqa: F401
+    webxr,
     make_teleoperator_from_config,
 )
 from lerobot.teleoperators.gamepad.teleop_gamepad import GamepadTeleop
