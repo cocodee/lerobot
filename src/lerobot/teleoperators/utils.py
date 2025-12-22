@@ -81,5 +81,8 @@ def make_teleoperator_from_config(config: TeleoperatorConfig) -> Teleoperator:
         from .supre_robot_leader import SupreRobotLeaderHil
         
         return SupreRobotLeaderHil(config)
+    elif config.type == "webxr":
+        from .webxr import WebxrTeleop
+        return WebxrTeleop(config)
     else:
         raise ValueError(config.type)
