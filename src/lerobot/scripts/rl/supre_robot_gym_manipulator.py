@@ -1865,6 +1865,242 @@ class KeyboardControlWrapper(GamepadControlWrapper):
         self.teleop_device.reset()
         return super().reset(**kwargs)
 
+class WebxrControlWrapper(gym.Wrapper):
+    """
+    Base class for leader-follower robot control wrappers.
+
+    This wrapper enables human intervention through a leader-follower robot setup,
+    where the human can control a leader robot to guide the follower robot's movements.
+    """
+
+    def __init__(
+        self,
+        env,
+        teleop_device,
+        end_effector_step_sizes,
+        use_gripper=False,
+        auto_reset=False,
+    ):
+        """
+        Initialize the base leader control wrapper.
+
+        Args:
+            env: The environment to wrap.
+            teleop_device: The teleoperation device.
+            use_gripper: Whether to include gripper control.
+        """
+        super().__init__(env)
+        self.teleop_device = teleop_device
+        #TODO4:ignore 这是什么?
+        self.use_gripper: bool = use_gripper
+
+        self.auto_reset = auto_reset
+        # Set up keyboard event tracking
+        self._init_keyboard_events()
+        self.event_lock = Lock()  # Thread-safe access to events
+
+        self._init_keyboard_listener()
+
+    def _init_keyboard_events(self):
+        """
+        Initialize the keyboard events dictionary.
+
+        This method sets up tracking for keyboard events used for intervention control.
+        It should be overridden in subclasses to add additional events.
+        """
+        self.keyboard_events = {
+            "episode_success": False,
+            "episode_end": False,
+            "rerecord_episode": False,
+        }
+
+    def _handle_key_press(self, key, keyboard_device):
+        """
+        Handle key press events.
+
+        Args:
+            key: The key that was pressed.
+            keyboard: The keyboard module with key definitions.
+
+        This method should be overridden in subclasses for additional key handling.
+        """
+        try:
+            if key == keyboard_device.Key.esc:
+                self.keyboard_events["episode_end"] = True
+                return
+            if key == keyboard_device.Key.left:
+                self.keyboard_events["rerecord_episode"] = True
+                return
+            if hasattr(key, "char") and key.char == "s":
+                logging.info("Key 's' pressed. Episode success triggered.")
+                self.keyboard_events["episode_success"] = True
+                return
+            if key == keyboard_device.Key.space:
+                  if not self.keyboard_events["human_intervention_step"]:
+                      logging.info(
+                          "Space key pressed. Human intervention required.\n"
+                          "Place the leader in similar pose to the follower and press space again."
+                      )
+                      self.keyboard_events["human_intervention_step"] = True
+                      log_say("Human intervention step.", play_sounds=True)
+                  else:
+                      self.keyboard_events["human_intervention_step"] = False
+                      logging.info("Space key pressed for a second time.\nContinuing with policy actions.")
+                      log_say("Continuing with policy actions.", play_sounds=True)            
+        except Exception as e:
+            logging.error(f"Error handling key press: {e}")
+
+    def _init_keyboard_listener(self):
+        """
+        Initialize the keyboard listener for intervention control.
+
+        This method sets up keyboard event handling if not in headless mode.
+        """
+        from pynput import keyboard as keyboard_device
+
+        def on_press(key):
+            with self.event_lock:
+                self._handle_key_press(key, keyboard_device)
+
+        self.listener = keyboard_device.Listener(on_press=on_press)
+        self.listener.start()
+
+    def get_teleop_commands(
+        self,
+    ) -> tuple[bool, np.ndarray, bool, bool, bool]:
+        """
+        Get the current action from the gamepad if any input is active.
+
+        Returns:
+            Tuple containing:
+            - is_active: Whether gamepad input is active (from teleop_device.gamepad.should_intervene())
+            - action: The action derived from gamepad input (from teleop_device.get_action())
+            - terminate_episode: Whether episode termination was requested
+            - success: Whether episode success was signaled
+            - rerecord_episode: Whether episode rerecording was requested
+        """
+        if not hasattr(self.teleop_device, "name") or self.teleop_device.name != "webxr":
+            raise AttributeError(
+                "teleop_device does not have a 'name' attribute or it is not webxr. Expected for WebxrControlWrapper."
+            )
+
+        # Get status flags from the underlying gamepad controller within the teleop_device
+
+        terminate_episode = self.keyboard_events["episode_end"]
+        success = self.keyboard_events["episode_success"]
+        rerecord_episode = self.keyboard_events["rerecord_episode"]
+
+        intervention_is_active = self.keyboard_events["human_intervention_step"]
+        # Get the action dictionary from the teleop_device
+        action_dict = self.teleop_device.get_action()
+
+        # Convert action_dict to numpy array based on expected structure
+        # Order: delta_x, delta_y, delta_z, gripper (if use_gripper)
+        action_list = [action_dict["delta_x"], action_dict["delta_y"], action_dict["delta_z"]]
+        if self.use_gripper:
+            # GamepadTeleop returns gripper action as 0 (close), 1 (stay), 2 (open)
+            # This needs to be consistent with what EEActionWrapper expects if it's used downstream
+            # EEActionWrapper for gripper typically expects 0.0 (closed) to 2.0 (open)
+            # For now, we pass the direct value from GamepadTeleop, ensure downstream compatibility.
+            gripper_val = action_dict.get("gripper", 1.0)  # Default to 1.0 (stay) if not present
+            action_list.append(float(gripper_val))
+
+        gamepad_action_np = np.array(action_list, dtype=np.float32)
+
+        return (
+            intervention_is_active,
+            gamepad_action_np,
+            terminate_episode,
+            success,
+            rerecord_episode,
+        )
+
+    def step(self, action):
+        """
+        Step the environment, using gamepad input to override actions when active.
+
+        Args:
+            action: Original action from agent.
+
+        Returns:
+            Tuple of (observation, reward, terminated, truncated, info).
+        """
+        # Get gamepad state and action
+        (
+            is_intervention,
+            gamepad_action,
+            terminate_episode,
+            success,
+            rerecord_episode,
+        ) = self.get_teleop_commands()
+
+        # Update episode ending state if requested
+        if terminate_episode:
+            logging.info(f"Episode manually ended: {'SUCCESS' if success else 'FAILURE'}")
+
+        # Only override the action if gamepad is active
+        action = gamepad_action if is_intervention else action
+
+        # Step the environment
+        obs, reward, terminated, truncated, info = self.env.step(action)
+
+        # Add episode ending if requested via gamepad
+        terminated = terminated or truncated or terminate_episode
+
+        if success:
+            reward = 1.0
+            logging.info("Episode ended successfully with reward 1.0")
+
+        if isinstance(action, np.ndarray):
+            action = torch.from_numpy(action)
+
+        info["is_intervention"] = is_intervention
+        # The original `BaseLeaderControlWrapper` puts `action_intervention` in info.
+        # For Gamepad, if intervention, `gamepad_action` is the intervention.
+        # If not intervention, policy's action is `action`.
+        # For consistency, let's store the *human's* action if intervention occurred.
+        info["action_intervention"] = action
+
+        info["rerecord_episode"] = rerecord_episode
+
+        # If episode ended, reset the state
+        if terminated or truncated:
+            # Add success/failure information to info dict
+            info["next.success"] = success
+
+            # Auto reset if configured
+            if self.auto_reset:
+                obs, reset_info = self.reset()
+                info.update(reset_info)
+
+        return obs, reward, terminated, truncated, info
+    
+    def reset(self, **kwargs):
+        """
+        Reset the environment and intervention state.
+
+        Args:
+            **kwargs: Keyword arguments passed to the wrapped environment's reset.
+
+        Returns:
+            The initial observation and info.
+        """
+        self.keyboard_events = dict.fromkeys(self.keyboard_events, False)
+        return super().reset(**kwargs)
+
+    def close(self):
+        """
+        Clean up resources, including stopping keyboard listener.
+
+        Returns:
+            Result of closing the wrapped environment.
+        """
+        if hasattr(self, "listener") and self.listener is not None:
+            self.listener.stop()
+        if hasattr(self.teleop_device, "disconnect"):
+                self.teleop_device.disconnect()    
+        return self.env.close()
+
 class GymHilDeviceWrapper(gym.Wrapper):
     def __init__(self, env, device="cpu"):
         super().__init__(env)
