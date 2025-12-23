@@ -1912,6 +1912,7 @@ class WebxrControlWrapper(gym.Wrapper):
             "episode_success": False,
             "episode_end": False,
             "rerecord_episode": False,
+            "human_intervention_step": False,
         }
 
     def _handle_key_press(self, key, keyboard_device):
