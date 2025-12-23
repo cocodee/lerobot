@@ -23,9 +23,9 @@ robot:
       - 10.0
       - 10.0
   end_effector_step_sizes:
-    x: 0.05
-    y: 0.05
-    z: 0.05
+    x: 1.0
+    y: 1.0
+    z: 1.0
 
 teleop:
   # Specifies which subclass of TeleoperatorConfig to use.
