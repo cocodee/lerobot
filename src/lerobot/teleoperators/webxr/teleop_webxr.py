@@ -166,10 +166,11 @@ class WebxrTeleop(Teleoperator):
             self.prev_quat = xr_rot
             return self._empty_action()
 
+        logger.info(f"[XR] pos: {curr_pos}, quat: {xr_rot}")
         # 3. 计算 Delta
         # 位置增量
         delta_pos = curr_pos - self.prev_pos
-
+        logger.info(f"[XR] delta_pos: {delta_pos}")
         # 旋转增量 (Global Frame Delta): Q_delta = Q_curr * Q_prev_inv
         delta_rot_raw = xr_rot * self.prev_quat.inv()
         

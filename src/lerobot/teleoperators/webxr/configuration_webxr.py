@@ -9,5 +9,5 @@ class WebxrTeleopConfig(TeleoperatorConfig):
     # 订阅的 Topic
     zenoh_topic: str = "lerobot/webxr/teleop"
     # 移动灵敏度系数
-    pos_scale: float = 2.5
+    pos_scale: float = 1.0
     use_gripper: bool = True
