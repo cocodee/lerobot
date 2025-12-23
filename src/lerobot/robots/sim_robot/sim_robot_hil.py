@@ -285,7 +285,8 @@ class SimRobotHil(SimRobot):
     def _debug_draw_frame(self, frame_matrix, label="frame", life_time=0.1, line_width=2):
         """
         在 PyBullet 中画出一个 4x4 矩阵代表的坐标系。
-        红色=X轴, 绿色=Y轴, 蓝色=Z轴
+        红色=X轴(-Right), 绿色=Y轴(-Forward), 蓝色=Z轴(Up)
+        (WebXR 坐标系: Y-Up, -Z Forward, X Right)
         """
         origin = frame_matrix[:3, 3]
         rotation = frame_matrix[:3, :3]
