@@ -2272,7 +2272,7 @@ def make_robot_env(cfg: EnvConfig) -> gym.Env:
             teleop_device=teleop_device,
             end_effector_step_sizes=cfg.robot.end_effector_step_sizes,
             use_gripper=cfg.wrapper.use_gripper,
-            auto_reset=cfg.wrapper.auto_reset,
+            auto_reset=True,
         )
     else:
         raise ValueError(f"Invalid control mode: {control_mode}")
