@@ -1994,7 +1994,7 @@ class WebxrControlWrapper(gym.Wrapper):
         intervention_is_active = self.keyboard_events["human_intervention_step"]
         # Get the action dictionary from the teleop_device
         action_dict = self.teleop_device.get_action()
-
+        logger.info(f"Action dict: {action_dict}")
         # Convert action_dict to numpy array based on expected structure
         # Order: delta_x, delta_y, delta_z, gripper (if use_gripper)
         action_list = [action_dict["delta_x"], action_dict["delta_y"], action_dict["delta_z"]]
