@@ -55,12 +55,9 @@ class RobotKinematics:
         self.tip_frame = self.solver.add_frame_task(self.target_frame_name, np.eye(4))
 
         for joint_name in self.robot.joint_names():
-            if joint_name in self.joint_names:
+            if joint_name not in self.joint_names:
                 # 如果是左臂关节，允许求解器移动它
-                self.solver.enable_joint(joint_name, True)
-            else:
-                # 如果是其他关节（右臂、腿、头等），禁止求解器移动它
-                self.solver.enable_joint(joint_name, False)
+                self.solver.mask_dof(joint_name)
 
     def forward_kinematics(self, joint_pos_deg):
         """
