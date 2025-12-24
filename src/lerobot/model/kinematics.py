@@ -67,7 +67,7 @@ class RobotKinematics:
 
         # Convert degrees to radians
         joint_pos_rad = np.deg2rad(joint_pos_deg[: len(self.joint_names)])
-
+        logger.info(f"joint_pos_rad: {joint_pos_rad}")
         # Update joint positions in placo robot
         for i, joint_name in enumerate(self.joint_names):
             self.robot.set_joint(joint_name, joint_pos_rad[i])
@@ -96,7 +96,7 @@ class RobotKinematics:
 
         # Convert current joint positions to radians for initial guess
         current_joint_rad = np.deg2rad(current_joint_pos[: len(self.joint_names)])
-
+        logger.info(f"current_joint_rad: {current_joint_rad}")
         # Set current joint positions as initial guess
         for i, joint_name in enumerate(self.joint_names):
             self.robot.set_joint(joint_name, current_joint_rad[i])

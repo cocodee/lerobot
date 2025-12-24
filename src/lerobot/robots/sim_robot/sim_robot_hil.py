@@ -161,10 +161,10 @@ class SimRobotHil(SimRobot):
         logger.info(f"current_joint_pos: {self.current_joint_pos}")
         logger.info(f"target_joint_values_in_degrees: {target_joint_values_in_degrees}")
 
-        self._debug_draw_frame(desired_ee_pos, label="Target", life_time=0.5)
+        self._debug_draw_frame(self.base_pos_2_world_pos(desired_ee_pos), label="Target", life_time=0.5)
         
         # 2. 画出当前的实际位置 (Actual)
-        self._debug_draw_frame(self.current_ee_pos, label="Current", life_time=0.5)        
+        self._debug_draw_frame(self.base_pos_2_world_pos(self.current_ee_pos), label="Current", life_time=0.5)        
         self.current_ee_pos = desired_ee_pos.copy()
         self.current_joint_pos = np.append(
             target_joint_values_in_degrees.copy(), 
@@ -306,3 +306,22 @@ class SimRobotHil(SimRobot):
         
         # 可选：显示文字标签
         p.addUserDebugText(label, origin, [0, 0, 0], lifeTime=life_time)
+
+    def base_pos_2_world_pos(self, ee_pose_in_base) -> np.ndarray:
+        """
+        将机器人基座位置转换为世界坐标系下的位置
+        """
+        sim_base_pos, sim_base_orn = p.getBasePositionAndOrientation(self.simulator.robot_body_id)
+    
+        # 将四元数转换为 3x3 旋转矩阵
+        base_rot_matrix = np.reshape(p.getMatrixFromQuaternion(sim_base_orn), (3, 3))
+    
+        # 构建 4x4 齐次变换矩阵 T_base_to_world
+        T_base_to_world = np.eye(4)
+        T_base_to_world[:3, :3] = base_rot_matrix # 填入旋转
+        T_base_to_world[:3, 3] = sim_base_pos     # 填入平移
+    
+        # 3. 矩阵乘法：将相对坐标转换为世界坐标
+        # ee_pose_in_world = T_base_to_world * ee_pose_in_base
+        ee_pose_in_world = T_base_to_world @ ee_pose_in_base
+        return ee_pose_in_world
