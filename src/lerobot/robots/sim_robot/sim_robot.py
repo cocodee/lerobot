@@ -179,7 +179,7 @@ class SimRobot(Robot):
             #    math.radians(action[f"{name}.pos"]) for name in self.joint_names
             #    # action[f"{name}.pos"] for name in self.joint_names
             #])
-
+        logger.info("action_array: {action_array}")
         # import pdb; pdb.set_trace()
         # 执行仿真步骤
         # _, _, done, _ = self.simulator.step(action_array)
