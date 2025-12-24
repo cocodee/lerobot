@@ -311,7 +311,7 @@ class SimRobotHil(SimRobot):
         """
         将机器人基座位置转换为世界坐标系下的位置
         """
-        sim_base_pos, sim_base_orn = p.getBasePositionAndOrientation(self.simulator.robot_body_id)
+        sim_base_pos, sim_base_orn = p.getBasePositionAndOrientation(self.simulator.robot_id)
     
         # 将四元数转换为 3x3 旋转矩阵
         base_rot_matrix = np.reshape(p.getMatrixFromQuaternion(sim_base_orn), (3, 3))
