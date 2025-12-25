@@ -114,6 +114,7 @@ class RobotKinematics:
 
         # Solve IK
         self.solver.solve(True)
+        self.solver.dump_status()
         self.robot.update_kinematics()
 
         # === 新增：误差分析 ===
