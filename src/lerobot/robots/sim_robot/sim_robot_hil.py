@@ -307,9 +307,9 @@ class SimRobotHil(SimRobot):
         robot_id = self.simulator.robot_id
         base_link_index = -1
         # 转换到世界坐标系: origin + R @ axis
-        p.addUserDebugLine(origin, origin + rotation @ x_axis, [1, 0, 0], lifeTime=life_time, lineWidth=line_width,parentObjectUniqueId=robot_id, parentLinkIndex=base_link_index)
-        p.addUserDebugLine(origin, origin + rotation @ y_axis, [0, 1, 0], lifeTime=life_time, lineWidth=line_width,parentObjectUniqueId=robot_id, parentLinkIndex=base_link_index)
-        p.addUserDebugLine(origin, origin + rotation @ z_axis, [0, 0, 1], lifeTime=life_time, lineWidth=line_width,parentObjectUniqueId=robot_id, parentLinkIndex=base_link_index)
+        p.addUserDebugLine(origin, origin + x_axis, [1, 0, 0], lifeTime=life_time, lineWidth=line_width,parentObjectUniqueId=robot_id, parentLinkIndex=base_link_index)
+        p.addUserDebugLine(origin, origin + y_axis, [0, 1, 0], lifeTime=life_time, lineWidth=line_width,parentObjectUniqueId=robot_id, parentLinkIndex=base_link_index)
+        p.addUserDebugLine(origin, origin + z_axis, [0, 0, 1], lifeTime=life_time, lineWidth=line_width,parentObjectUniqueId=robot_id, parentLinkIndex=base_link_index)
         
         # 可选：显示文字标签
         p.addUserDebugText(label, origin, [0, 0, 0], lifeTime=life_time,parentObjectUniqueId=robot_id, parentLinkIndex=base_link_index)
