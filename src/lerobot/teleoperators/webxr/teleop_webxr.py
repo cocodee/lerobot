@@ -151,7 +151,7 @@ class WebxrTeleop(Teleoperator):
         #   WebXR -X (左) -> Robot Y (左)  (注意：WebXR X是右，所以取反)
         #   WebXR  Y (上) -> Robot Z (上)
         # 红色=X轴(-Right), 绿色=Y轴(-Forward), 蓝色=Z轴(Up)
-        # (WebXR 坐标系: Y-Up, Z Forward, X -Right)
+        # (WebXR 坐标系: Y-Up, Z -Forward, X Right)
         scale = self.config.pos_scale
         
         #curr_pos = np.array([
@@ -161,8 +161,8 @@ class WebxrTeleop(Teleoperator):
         #])
 
         curr_pos = np.array([
-             raw_p[0] * scale, # Robot X
-            -raw_p[2] * scale, # Robot Y
+             -raw_p[0] * scale, # Robot X
+             raw_p[2] * scale, # Robot Y
              raw_p[1] * scale  # Robot Z
         ])
         # 处理旋转
