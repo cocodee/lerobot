@@ -2087,6 +2087,7 @@ class WebxrControlWrapper(gym.Wrapper):
             The initial observation and info.
         """
         self.keyboard_events = dict.fromkeys(self.keyboard_events, False)
+        self.webxr_teleop.reset()
         return super().reset(**kwargs)
 
     def close(self):
