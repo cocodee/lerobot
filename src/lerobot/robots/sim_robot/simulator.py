@@ -42,7 +42,7 @@ camera_cfg = {
 
 class Simulator:
     """保持用户实现的仿真逻辑，仅调整接口适配"""
-    def __init__(self, headless: bool = False):
+    def __init__(self,config:SimRobotConfig,headless: bool = False):
         self.physics_client = p.connect(p.DIRECT if headless else p.GUI)
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
         p.setGravity(0, 0, -9.81)
@@ -116,9 +116,10 @@ class Simulator:
         self.action_scale = (self.action_high - self.action_low) / 2.0
         self.action_bias = (self.action_high + self.action_low) / 2.0
 
+        self.config = config
         # 加载机器人模型（使用配置中的路径）
         self.robot_id = p.loadURDF(
-            SimRobotConfig().urdf_path1,
+            config.urdf_path1,
             basePosition=[0, 0, 0.0],
             useFixedBase=True
         )

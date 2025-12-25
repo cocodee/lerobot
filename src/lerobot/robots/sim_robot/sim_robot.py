@@ -98,6 +98,7 @@ class SimRobot(Robot):
         """创建并初始化仿真环境"""
         from .simulator import Simulator  # 导入用户提供的仿真器类
         return Simulator(
+            config=self.config.config,
             headless=self.config.headless,
         )
 
