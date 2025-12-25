@@ -9,6 +9,8 @@ from scipy.spatial.transform import Rotation as R
 from lerobot.errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
 from ..teleoperator import Teleoperator
 from .configuration_webxr import WebxrTeleopConfig
+from lerobot.utils.utils import log_say
+
 
 logger = logging.getLogger(__name__)
 
@@ -246,4 +248,5 @@ class WebxrTeleop(Teleoperator):
         self.prev_pos = None
         self.prev_quat = None
         self.latest_data = None
+        log_say(f"{self.name} teleoperator state reset.")
         logger.info(f"{self.name} teleoperator state reset.")
