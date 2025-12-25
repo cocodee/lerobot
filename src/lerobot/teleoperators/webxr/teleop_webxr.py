@@ -248,6 +248,5 @@ class WebxrTeleop(Teleoperator):
         self.prev_pos = None
         self.prev_quat = None
         self.latest_data = None
-        super().reset()
         log_say(f"{self.name} teleoperator state reset.")
         logger.info(f"{self.name} teleoperator state reset.")
