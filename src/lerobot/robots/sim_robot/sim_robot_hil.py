@@ -165,10 +165,10 @@ class SimRobotHil(SimRobot):
         logger.info(f"current_joint_pos: {self.current_joint_pos}")
         logger.info(f"target_joint_values_in_degrees: {target_joint_values_in_degrees}")
 
-        self._debug_draw_frame(self.base_pos_2_world_pos(desired_ee_pos), label="Target", life_time=0.5)
+        self._debug_draw_frame(desired_ee_pos, label="Target", life_time=0.5)
         
         # 2. 画出当前的实际位置 (Actual)
-        self._debug_draw_frame(self.base_pos_2_world_pos(self.current_ee_pos), label="Current", life_time=0.5)        
+        self._debug_draw_frame(self.current_ee_pos, label="Current", life_time=0.5)        
         self.current_ee_pos = desired_ee_pos.copy()
         self.current_joint_pos = np.append(
             target_joint_values_in_degrees.copy(), 
@@ -304,13 +304,15 @@ class SimRobotHil(SimRobot):
         y_axis = np.array([0, length, 0])
         z_axis = np.array([0, 0, length])
         
+        robot_id = self.simulator.robot_id
+        base_link_index = -1
         # 转换到世界坐标系: origin + R @ axis
-        p.addUserDebugLine(origin, origin + rotation @ x_axis, [1, 0, 0], lifeTime=life_time, lineWidth=line_width)
-        p.addUserDebugLine(origin, origin + rotation @ y_axis, [0, 1, 0], lifeTime=life_time, lineWidth=line_width)
-        p.addUserDebugLine(origin, origin + rotation @ z_axis, [0, 0, 1], lifeTime=life_time, lineWidth=line_width)
+        p.addUserDebugLine(origin, origin + rotation @ x_axis, [1, 0, 0], lifeTime=life_time, lineWidth=line_width,parentObjectUniqueId=robot_id, parentLinkIndex=base_link_index)
+        p.addUserDebugLine(origin, origin + rotation @ y_axis, [0, 1, 0], lifeTime=life_time, lineWidth=line_width,parentObjectUniqueId=robot_id, parentLinkIndex=base_link_index)
+        p.addUserDebugLine(origin, origin + rotation @ z_axis, [0, 0, 1], lifeTime=life_time, lineWidth=line_width,parentObjectUniqueId=robot_id, parentLinkIndex=base_link_index)
         
         # 可选：显示文字标签
-        p.addUserDebugText(label, origin, [0, 0, 0], lifeTime=life_time)
+        p.addUserDebugText(label, origin, [0, 0, 0], lifeTime=life_time,parentObjectUniqueId=robot_id, parentLinkIndex=base_link_index)
 
     def base_pos_2_world_pos(self, ee_pose_in_base) -> np.ndarray:
         """
