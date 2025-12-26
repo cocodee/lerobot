@@ -408,10 +408,11 @@ class RobotEnv(gym.Env):
                 - truncated (bool): True if the episode was truncated (e.g., time constraints).
                 - info (dict): Additional debugging information including intervention status.
         """
-        action_dict = {"delta_x": action[0], "delta_y": action[1], "delta_z": action[2]}
+        action_dict = {"delta_x": action[0], "delta_y": action[1], "delta_z": action[2],
+                       "delta_qx":action[3], "delta_qy":action[4], "delta_qz":action[5], "delta_qw":action[6]}
 
         # 1.0 action corresponds to no-op action
-        action_dict["gripper"] = action[3] if self.use_gripper else 1.0
+        action_dict["gripper"] = action[7] if self.use_gripper else 1.0
 
         self.robot.send_action(action_dict)
 
