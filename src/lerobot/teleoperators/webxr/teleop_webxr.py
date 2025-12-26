@@ -234,6 +234,7 @@ class WebxrTeleop(Teleoperator):
         #}
         return {
             "delta_x": 0.0, "delta_y": 0.0, "delta_z": 0.0,
+            "delta_qx": 0.0, "delta_qy": 0.0, "delta_qz": 0.0, "delta_qw": 1.0, # Identity Quat
             "gripper": 0.0
         }
 
