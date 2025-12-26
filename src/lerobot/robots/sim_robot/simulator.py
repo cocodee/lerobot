@@ -122,7 +122,8 @@ class Simulator:
         self.robot_id = p.loadURDF(
             config.urdf_path1,
             basePosition=[0, 0, 0.0],
-            useFixedBase=True
+            useFixedBase=True,
+            baseOrientation=p.getQuaternionFromEuler([1.5708, 0, 0])
         )
 
         # 加载场景物体（保持用户定义）
