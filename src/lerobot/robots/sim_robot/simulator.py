@@ -264,11 +264,13 @@ class Simulator:
             action_pos = action[ia]
             # 超限位处理
             if action_pos < self.action_low[ia]:
-                logger.info(joint+" ia: "+ str(ia) +" action="+ str(action_pos)+" 超最低限位 new_action="+str(self.action_low[ia]))
-                action_pos = self.action_low[ia]
+                #logger.info(joint+" ia: "+ str(ia) +" action="+ str(action_pos)+" 超最低限位 new_action="+str(self.action_low[ia]))
+                #action_pos = self.action_low[ia]
+                pass
             if action_pos > self.action_high[ia]:
-                logger.info(joint+" ia: "+ str(ia) +" action="+ str(action_pos)+" 超最高限位 new_action="+str(self.action_low[ia]))
-                action_pos = self.action_high[ia]
+                #logger.info(joint+" ia: "+ str(ia) +" action="+ str(action_pos)+" 超最高限位 new_action="+str(self.action_low[ia]))
+                #action_pos = self.action_high[ia]
+                pass
 
             #p.setJointMotorControl2(
             #    self.robot_id,
