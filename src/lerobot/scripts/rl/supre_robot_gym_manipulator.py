@@ -2352,8 +2352,8 @@ def record_dataset(env, policy, cfg):
     from lerobot.datasets.lerobot_dataset import LeRobotDataset
 
     # Setup initial action (zero action if using teleop)
-    #action = env.action_space.sample() * 0.0
-    action = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0], dtype=np.float32)
+    action = env.action_space.sample() * 0.0
+    #action = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0], dtype=np.float32)
     action_names = ["delta_x_ee", "delta_y_ee", "delta_z_ee"]
     if cfg.wrapper.use_gripper:
         action_names.append("gripper_delta")
@@ -2420,8 +2420,9 @@ def record_dataset(env, policy, cfg):
                 action = policy.select_action(obs)
 
             # Step environment
+            logger.info(f"dkk action {action}")
             obs, reward, terminated, truncated, info = env.step(action)
-            
+            logger.info(f"dkk obs {obs}")
             for k, v in obs.items():
                 logger.info(f"observation key:{k, v.shape}")
             # Check if episode needs to be rerecorded
