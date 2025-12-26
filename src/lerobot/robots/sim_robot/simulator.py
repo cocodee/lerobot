@@ -400,7 +400,7 @@ class Simulator:
     def close(self):
         p.disconnect(self.physics_client)
 
-    def draw_base_frame(self, robot_id, axis_length=0.3, line_width=20, life_time=0):
+    def draw_base_frame(self, robot_id, axis_length=2.0, line_width=20, life_time=0):
         """
         在机器人的 Base Link 上画出 RGB 坐标轴。
         红色 = X轴
