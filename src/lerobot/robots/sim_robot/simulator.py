@@ -117,6 +117,7 @@ class Simulator:
         self.action_bias = (self.action_high + self.action_low) / 2.0
 
         self.config = config
+        logger.info(f"config.urdf_path1:{config.urdf_path1}")
         # 加载机器人模型（使用配置中的路径）
         self.robot_id = p.loadURDF(
             config.urdf_path1,
@@ -418,7 +419,7 @@ class Simulator:
         p.addUserDebugLine(
             lineFromXYZ=origin_local, 
             lineToXYZ=x_end_local, 
-            lineColorRGB=[1, 0, 0], # Red
+            lineColorRGB=[0, 1, 0], # Red
             lineWidth=line_width, 
             lifeTime=life_time,     # 0 表示永久显示
             parentObjectUniqueId=robot_id, 
@@ -429,7 +430,7 @@ class Simulator:
         p.addUserDebugLine(
             lineFromXYZ=origin_local, 
             lineToXYZ=y_end_local, 
-            lineColorRGB=[0, 1, 0], # Green
+            lineColorRGB=[1, 0, 0], # Green
             lineWidth=line_width, 
             lifeTime=life_time,
             parentObjectUniqueId=robot_id, 
