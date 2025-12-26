@@ -408,11 +408,11 @@ class RobotEnv(gym.Env):
                 - truncated (bool): True if the episode was truncated (e.g., time constraints).
                 - info (dict): Additional debugging information including intervention status.
         """
-        #action_dict = {"delta_x": action[0], "delta_y": action[1], "delta_z": action[2]}
+        action_dict = {"delta_x": action[0], "delta_y": action[1], "delta_z": action[2]}
 
         # 1.0 action corresponds to no-op action
-        #action_dict["gripper"] = action[3] if self.use_gripper else 1.0
-        action_dict = action
+        action_dict["gripper"] = action[3] if self.use_gripper else 1.0
+
         self.robot.send_action(action_dict)
 
         self._get_observation()
@@ -1997,7 +1997,8 @@ class WebxrControlWrapper(gym.Wrapper):
         logger.info(f"Action dict: {action_dict}")
         # Convert action_dict to numpy array based on expected structure
         # Order: delta_x, delta_y, delta_z, gripper (if use_gripper)
-        action_list = [action_dict["delta_x"], action_dict["delta_y"], action_dict["delta_z"]]
+        action_list = [action_dict["delta_x"], action_dict["delta_y"], action_dict["delta_z"],
+                       action_dict["delta_qx"],action_dict["delta_qy"],action_dict["delta_qz"],action_dict["delta_qw"]]
         if self.use_gripper:
             # GamepadTeleop returns gripper action as 0 (close), 1 (stay), 2 (open)
             # This needs to be consistent with what EEActionWrapper expects if it's used downstream

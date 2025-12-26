@@ -87,8 +87,10 @@ class SimRobotHil(SimRobot):
             raise DeviceNotConnectedError(f"{self} is not connected.")
 
         # Convert action to numpy array if not already
+        delta_quat = None
         if isinstance(action, dict):
             if all(k in action for k in ["delta_x", "delta_y", "delta_z"]):
+                logger.debug(f"action: {action}")
                 delta_ee = np.array(
                     [
                         action["delta_x"] * self.config.end_effector_step_sizes["x"],
@@ -142,7 +144,7 @@ class SimRobotHil(SimRobot):
         desired_ee_pos = np.eye(4)
         #desired_ee_pos[:3, :3] = self.current_ee_pos[:3, :3]  # Keep orientation
         desired_ee_pos[:3, :3] = new_rot_mat
-        
+
         # Add delta to position and clip to bounds
         desired_ee_pos[:3, 3] = self.current_ee_pos[:3, 3] + action[:3]
         if self.end_effector_bounds is not None:
