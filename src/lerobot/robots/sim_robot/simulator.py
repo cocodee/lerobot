@@ -400,7 +400,7 @@ class Simulator:
     def close(self):
         p.disconnect(self.physics_client)
 
-    def draw_base_frame(self, robot_id, axis_length=0.3, line_width=3, life_time=0):
+    def draw_base_frame(self, robot_id, axis_length=0.3, line_width=20, life_time=0):
         """
         在机器人的 Base Link 上画出 RGB 坐标轴。
         红色 = X轴
@@ -422,7 +422,7 @@ class Simulator:
         p.addUserDebugLine(
             lineFromXYZ=origin_local, 
             lineToXYZ=x_end_local, 
-            lineColorRGB=[0, 1, 0], # Red
+            lineColorRGB=[1, 0, 0], # Red
             lineWidth=line_width, 
             lifeTime=life_time,     # 0 表示永久显示
             parentObjectUniqueId=robot_id, 
@@ -433,7 +433,7 @@ class Simulator:
         p.addUserDebugLine(
             lineFromXYZ=origin_local, 
             lineToXYZ=y_end_local, 
-            lineColorRGB=[1, 0, 0], # Green
+            lineColorRGB=[0, 1, 0], # Green
             lineWidth=line_width, 
             lifeTime=life_time,
             parentObjectUniqueId=robot_id, 
