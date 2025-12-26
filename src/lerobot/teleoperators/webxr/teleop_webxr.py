@@ -219,6 +219,10 @@ class WebxrTeleop(Teleoperator):
             "delta_x": float(delta_pos[0]),
             "delta_y": float(delta_pos[1]),
             "delta_z": float(delta_pos[2]),
+            "delta_qx": float(delta_quat[0]),
+            "delta_qy": float(delta_quat[1]),
+            "delta_qz": float(delta_quat[2]),
+            "delta_qw": float(delta_quat[3]),            
             "gripper": float(gripper_state)
         }
 
