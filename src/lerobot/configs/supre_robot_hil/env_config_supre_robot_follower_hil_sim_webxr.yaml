@@ -33,7 +33,7 @@ teleop:
   # Specifies which subclass of TeleoperatorConfig to use.
   # This matches the name in `@TeleoperatorConfig.register_subclass("supre_robot_leader")`
   type: webxr
-  zenoh_connect_key: "tcp/74.48.61.171:7447"
+  zenoh_connect_key: "tcp/47.116.8.214:7447"
 wrapper:
   display_cameras: false
   add_joint_velocity_to_observation: true
