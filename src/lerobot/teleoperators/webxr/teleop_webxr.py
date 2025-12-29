@@ -179,37 +179,41 @@ class WebxrTeleop(Teleoperator):
         # 位置增量
         delta_pos = curr_pos - self.prev_pos
         logger.info(f"[XR] delta_pos: {delta_pos}")
-        #### 旋转增量 (Global Frame Delta): Q_delta = Q_curr * Q_prev_inv
-        ###delta_rot_raw = xr_rot * self.prev_quat.inv()
-        ###
-        #### 4. 旋转轴映射
-        #### 将 WebXR 坐标系的旋转变化映射到 Robot 坐标系
-        ###rv = delta_rot_raw.as_rotvec()
-        ###
-        #### 映射规则 (需要根据实际手感调整):
-        #### 绕 WebXR X轴转 (点头) -> Robot Y轴 (Pitch)
-        #### 绕 WebXR Y轴转 (摇头) -> Robot Z轴 (Yaw)
-        #### 绕 WebXR Z轴转 (歪头) -> Robot X轴 (Roll)
-        #### 注意方向符号
-        ###mapped_rv = np.array([
-        ###    -rv[2], # Robot Roll (X)  <~ WebXR -Roll (Z)
-        ###    -rv[0], # Robot Pitch (Y) <~ WebXR -Pitch (X)
-        ###     rv[1]  # Robot Yaw (Z)   <~ WebXR Yaw (Y)
-        ###])
-        ###
-        ###final_delta_rot = R.from_rotvec(mapped_rv)
-        ###delta_quat = final_delta_rot.as_quat() # [x, y, z, w]
 
-        R_base = R.from_matrix([
-            [-1,  0,  0],
-            [ 0,  1,  0],
-            [ 0,  0, -1]
-        ])
-        
-        # 计算在机器人坐标系下的绝对旋转: R_robot = R_base * R_xr
-        final_rot = R_base * xr_rot
-        curr_quat = final_rot.as_quat() # [x, y, z, w]
-        delta_quat = curr_quat
+        use_delta_rot = True
+        if use_delta_rot:
+            # 旋转增量 (Global Frame Delta): Q_delta = Q_curr * Q_prev_inv
+            delta_rot_raw = xr_rot * self.prev_quat.inv()
+            
+            # 4. 旋转轴映射
+            # 将 WebXR 坐标系的旋转变化映射到 Robot 坐标系
+            rv = delta_rot_raw.as_rotvec()
+            
+            # 映射规则 (需要根据实际手感调整):
+            # 绕 WebXR X轴转 (点头) -> Robot Y轴 (Pitch)
+            # 绕 WebXR Y轴转 (摇头) -> Robot Z轴 (Yaw)
+            # 绕 WebXR Z轴转 (歪头) -> Robot X轴 (Roll)
+            # 注意方向符号
+            mapped_rv = np.array([
+                -rv[2], # Robot Roll (X)  <~ WebXR -Roll (Z)
+                -rv[0], # Robot Pitch (Y) <~ WebXR -Pitch (X)
+                 rv[1]  # Robot Yaw (Z)   <~ WebXR Yaw (Y)
+            ])
+            
+            final_delta_rot = R.from_rotvec(mapped_rv)
+            delta_quat = final_delta_rot.as_quat() # [x, y, z, w]
+        else:
+            R_base = R.from_matrix([
+                [-1,  0,  0],
+                [ 0,  1,  0],
+                [ 0,  0, -1]
+            ])
+            
+            # 计算在机器人坐标系下的绝对旋转: R_robot = R_base * R_xr
+            final_rot = R_base * xr_rot
+            curr_quat = final_rot.as_quat() # [x, y, z, w]
+            delta_quat = curr_quat
+            
         # 5. 更新状态
         self.prev_pos = curr_pos
         self.prev_quat = xr_rot

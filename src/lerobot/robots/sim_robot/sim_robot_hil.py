@@ -133,26 +133,27 @@ class SimRobotHil(SimRobot):
         if True:
             self.current_ee_pos = self.kinematics.forward_kinematics(self.current_joint_pos[:-1])
 
-        ###current_rot_mat = self.current_ee_pos[:3, :3]
-        ###delta_rot_mat = np.reshape(p.getMatrixFromQuaternion(delta_quat), (3, 3))
-        ###
-        #### 应用旋转增量
-        ###new_rot_mat = delta_rot_mat @ current_rot_mat
-        ###
-###
-        ###logger.info(f"Current end-effector position: {self.current_ee_pos}")
-        #### Set desired end-effector position by adding delta
-        ###desired_ee_pos = np.eye(4)
-        ####desired_ee_pos[:3, :3] = self.current_ee_pos[:3, :3]  # Keep orientation
-        ###desired_ee_pos[:3, :3] = new_rot_mat
-
-
-        # --- 旋转部分：直接使用传入的绝对姿态 ---
-        # 因为 WebXR 那边已经处理好了 R_base * R_xr，所以这里直接转换即可
-        desired_ee_pos = np.eye(4)
-        new_rot_mat = np.reshape(p.getMatrixFromQuaternion(delta_quat), (3, 3))
-        desired_ee_pos[:3, :3] = new_rot_mat
-        # Add delta to position and clip to bounds
+        use_delta_rot = True
+        if use_delta_rot:
+            current_rot_mat = self.current_ee_pos[:3, :3]
+            delta_rot_mat = np.reshape(p.getMatrixFromQuaternion(delta_quat), (3, 3))
+            
+            # 应用旋转增量
+            new_rot_mat = delta_rot_mat @ current_rot_mat
+            
+            logger.info(f"Current end-effector position: {self.current_ee_pos}")
+            # Set desired end-effector position by adding delta
+            desired_ee_pos = np.eye(4)
+            #desired_ee_pos[:3, :3] = self.current_ee_pos[:3, :3]  # Keep orientation
+            desired_ee_pos[:3, :3] = new_rot_mat
+        else:
+            # --- 旋转部分：直接使用传入的绝对姿态 ---
+            # 因为 WebXR 那边已经处理好了 R_base * R_xr，所以这里直接转换即可
+            desired_ee_pos = np.eye(4)
+            new_rot_mat = np.reshape(p.getMatrixFromQuaternion(delta_quat), (3, 3))
+            desired_ee_pos[:3, :3] = new_rot_mat
+            # Add delta to position and clip to bounds
+        
         desired_ee_pos[:3, 3] = self.current_ee_pos[:3, 3] + action[:3]
 
         if self.end_effector_bounds is not None:
