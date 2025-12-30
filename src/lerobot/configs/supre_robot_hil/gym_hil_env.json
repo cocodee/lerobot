@@ -38,7 +38,7 @@
         "control_mode": "keyboard-ee"
     },
     "name": "franka_sim",
-    "mode": null,
+    "mode": "record",
     "repo_id": null,
     "dataset_root": null,
     "task": "PandaPickCubeKeyboard-v0",
