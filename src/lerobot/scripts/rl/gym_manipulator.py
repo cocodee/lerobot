@@ -2097,10 +2097,13 @@ def record_dataset(env, policy, cfg):
                 break
 
             # For teleop, get action from intervention
+            ###kdi 
+            ###recorded_action = {
+            ###    "action": info["action_intervention"].cpu().squeeze(0).float() if policy is None else action
+            ###}
             recorded_action = {
-                "action": info["action_intervention"].cpu().squeeze(0).float() if policy is None else action
+                "action": info.get("action_intervention", action).cpu().squeeze(0).float() if policy is None else action
             }
-
             # Process observation for dataset
             obs_processed = {k: v.cpu().squeeze(0).float() for k, v in obs.items()}
 
