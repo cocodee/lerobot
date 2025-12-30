@@ -71,8 +71,8 @@ wrapper:
 name: real_robot
 #mode record/replay
 mode: record
-repo_id: cocodee/hil
-dataset_root: data/dkk1
+repo_id: "cocodee/hil"
+dataset_root: "data/dkk1"
 task: "grab things"
 num_episodes: 2
 episode: 0
