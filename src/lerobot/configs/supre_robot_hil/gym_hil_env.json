@@ -23,7 +23,7 @@
             128,
             128
         ],
-        "control_time_s": 15.0,
+        "control_time_s": 120.0,
         "use_gripper": true,
         "fixed_reset_joint_positions": [
             0.0,
@@ -42,7 +42,7 @@
     "repo_id": "cocodee/hil",
     "dataset_root": "data/dkk1",
     "task": "PandaPickCubeKeyboard-v0",
-    "num_episodes": 30,
+    "num_episodes": 3,
     "episode": 0,
     "pretrained_policy_name_or_path": null,
     "device": "cuda",
