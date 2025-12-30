@@ -41,7 +41,7 @@
     "mode": null,
     "repo_id": null,
     "dataset_root": null,
-    "task": "PandaPickCubeGamepad-v0",
+    "task": "PandaPickCubeKeyboard-v0",
     "num_episodes": 30,
     "episode": 0,
     "pretrained_policy_name_or_path": null,
