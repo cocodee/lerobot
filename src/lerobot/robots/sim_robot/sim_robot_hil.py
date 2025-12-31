@@ -57,6 +57,7 @@ class SimRobotHil(SimRobot):
 
         self.current_ee_pos = None
         self.current_joint_pos = None
+        self.debug_accumulated_pose = None
         # 为了对应真机修改
 
     @property
@@ -154,6 +155,31 @@ class SimRobotHil(SimRobot):
             desired_ee_pos[:3, :3] = new_rot_mat
             # Add delta to position and clip to bounds
         
+        # ----------------------------------------------------------------
+        # [新增/修改] 3. 纯 Action 累积 Debug 坐标 (Commanded Pose)
+        # ----------------------------------------------------------------
+        
+        # 如果是刚启动或刚 Reset，将 Debug 坐标对齐到当前机械臂实际位置
+        if self.debug_accumulated_pose is None:
+            self.debug_accumulated_pose = self.current_ee_pos.copy()
+
+        # 计算旋转增量矩阵
+        if delta_quat is not None:
+            delta_rot_mat = np.reshape(p.getMatrixFromQuaternion(delta_quat), (3, 3))
+        else:
+            delta_rot_mat = np.eye(3)
+
+        # === 更新 Debug 坐标 (无视 IK，无视边界) ===
+        # 1. 更新旋转: R_new = R_delta * R_old
+        self.debug_accumulated_pose[:3, :3] = delta_rot_mat @ self.debug_accumulated_pose[:3, :3]
+        # 2. 更新位置: P_new = P_old + Delta
+        self.debug_accumulated_pose[:3, 3] += delta_ee
+
+        # === 绘制 Debug 坐标 ===
+        # 使用上一轮修正后的 _debug_draw_frame 方法
+        # 这个坐标系完全由摇杆/输入控制，哪怕机械臂卡死，它也会动
+        self._debug_draw_frame(self.debug_accumulated_pose, label="Command", life_time=0.5)
+
         desired_ee_pos[:3, 3] = self.current_ee_pos[:3, 3] + action[:3]
 
         if self.end_effector_bounds is not None:
@@ -214,6 +240,7 @@ class SimRobotHil(SimRobot):
     def reset(self):
         self.current_ee_pos = None
         self.current_joint_pos = None
+        self.debug_accumulated_pose = None
     def get_joint_names(self) -> List[str]:
         """返回所有关节的名称列表"""
         return ["left_arm_joint_1",
@@ -314,32 +341,51 @@ class SimRobotHil(SimRobot):
         """获取 URDF 文件路径"""
         return getattr(self.config, "urdf_path", None)
 
+
     def _debug_draw_frame(self, frame_matrix, label="frame", life_time=0.1, line_width=2):
         """
+        修正后的绘图方法：
         在 PyBullet 中画出一个 4x4 矩阵代表的坐标系。
-        红色=X轴(-Right), 绿色=Y轴(-Forward), 蓝色=Z轴(Up)
-        (WebXR 坐标系: Y-Up, -Z Forward, X Right)
+        红色=X轴, 绿色=Y轴, 蓝色=Z轴
         """
-        origin = frame_matrix[:3, 3]
-        rotation = frame_matrix[:3, :3]
+        origin = frame_matrix[:3, 3]       # 提取平移向量
+        rotation = frame_matrix[:3, :3]    # 提取旋转矩阵
         
         # 轴的长度 (例如 10cm)
         length = 0.1
         
-        # 本地坐标系的轴
-        x_axis = np.array([length, 0, 0])
-        y_axis = np.array([0, length, 0])
-        z_axis = np.array([0, 0, length])
+        # 定义局部坐标系的轴向量
+        x_axis_local = np.array([length, 0, 0])
+        y_axis_local = np.array([0, length, 0])
+        z_axis_local = np.array([0, 0, length])
+        
+        # 【关键修改】：将局部轴向量旋转到目标坐标系的方向
+        # 使用矩阵乘法: R * v
+        x_axis_rotated = rotation @ x_axis_local
+        y_axis_rotated = rotation @ y_axis_local
+        z_axis_rotated = rotation @ z_axis_local
         
         robot_id = self.simulator.robot_id
         base_link_index = -1
-        # 转换到世界坐标系: origin + R @ axis
-        p.addUserDebugLine(origin, origin + x_axis, [1, 0, 0], lifeTime=life_time, lineWidth=line_width,parentObjectUniqueId=robot_id, parentLinkIndex=base_link_index)
-        p.addUserDebugLine(origin, origin + y_axis, [0, 1, 0], lifeTime=life_time, lineWidth=line_width,parentObjectUniqueId=robot_id, parentLinkIndex=base_link_index)
-        p.addUserDebugLine(origin, origin + z_axis, [0, 0, 1], lifeTime=life_time, lineWidth=line_width,parentObjectUniqueId=robot_id, parentLinkIndex=base_link_index)
         
-        # 可选：显示文字标签
-        p.addUserDebugText(label, origin, [0, 0, 0], lifeTime=life_time,parentObjectUniqueId=robot_id, parentLinkIndex=base_link_index)
+        # 画线：从原点指向旋转后的轴端点
+        # 红色 X轴
+        p.addUserDebugLine(origin, origin + x_axis_rotated, [1, 0, 0], 
+                           lifeTime=life_time, lineWidth=line_width,
+                           parentObjectUniqueId=robot_id, parentLinkIndex=base_link_index)
+        # 绿色 Y轴
+        p.addUserDebugLine(origin, origin + y_axis_rotated, [0, 1, 0], 
+                           lifeTime=life_time, lineWidth=line_width,
+                           parentObjectUniqueId=robot_id, parentLinkIndex=base_link_index)
+        # 蓝色 Z轴
+        p.addUserDebugLine(origin, origin + z_axis_rotated, [0, 0, 1], 
+                           lifeTime=life_time, lineWidth=line_width,
+                           parentObjectUniqueId=robot_id, parentLinkIndex=base_link_index)
+        
+        # 显示文字标签
+        p.addUserDebugText(label, origin, [0, 0, 0], 
+                           lifeTime=life_time,
+                           parentObjectUniqueId=robot_id, parentLinkIndex=base_link_index)
 
     def base_pos_2_world_pos(self, ee_pose_in_base) -> np.ndarray:
         """
