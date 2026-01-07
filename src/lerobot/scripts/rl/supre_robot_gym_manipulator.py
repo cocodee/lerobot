@@ -35,7 +35,11 @@ Example:
     action = policy.select_action(obs)
     obs, reward, terminated, truncated, info = env.step(action)
 """
-
+import sys
+try:
+    import coal
+except ImportError:
+    pass
 import logging
 import time
 from collections import deque
