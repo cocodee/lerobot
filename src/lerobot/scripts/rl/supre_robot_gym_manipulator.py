@@ -42,11 +42,6 @@ try:
 except ImportError:
     print("DEBUG: Could not import hppfcl")
 
-try:
-    import coal
-    print("DEBUG: Imported coal successfully")
-except ImportError:
-    print("DEBUG: Could not import coal")
 import logging
 import time
 from collections import deque
