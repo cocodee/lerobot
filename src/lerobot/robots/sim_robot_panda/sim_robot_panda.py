@@ -19,6 +19,7 @@ class SimRobotPanda(Robot):
         super().__init__(config)
         self.config = config
         self._is_connected = False
+        self._is_calibrated = True
         self.simulator = None
 
         # Franka Panda 关节定义 (MuJoCo XML 中的关节名称)
@@ -133,3 +134,23 @@ class SimRobotPanda(Robot):
         self.simulator.step(target_positions)
         
         return action
+    
+    @property
+    def is_calibrated(self) -> bool:
+        return self._is_calibrated
+
+    def calibrate(self) -> None:
+        """仿真环境无需实际校准"""
+        if not self.is_connected:
+            raise DeviceNotConnectedError(f"{self} is not connected")
+        self._is_calibrated = True
+        logger.info(f"{self} calibration skipped (simulation)")
+
+    def configure(self) -> None:
+        """配置仿真环境参数"""
+        pass
+
+    @cached_property
+    def observation_features(self) -> dict[str, type | tuple]:
+        """观测特征集合"""
+        return {**self._motors_ft, **self._cameras_ft}
