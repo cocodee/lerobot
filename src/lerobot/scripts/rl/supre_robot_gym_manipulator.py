@@ -37,9 +37,16 @@ Example:
 """
 import sys
 try:
-    import coal
+    import hppfcl
+    print("DEBUG: Imported hppfcl successfully")
 except ImportError:
-    pass
+    print("DEBUG: Could not import hppfcl")
+
+try:
+    import coal
+    print("DEBUG: Imported coal successfully")
+except ImportError:
+    print("DEBUG: Could not import coal")
 import logging
 import time
 from collections import deque
