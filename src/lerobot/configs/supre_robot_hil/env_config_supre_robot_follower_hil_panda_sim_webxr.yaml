@@ -1,0 +1,109 @@
+type: gym_manipulator
+
+# ===============================================
+# Robot (Follower) Configuration
+# ===============================================
+robot:
+  # Specifies which subclass of RobotConfig to use.
+  # This matches the name in `@RobotConfig.register_subclass("supre_robot_follower")`
+  type: sim_robot_panda_hil
+
+#hil new fields
+  #urdf_path: "/home/smai/workspace/dikeke/webxr/urdf/RJ2506-20251125-all-13-std.urdf"
+  #urdf_path: "/home/smai/workspace/dc_dir/sim_lerobot/rf2502_new_3/urdf/rf2502_new_3.urdf"
+  #urdf_path1: "/home/smai/workspace/dc_dir/sim_lerobot/rf2502_new_3/urdf/rf2502_new_3.urdf"
+  urdf_path: "/home/smai/workspace/dikeke/franka_description/fr3_urdfs/fr3_franka_hand_obj.urdf"
+  xml_path: "/home/smai/workspace/dikeke/franka_description/fr3_urdfs/fr3_franka_hand_obj.xml"
+  target_frame_name: hand
+  end_effector_bounds:
+    min:
+      - -10.0
+      - -10.0
+      - -10.0
+    max:
+      - 10.0
+      - 10.0
+      - 10.0
+  end_effector_step_sizes:
+    x: 1.0
+    y: 1.0
+    z: 1.0
+
+teleop:
+  # Specifies which subclass of TeleoperatorConfig to use.
+  # This matches the name in `@TeleoperatorConfig.register_subclass("supre_robot_leader")`
+  type: webxr
+  zenoh_connect_key: "tcp/47.116.8.214:7447"
+wrapper:
+  display_cameras: false
+  add_joint_velocity_to_observation: true
+  add_current_to_observation: true
+  add_ee_pose_to_observation: true
+  crop_params_dict:
+    observation.images.head_cam:
+      - 270
+      - 170
+      - 90
+      - 190
+    observation.images.left_wrist_cam:
+      - 0
+      - 0
+      - 480
+      - 640
+  resize_size:
+    - 128
+    - 128
+  control_time_s: 60.0
+  use_gripper: true
+  gripper_quantization_threshold: null
+  gripper_penalty: -0.02
+  gripper_penalty_in_reward: false
+  fixed_reset_joint_positions:
+    - -30.0
+    - -10.0
+    - 10.0
+    - 10.0
+    - 10.0
+    - 10.0
+    - 1.0
+  reset_time_s: 2.5
+  control_mode: webxr
+name: real_robot
+#mode record/replay
+mode: record
+repo_id: "cocodee/hil"
+dataset_root: "data/dkk1"
+task: "grab things"
+num_episodes: 2
+episode: 0
+pretrained_policy_name_or_path: null
+device: cpu
+push_to_hub: false
+fps: 20
+features:
+  observation.images.head_cam:
+    type: VISUAL
+    shape:
+      - 3
+      - 128
+      - 128
+  observation.images.left_wrist_cam:
+    type: VISUAL
+    shape:
+      - 3
+      - 128
+      - 128
+  observation.state:
+    type: STATE
+    shape:
+      - 24
+  action:
+    type: ACTION
+    shape:
+      - 3
+features_map:
+  observation.images.head_cam: observation.images.head_cam
+  observation.images.left_wrist_cam: observation.images.left_wrist_cam
+  observation.state: observation.state
+  action: action
+reward_classifier_pretrained_path: null

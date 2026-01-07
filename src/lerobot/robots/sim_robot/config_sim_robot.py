@@ -101,3 +101,32 @@ class SimRobotHilConfig(SimRobotConfig):
         }
     )
     gripper_joint_name: str = "left_arm_joint_7"    
+
+
+@RobotConfig.register_subclass("sim_robot_panda_hil")
+@dataclass
+class SimRobotPandaHilConfig(SimRobotConfig):
+    # 仿真环境参数
+    urdf_path: str = "/home/smai/workspace/dikeke/franka_description/fr3_urdfs/fr3_franka_hand_obj.xml"
+    xml_path: str = "/home/smai/workspace/dikeke/franka_description/fr3_urdfs/fr3_franka_hand_obj.urdf"
+    # End-effector frame name in the URDF
+    target_frame_name: str = "hand"
+
+    # Default bounds for the end-effector position (in meters)
+    end_effector_bounds: dict[str, list[float]] = field(
+        default_factory=lambda: {
+            "min": [-10.0, -10.0, -10.0],  # min x, y, z
+            "max": [10.0, 10.0, 10.0],  # max x, y, z
+        }
+    )
+
+    max_gripper_pos: float = 1.0
+
+    end_effector_step_sizes: dict[str, float] = field(
+        default_factory=lambda: {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0,
+        }
+    )
+    gripper_joint_name: str = "left_arm_joint_7"    

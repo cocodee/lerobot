@@ -79,6 +79,9 @@ def make_robot_from_config(config: RobotConfig) -> Robot:
     elif config.type == "sim_robot_hil":
         from .sim_robot import SimRobotHil
         return SimRobotHil(config)
+    elif config.type == "sim_robot_panda_hil":
+        from .sim_robot_panda import SimRobotPandaHil
+        return SimRobotPandaHil(config)
     elif config.type == "mock_robot":
         from tests.mocks.mock_robot import MockRobot
 
