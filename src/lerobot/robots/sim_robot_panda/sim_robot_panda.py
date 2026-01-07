@@ -11,7 +11,7 @@ from ..utils import ensure_safe_goal_position
 
 logger = logging.getLogger(__name__)
 
-class FrankaSimRobot(Robot):
+class SimRobotPanda(Robot):
     config_class = SimRobotConfig
     name = "franka_sim_robot"
 
