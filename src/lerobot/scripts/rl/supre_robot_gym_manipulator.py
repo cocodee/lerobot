@@ -36,11 +36,6 @@ Example:
     obs, reward, terminated, truncated, info = env.step(action)
 """
 import sys
-try:
-    import hppfcl
-    print("DEBUG: Imported hppfcl successfully")
-except ImportError:
-    print("DEBUG: Could not import hppfcl")
 
 import logging
 import time
