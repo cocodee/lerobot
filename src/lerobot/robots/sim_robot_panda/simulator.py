@@ -14,28 +14,44 @@ class MujocoSimulator:
         self.config = config
         self.headless = headless
         
-        # --- 修改开始：构建环境并加载模型 ---
-        
-        # 1. 获取机械臂文件的绝对路径 (防止相对路径在字符串加载时出错)
         robot_path = os.path.abspath(self.config.xml_path)
+        robot_dir = os.path.dirname(robot_path)
         
-        # 2. 动态生成包含环境和机械臂位置的 XML 字符串
-        # 注意：如果你的模型是 .urdf 格式，MuJoCo 的 <include> 标签可能无法直接支持。
-        # 建议先将 URDF 拖入 MuJoCo 模拟器并 Save xml 为 .xml (MJCF) 格式，效果最好。
+        # 2. 生成场景 XML
         scene_xml = self._create_scene_xml(robot_path)
 
-        # 3. 从生成的字符串加载模型
+        # 3. 加载模型
         try:
-            # 使用 from_xml_string 加载构建好的场景
-            # basedir 是为了让 MuJoCo 找到机械臂文件旁边的 mesh 资源
-            self.model = mujoco.MjModel.from_xml_string(scene_xml, list(), os.path.dirname(robot_path))
+            # --- 修改重点：使用 os.chdir 确保 MuJoCo 能找到 include 文件和相关的 Mesh ---
+            old_cwd = os.getcwd()
+            os.chdir(robot_dir)
+            try:
+                # 现在的 MuJoCo Python API: from_xml_string(xml_str, assets=None)
+                # 我们通过切换目录，让 MuJoCo 自动去当前目录找 mesh 和 include
+                self.model = mujoco.MjModel.from_xml_string(scene_xml)
+            finally:
+                os.chdir(old_cwd) # 无论成功失败，都切换回原来的目录
+                
         except Exception as e:
             logger.error(f"Failed to load MuJoCo model: {e}")
-            # 如果加载失败（例如因为 URDF include 问题），回退到原始加载方式
             logger.warning("Falling back to loading robot file directly (No Environment)...")
-            self.model = mujoco.MjModel.from_xml_path(self.config.urdf_path1)
-
-        # --- 修改结束 ---
+            
+            # 回退方案：直接加载路径
+            try:
+                # 如果是 URDF，确保 self.config.urdf_path1 是正确的
+                # 同样建议切换目录加载，防止 STL 找不到
+                fallback_path = os.path.abspath(self.config.xml_path)
+                fallback_dir = os.path.dirname(fallback_path)
+                
+                old_cwd = os.getcwd()
+                os.chdir(fallback_dir)
+                try:
+                    self.model = mujoco.MjModel.from_xml_path(fallback_path)
+                finally:
+                    os.chdir(old_cwd)
+            except Exception as e2:
+                logger.error(f"Critical Error: Fallback also failed: {e2}")
+                raise e2
 
         self.data = mujoco.MjData(self.model)
 
