@@ -6,6 +6,7 @@ import logging
 import os
 from typing import Dict, Tuple, Optional
 from ..sim_robot.config_sim_robot import SimRobotPandaHilConfig
+import xml.etree.ElementTree as ET
 
 logger = logging.getLogger(__name__)
 
@@ -14,44 +15,17 @@ class MujocoSimulator:
         self.config = config
         self.headless = headless
         
-        robot_path = os.path.abspath(self.config.xml_path)
-        robot_dir = os.path.dirname(robot_path)
-        
-        # 2. 生成场景 XML
-        scene_xml = self._create_scene_xml(robot_path)
-
-        # 3. 加载模型
+        # 调用上面写的合并函数
         try:
-            # --- 修改重点：使用 os.chdir 确保 MuJoCo 能找到 include 文件和相关的 Mesh ---
-            old_cwd = os.getcwd()
-            os.chdir(robot_dir)
-            try:
-                # 现在的 MuJoCo Python API: from_xml_string(xml_str, assets=None)
-                # 我们通过切换目录，让 MuJoCo 自动去当前目录找 mesh 和 include
-                self.model = mujoco.MjModel.from_xml_string(scene_xml)
-            finally:
-                os.chdir(old_cwd) # 无论成功失败，都切换回原来的目录
-                
+            robot_path = os.path.abspath(self.config.xml_path)
+            # 这里调用上面定义的逻辑
+            self.model = self._build_model_with_scene(robot_path)
+            logger.info("Successfully merged robot into scene at 1.5m height")
         except Exception as e:
-            logger.error(f"Failed to load MuJoCo model: {e}")
-            logger.warning("Falling back to loading robot file directly (No Environment)...")
-            
-            # 回退方案：直接加载路径
-            try:
-                # 如果是 URDF，确保 self.config.urdf_path1 是正确的
-                # 同样建议切换目录加载，防止 STL 找不到
-                fallback_path = os.path.abspath(self.config.xml_path)
-                fallback_dir = os.path.dirname(fallback_path)
-                
-                old_cwd = os.getcwd()
-                os.chdir(fallback_dir)
-                try:
-                    self.model = mujoco.MjModel.from_xml_path(fallback_path)
-                finally:
-                    os.chdir(old_cwd)
-            except Exception as e2:
-                logger.error(f"Critical Error: Fallback also failed: {e2}")
-                raise e2
+            logger.error(f"Failed to load merged model: {e}")
+            # 回退...
+            self.model = mujoco.MjModel.from_xml_path(robot_path)
+
 
         self.data = mujoco.MjData(self.model)
 
@@ -91,6 +65,78 @@ class MujocoSimulator:
         if self.viewer:
             self.viewer.sync()
 
+    def _build_model_with_scene(self, robot_xml_path):
+        """
+        通过 Python 代码合并场景和机器人模型，并返回 MjModel 对象。
+        """
+        mount_height = 1.5
+        robot_xml_path = os.path.abspath(robot_xml_path)
+        robot_dir = os.path.dirname(robot_path)
+    
+        # 1. 解析机器人原始 XML
+        robot_tree = ET.parse(robot_xml_path)
+        robot_root = robot_tree.getroot()
+    
+        # 2. 创建场景的基础结构 (String)
+        scene_xml_base = f"""
+        <mujoco model="scene_with_robot">
+            <statistic extent="2" center="0 0 1"/>
+            <option timestep="0.002"/>
+            <visual>
+                <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0"/>
+                <rgba haze="0.15 0.25 0.35 1"/>
+                <global azimuth="120" elevation="-20"/>
+            </visual>
+            <asset>
+                <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="3072"/>
+                <texture type="2d" name="groundplane" builtin="checker" rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3" mark="edge" markrgb="0.8 0.8 0.8" width="300" height="300"/>
+                <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance="0.2"/>
+            </asset>
+            <worldbody>
+                <light pos="0 0 3" dir="0 0 -1" directional="true"/>
+                <geom name="floor" size="0 0 0.05" type="plane" material="groundplane"/>
+                <camera name="side_view" pos="0 -2 1.5" xyaxes="1 0 0 0 0 1"/>
+                
+                <!-- 我们要把机械臂放进这个 mount 里 -->
+                <body name="robot_mount" pos="0 0 {mount_height}">
+                </body>
+            </worldbody>
+        </mujoco>
+        """
+        
+        # 3. 将字符串转为 Element 对象
+        scene_root = ET.fromstring(scene_xml_base)
+        mount_body = scene_root.find(".//body[@name='robot_mount']")
+        scene_asset = scene_root.find("asset")
+    
+        # 4. 提取机器人 XML 中的所有 Assets (Mesh, Material, Texture) 并合并到场景
+        robot_assets = robot_root.find("asset")
+        if robot_assets is not None:
+            for asset in robot_assets:
+                scene_asset.append(asset)
+    
+        # 5. 提取机器人 XML 中的 Worldbody 内容并放入 mount_body
+        robot_worldbody = robot_root.find("worldbody")
+        if robot_worldbody is not None:
+            for element in robot_worldbody:
+                mount_body.append(element)
+    
+        # 6. 处理编译选项 (如 mesh 路径)
+        # 如果机器人 XML 有 compiler 标签，直接复制过来
+        robot_compiler = robot_root.find("compiler")
+        if robot_compiler is not None:
+            scene_root.insert(0, robot_compiler)
+        else:
+            # 如果没有，手动添加一个确保能找到 mesh 路径
+            compiler = ET.Element("compiler", meshdir=robot_dir, texturedir=robot_dir)
+            scene_root.insert(0, compiler)
+    
+        # 7. 导出最终的 XML 字符串
+        merged_xml_str = ET.tostring(scene_root, encoding='unicode')
+    
+        # 8. 加载模型
+        # 注意：一定要传入 robot_dir 作为 assets 路径，否则找不到 .stl 文件
+        return mujoco.MjModel.from_xml_string(merged_xml_str)
     def _create_scene_xml(self, robot_file_path: str) -> str:
         """
         创建一个包含地板、光照、背景以及固定在高处底座的机械臂的 XML 场景。
@@ -151,9 +197,24 @@ class MujocoSimulator:
 
         return self.get_observation()
 
-    def get_observation(self) -> np.ndarray:
-        pos, vel = self.get_joint_states()
-        return np.concatenate([pos, vel])
+    def get_observation(self) -> Dict[str, float]:
+        """
+        返回主脚本期望的字典格式：{'joint1.pos': value, 'joint1.vel': value, ...}
+        """
+        obs = {}
+        for i, name in enumerate(self.joint_names):
+            # 获取位置和速度
+            q_pos = self.data.qpos[self.joint_qpos_adr[i]]
+            q_vel = self.data.qvel[self.joint_qvel_adr[i]]
+            
+            # 这里的 Key 必须与主脚本 self._joint_names 中的定义一致
+            # 如果脚本找的是 'joint1.pos'，即使模型里叫 'panda_joint1'，这里也建议映射回 'joint1'
+            # 或者确保主脚本的配置里关节名匹配
+            logic_name = f"joint{i+1}" 
+            obs[f"{logic_name}.pos"] = float(q_pos)
+            obs[f"{logic_name}.vel"] = float(q_vel)
+            
+        return obs
 
     def get_joint_states(self) -> Tuple[np.ndarray, np.ndarray]:
         positions = []
@@ -199,3 +260,4 @@ class MujocoSimulator:
         if self.viewer:
             self.viewer.close()
             self.viewer = None
+            
