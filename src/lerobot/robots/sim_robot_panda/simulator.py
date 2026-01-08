@@ -4,12 +4,12 @@ import time
 import logging
 import os
 from typing import Dict, Tuple, Optional
-from ..sim_robot.config_sim_robot import SimRobotPandaConfig
+from ..sim_robot.config_sim_robot import SimRobotPandaHilConfig
 
 logger = logging.getLogger(__name__)
 
 class MujocoSimulator:
-    def __init__(self, config: SimRobotPandaConfig, headless: bool = False):
+    def __init__(self, config: SimRobotPandaHilConfig, headless: bool = False):
         self.config = config
         self.headless = headless
         
