@@ -45,7 +45,6 @@ class MujocoSimulator:
         # 5. 初始化可视化窗口
         self.viewer = None
         if not self.headless:
-            import mujoco.viewer
             self.viewer = mujoco.viewer.launch_passive(self.model, self.data)
 
         # 6. 建立名称到索引的映射
