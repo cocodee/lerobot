@@ -70,7 +70,7 @@ class MujocoSimulator:
         通过 Python 代码合并场景和机器人模型，并返回 MjModel 对象。
         """
         mount_height = 1.5
-        robot_xml_path = os.path.abspath(robot_xml_path)
+        robot_path = os.path.abspath(robot_xml_path)
         robot_dir = os.path.dirname(robot_path)
     
         # 1. 解析机器人原始 XML
