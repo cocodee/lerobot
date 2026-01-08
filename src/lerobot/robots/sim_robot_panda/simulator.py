@@ -65,26 +65,29 @@ class MujocoSimulator:
         if self.viewer:
             self.viewer.sync()
 
-    def _build_model_with_scene(self, robot_xml_path):
-        """
-        通过 Python 代码合并场景和机器人模型，并返回 MjModel 对象。
-        """
+    def _build_model_with_scene(self, robot_xml_path: str):
+        robot_dir = os.path.dirname(robot_xml_path)
+        tree = ET.parse(robot_xml_path)
+        robot_root = tree.getroot()
+
+        # 核心修复：强制注入 compiler meshdir，解决 'link0.obj' 找不到的问题
+        compiler = robot_root.find("compiler")
+        if compiler is None:
+            compiler = ET.SubElement(robot_root, "compiler")
+        # 将相对路径转换为绝对路径
+        orig_meshdir = compiler.get("meshdir", "")
+        abs_meshdir = os.path.abspath(os.path.join(robot_dir, orig_meshdir))
+        compiler.set("meshdir", abs_meshdir)
+        compiler.set("texturedir", abs_meshdir)
+
+        # 构建场景 XML
         mount_height = 1.5
-        robot_path = os.path.abspath(robot_xml_path)
-        robot_dir = os.path.dirname(robot_path)
-    
-        # 1. 解析机器人原始 XML
-        robot_tree = ET.parse(robot_xml_path)
-        robot_root = robot_tree.getroot()
-    
-        # 2. 创建场景的基础结构 (String)
         scene_xml_base = f"""
-        <mujoco model="scene_with_robot">
+        <mujoco model="merged_scene">
             <statistic extent="2" center="0 0 1"/>
             <option timestep="0.002"/>
             <visual>
                 <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0"/>
-                <rgba haze="0.15 0.25 0.35 1"/>
                 <global azimuth="120" elevation="-20"/>
             </visual>
             <asset>
@@ -95,48 +98,32 @@ class MujocoSimulator:
             <worldbody>
                 <light pos="0 0 3" dir="0 0 -1" directional="true"/>
                 <geom name="floor" size="0 0 0.05" type="plane" material="groundplane"/>
-                <camera name="side_view" pos="0 -2 1.5" xyaxes="1 0 0 0 0 1"/>
-                
-                <!-- 我们要把机械臂放进这个 mount 里 -->
-                <body name="robot_mount" pos="0 0 {mount_height}">
-                </body>
+                <body name="robot_mount" pos="0 0 {mount_height}"></body>
             </worldbody>
         </mujoco>
         """
-        
-        # 3. 将字符串转为 Element 对象
         scene_root = ET.fromstring(scene_xml_base)
-        mount_body = scene_root.find(".//body[@name='robot_mount']")
-        scene_asset = scene_root.find("asset")
-    
-        # 4. 提取机器人 XML 中的所有 Assets (Mesh, Material, Texture) 并合并到场景
+        
+        # 合并 compiler
+        scene_root.insert(0, compiler)
+        
+        # 合并 Assets
+        scene_assets = scene_root.find("asset")
         robot_assets = robot_root.find("asset")
         if robot_assets is not None:
-            for asset in robot_assets:
-                scene_asset.append(asset)
-    
-        # 5. 提取机器人 XML 中的 Worldbody 内容并放入 mount_body
+            for a in robot_assets: scene_assets.append(a)
+
+        # 合并 Worldbody (把机器人的身体挂到 mount 下)
+        mount_body = scene_root.find(".//body[@name='robot_mount']")
         robot_worldbody = robot_root.find("worldbody")
         if robot_worldbody is not None:
-            for element in robot_worldbody:
-                mount_body.append(element)
-    
-        # 6. 处理编译选项 (如 mesh 路径)
-        # 如果机器人 XML 有 compiler 标签，直接复制过来
-        robot_compiler = robot_root.find("compiler")
-        if robot_compiler is not None:
-            scene_root.insert(0, robot_compiler)
-        else:
-            # 如果没有，手动添加一个确保能找到 mesh 路径
-            compiler = ET.Element("compiler", meshdir=robot_dir, texturedir=robot_dir)
-            scene_root.insert(0, compiler)
-    
-        # 7. 导出最终的 XML 字符串
+            for b in robot_worldbody: mount_body.append(b)
+
         merged_xml_str = ET.tostring(scene_root, encoding='unicode')
-    
-        # 8. 加载模型
-        # 注意：一定要传入 robot_dir 作为 assets 路径，否则找不到 .stl 文件
+        
+        # 加载时指定 basedir
         return mujoco.MjModel.from_xml_string(merged_xml_str)
+
     def _create_scene_xml(self, robot_file_path: str) -> str:
         """
         创建一个包含地板、光照、背景以及固定在高处底座的机械臂的 XML 场景。
