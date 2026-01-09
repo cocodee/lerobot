@@ -288,3 +288,23 @@ class SimRobotPandaHil(SimRobotPanda):
             self.sim2robot[name]: math.degrees(joint_positions[i])*self.joint_direction[i]
             for i, name in enumerate(self.joint_names)
         }
+    
+    def write_goal_position(self, target_position: Dict[str, float]) -> None:
+        """
+        向机器人写入目标位置。
+        通过调用 send_action 实现，包含重映射、安全检查和仿真步进。
+        Args:
+            target_position: 包含 {'joint_name': target_pos_degrees} 的字典
+        """
+        if not self.is_connected:
+            raise DeviceNotConnectedError(f"{self} is not connected")
+
+        # 构造符合 send_action 预期的字典 (确保带 .pos 后缀)
+        action = {}
+        for name, value in target_position.items():
+            # 如果键名已经是 'joint.pos' 格式则保持，否则添加后缀
+            key = name if name.endswith(".pos") else f"{name}.pos"
+            action[key] = value
+
+        # 直接调用 send_action，复用其内部的名称映射(robot2sim)和单位转换逻辑
+        super().send_action(action)    
