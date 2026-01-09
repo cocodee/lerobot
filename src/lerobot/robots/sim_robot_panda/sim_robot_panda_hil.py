@@ -268,3 +268,7 @@ class SimRobotPandaHil(SimRobotPanda):
         # logger.debug(f"Present Joint State: {state_dict}")
         
         return state_dict    
+    
+    def get_urdf_path(self) -> str:
+        """获取 URDF 文件路径"""
+        return getattr(self.config, "urdf_path", None)
