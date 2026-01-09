@@ -308,3 +308,8 @@ class SimRobotPandaHil(SimRobotPanda):
 
         # 直接调用 send_action，复用其内部的名称映射(robot2sim)和单位转换逻辑
         super().send_action(action)    
+
+    def reset(self):
+        self.current_ee_pos = None
+        self.current_joint_pos = None
+        self.debug_accumulated_pose = None        
