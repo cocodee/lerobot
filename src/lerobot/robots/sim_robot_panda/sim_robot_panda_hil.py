@@ -272,3 +272,19 @@ class SimRobotPandaHil(SimRobotPanda):
     def get_urdf_path(self) -> str:
         """获取 URDF 文件路径"""
         return getattr(self.config, "urdf_path", None)
+    
+    def get_present_position(self) -> Dict[str, float]:
+        """
+        获取当前关节位置。
+        返回格式: {'joint_name': position_in_degrees, ...}
+        """
+        if not self.is_connected:
+            raise DeviceNotConnectedError(f"{self} is not connected")
+        
+        # simulator.get_joint_states 返回的是弧度
+        joint_positions, _ = self.simulator.get_joint_states()
+        
+        return {
+            self.sim2robot[name]: math.degrees(joint_positions[i])*self.joint_direction[i]
+            for i, name in enumerate(self.joint_names)
+        }
