@@ -1152,7 +1152,7 @@ class EEObservationWrapper(gym.ObservationWrapper):
         self.kinematics = RobotKinematics(
             urdf_path=get_urdf_path(env.unwrapped.robot),
             target_frame_name=env.unwrapped.robot.config.target_frame_name,
-            joint_names=URDF_JOINT_NAMES,
+            joint_names=get_urdf_joint_names(env.unwrapped.robot),
         )
 
     def observation(self, observation):
@@ -1219,7 +1219,7 @@ class BaseLeaderControlWrapper(gym.Wrapper):
         self.kinematics = RobotKinematics(
             urdf_path=env.unwrapped.robot.config.urdf_path,
             target_frame_name=env.unwrapped.robot.config.target_frame_name,
-            joint_names=URDF_JOINT_NAMES,
+            joint_names=get_urdf_joint_names(env.unwrapped.robot),
         )
         self.leader_torque_enabled = True
         self.prev_leader_gripper = None
