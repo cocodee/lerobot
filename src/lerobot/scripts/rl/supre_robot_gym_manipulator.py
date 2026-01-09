@@ -308,6 +308,7 @@ class RobotEnv(gym.Env):
     def _get_observation(self) -> dict[str, np.ndarray]:
         """Helper to convert a dictionary from bus.sync_read to an ordered numpy array."""
         obs_dict = self.robot.get_observation()
+        logger.info(f"obs_dict:{obs_dict}")
         joint_positions = np.array([obs_dict[name] for name in self._joint_names])
 
         images = {key: obs_dict[key] for key in self._image_keys}
