@@ -324,3 +324,7 @@ class SimRobotPandaHil(SimRobotPanda):
         # 仿真通常不模拟电流，或者可以通过 getJointStates 的第4个返回值获取 torque
         # 这里为了简单起见，返回 0.0，或者你可以修改 Simulator 获取 torque
         return {self.sim2robot[name]: 0.0 for name in self.joint_names}        
+    
+    def get_urdf_joint_names(self) -> List[str]:
+        """获取 URDF 中的关节名称"""
+        return PANDA_URDF_JOINT_NAMES    

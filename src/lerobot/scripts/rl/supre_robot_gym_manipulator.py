@@ -86,6 +86,7 @@ URDF_JOINT_NAMES = [
             "arml_joint", "arml_joint1", "arml_joint2", 
             "arml_joint3", "arml_joint4", "arml_joint5",
         ]
+
 def get_present_position(robot_arm):
     #leader and follower
     return robot_arm.get_present_position()
@@ -110,6 +111,9 @@ def get_max_gripper_position(robot_arm):
 def get_urdf_path(robot_arm):
     #follower?
     return robot_arm.get_urdf_path()
+def get_urdf_joint_names(robot_arm):
+    #follower?
+    return robot_arm.get_urdf_joint_names()
 
 
 def reset_follower_position(robot_arm, target_position):

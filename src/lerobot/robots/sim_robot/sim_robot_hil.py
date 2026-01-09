@@ -405,3 +405,7 @@ class SimRobotHil(SimRobot):
         # ee_pose_in_world = T_base_to_world * ee_pose_in_base
         ee_pose_in_world = T_base_to_world @ ee_pose_in_base
         return ee_pose_in_world
+    
+    def get_urdf_joint_names(self) -> List[str]:
+        """获取 URDF 中的关节名称"""
+        return URDF_JOINT_NAMES
