@@ -313,3 +313,14 @@ class SimRobotPandaHil(SimRobotPanda):
         self.current_ee_pos = None
         self.current_joint_pos = None
         self.debug_accumulated_pose = None        
+
+    def get_present_current(self) -> Dict[str, float]:
+        """
+        获取当前关节电流 (仿真中通常返回 0 或力矩)。
+        """
+        if not self.is_connected:
+            raise DeviceNotConnectedError(f"{self} is not connected")
+        
+        # 仿真通常不模拟电流，或者可以通过 getJointStates 的第4个返回值获取 torque
+        # 这里为了简单起见，返回 0.0，或者你可以修改 Simulator 获取 torque
+        return {self.sim2robot[name]: 0.0 for name in self.joint_names}        
