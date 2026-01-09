@@ -18,6 +18,7 @@ import traceback
 
 logger = logging.getLogger(__name__)
 
+
 # Franka Panda 在 URDF 中的标准关节名称
 PANDA_URDF_JOINT_NAMES = [
     "joint1", "joint2", "joint3", 
@@ -208,7 +209,13 @@ class SimRobotPandaHil(SimRobotPanda):
 
     def get_joint_names(self) -> List[str]:
         """返回 URDF 中定义的关节名称"""
-        return PANDA_URDF_JOINT_NAMES
+        return ["left_arm_joint_1",
+                "left_arm_joint_2",
+                "left_arm_joint_3",
+                "left_arm_joint_4",
+                "left_arm_joint_5",
+                "left_arm_joint_6",
+                "left_arm_joint_7"]
 
     def _mujoco_debug_draw(self, frame_matrix):
         """
