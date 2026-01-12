@@ -73,20 +73,6 @@ logging.basicConfig(level=logging.INFO)
 
 logger = logging.getLogger(__name__)
 
-URDF_JOINT_NAMES = [
-    "left_arm_joint0",
-    "left_arm_joint1",
-    "left_arm_joint2",
-    "left_arm_joint3",
-    "left_arm_joint4",
-    "left_arm_joint5",
-]
-
-URDF_JOINT_NAMES = [
-            "arml_joint", "arml_joint1", "arml_joint2", 
-            "arml_joint3", "arml_joint4", "arml_joint5",
-        ]
-
 def get_present_position(robot_arm):
     #leader and follower
     return robot_arm.get_present_position()

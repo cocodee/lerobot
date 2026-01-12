@@ -328,3 +328,17 @@ class SimRobotPandaHil(SimRobotPanda):
     def get_urdf_joint_names(self) -> List[str]:
         """获取 URDF 中的关节名称"""
         return PANDA_URDF_JOINT_NAMES    
+    
+    def get_gripper_position(self) -> float:
+        """获取夹爪的当前位置"""
+        positions = self.get_present_position()
+        
+        # 假设 gripper 关节名称包含 'gripper'
+        # 根据 self.joint_names 查找
+        gripper_name = "left_arm_joint_7" # 默认假设
+        for name in self.joint_names:
+            if "gripper" in name and "flex" not in name: # 排除 flex 关节
+                gripper_name = name
+                break
+        
+        return positions.get(gripper_name, 0.0)    
