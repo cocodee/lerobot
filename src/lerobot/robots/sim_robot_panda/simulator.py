@@ -129,7 +129,7 @@ class MujocoSimulator:
         创建一个包含地板、光照、背景以及固定在高处底座的机械臂的 XML 场景。
         """
         # 机械臂安装高度 (米)，模拟人肩膀高度
-        mount_height = 1.5 
+        mount_height = 1.0
         
         xml_content = f"""
         <mujoco model="scene_with_robot">
@@ -160,8 +160,7 @@ class MujocoSimulator:
 
                 <!-- 机械臂底座：将机械臂固定在这个 Body 上 -->
                 <!-- pos="0 0 {mount_height}" 将机械臂抬高 -->
-                <body name="robot_mount" pos="0 0 {mount_height}" euler="0 0 0">
-                    <!-- 引用外部机械臂文件 -->
+                <body name="robot_mount" pos="0 0 {mount_height}" euler="0 180 0"></body>                    <!-- 引用外部机械臂文件 -->
                     <include file="{robot_file_path}"/>
                 </body>
             </worldbody>
