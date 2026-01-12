@@ -11,3 +11,4 @@ class WebxrTeleopConfig(TeleoperatorConfig):
     # 移动灵敏度系数
     pos_scale: float = 1.0
     use_gripper: bool = True
+    robot_type: str = "sim_robot"
