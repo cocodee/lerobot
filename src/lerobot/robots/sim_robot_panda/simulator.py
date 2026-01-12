@@ -81,7 +81,7 @@ class MujocoSimulator:
         compiler.set("texturedir", abs_meshdir)
 
         # 构建场景 XML
-        mount_height = 1.5
+        mount_height = 1.0
         scene_xml_base = f"""
         <mujoco model="merged_scene">
             <statistic extent="2" center="0 0 1"/>
@@ -98,7 +98,7 @@ class MujocoSimulator:
             <worldbody>
                 <light pos="0 0 3" dir="0 0 -1" directional="true"/>
                 <geom name="floor" size="0 0 0.05" type="plane" material="groundplane"/>
-                <body name="robot_mount" pos="0 0 {mount_height}"></body>
+                <body name="robot_mount" pos="0 0 {mount_height}" euler="0 180 0"></body>
             </worldbody>
         </mujoco>
         """
