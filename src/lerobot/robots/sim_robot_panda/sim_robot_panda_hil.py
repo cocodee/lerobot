@@ -159,9 +159,9 @@ class SimRobotPandaHil(SimRobotPanda):
         
         # 映射回仿真器名称
         for i, urdf_name in enumerate(PANDA_URDF_JOINT_NAMES):
-            sim_name = self.robot2sim_map[urdf_name]
+            name = self.sim2robot[urdf_name]
             # SimRobot 父类接受 f"{sim_name}.pos"
-            joint_action[f"{sim_name}.pos"] = target_joint_values_deg[i]
+            joint_action[f"{name}.pos"] = target_joint_values_deg[i]
 
         # --- 7. 处理夹爪 ---
         # Panda 夹爪范围通常是 0 (闭合) 到 0.04m (单指打开)，总宽度 0.08m
