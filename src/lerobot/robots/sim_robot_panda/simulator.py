@@ -81,7 +81,7 @@ class MujocoSimulator:
         compiler.set("texturedir", abs_meshdir)
 
         # 构建场景 XML
-        mount_height = 1.0
+        mount_height = 1.2
         scene_xml_base = f"""
         <mujoco model="merged_scene">
             <statistic extent="2" center="0 0 1"/>
