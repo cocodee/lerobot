@@ -131,7 +131,7 @@ class WebxrTeleop(Teleoperator):
     def configure(self):
         pass
 
-    def get_action_sim_robot(self) -> dict[str, Any]:
+    def get_action(self) -> dict[str, Any]:
         match self.robot_type:
             case "sim_robot":
                 return self.get_action_sim_robot()

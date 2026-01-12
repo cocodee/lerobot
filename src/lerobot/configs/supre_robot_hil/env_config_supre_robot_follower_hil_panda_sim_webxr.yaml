@@ -34,6 +34,7 @@ teleop:
   # This matches the name in `@TeleoperatorConfig.register_subclass("supre_robot_leader")`
   type: webxr
   zenoh_connect_key: "tcp/47.116.8.214:7447"
+  robot_type: sim_robot_panda
 wrapper:
   display_cameras: false
   add_joint_velocity_to_observation: true
