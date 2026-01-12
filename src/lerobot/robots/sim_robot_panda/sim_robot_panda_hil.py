@@ -198,7 +198,7 @@ class SimRobotPandaHil(SimRobotPanda):
         joint_action["finger_joint2.pos"] = target_gripper_pos
 
         logger.info(f"Target Joints (deg): {target_joint_values_deg}")
-        
+        logger.info(f"joint_action: {joint_action}")
         # Debug Drawing (MuJoCo版本)
         if hasattr(self.simulator, "viewer") and self.simulator.viewer:
             # MuJoCo 绘图比较复杂，这里仅简单打印，或者你可以扩展 Simulator 类
@@ -266,7 +266,7 @@ class SimRobotPandaHil(SimRobotPanda):
                     state_dict[robot_name] = math.degrees(raw_val)
         
         # 4. 可选：如果需要在日志中查看当前状态
-        logger.debug(f"Present Joint State: {state_dict}")
+        logger.info(f"Present Joint State: {state_dict}")
         
         return state_dict    
     
