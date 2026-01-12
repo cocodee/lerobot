@@ -2345,7 +2345,10 @@ def record_dataset(env, policy, cfg):
 
     # Setup initial action (zero action if using teleop)
     #action = env.action_space.sample() * 0.0
-    action = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0], dtype=np.float32)
+    if cfg.wrapper.use_gripper:
+        action = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0], dtype=np.float32)
+    else:
+        action = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0,0.0], dtype=np.float32)
     action = torch.as_tensor(action, dtype=torch.float32,device=torch.device("cpu"))
     action_names = ["delta_x_ee", "delta_y_ee", "delta_z_ee","delta_qx","delta_qy","delta_qz","delta_qw"]
     if cfg.wrapper.use_gripper:
