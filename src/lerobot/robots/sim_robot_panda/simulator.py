@@ -160,7 +160,7 @@ class MujocoSimulator:
 
                 <!-- 机械臂底座：将机械臂固定在这个 Body 上 -->
                 <!-- pos="0 0 {mount_height}" 将机械臂抬高 -->
-                <body name="robot_mount" pos="0 0 {mount_height}" euler="0 180 0"></body>                    <!-- 引用外部机械臂文件 -->
+                <body name="robot_mount" pos="0 0 {mount_height}" euler="0 180 0">              <!-- 引用外部机械臂文件 -->
                     <include file="{robot_file_path}"/>
                 </body>
             </worldbody>
