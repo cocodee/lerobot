@@ -116,7 +116,7 @@ class SimRobotPandaHil(SimRobotPanda):
                 logger.warning(f"Invalid action keys: {list(action.keys())}")
                 return {}
 
-        logger.info(f"Action: {action},delta_ee: {delta_ee}")
+        logger.info(f"send_action Action: {action},delta_ee: {delta_ee}")
         # --- 2. 获取当前状态 (Feedback) ---
         # 获取仿真器中的当前关节角度
         sim_joint_state = self.get_present_joint_state() # 返回 {sim_name: degrees}
@@ -196,7 +196,8 @@ class SimRobotPandaHil(SimRobotPanda):
         joint_action["finger_joint1.pos"] = target_gripper_pos
         # 如果需要显式控制第二个手指
         joint_action["finger_joint2.pos"] = target_gripper_pos
-
+        
+        logger.info(f"currrent_joint_pos: {self.current_joint_pos}")
         logger.info(f"Target Joints (deg): {target_joint_values_deg}")
         logger.info(f"joint_action: {joint_action}")
         # Debug Drawing (MuJoCo版本)

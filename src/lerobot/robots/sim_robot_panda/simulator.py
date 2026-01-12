@@ -175,7 +175,8 @@ class MujocoSimulator:
                 if qpos_adr is not None:
                     self.data.qpos[qpos_adr] = target_pos
                     self.data.qvel[self.joint_qvel_adr[i]] = 0.0
-
+        
+        logger.info(f"step data:{self.data}")
         mujoco.mj_forward(self.model, self.data)
 
         if self.viewer:
