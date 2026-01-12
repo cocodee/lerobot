@@ -58,16 +58,6 @@ class SimRobotPandaHil(SimRobotPanda):
             "joint5", "joint6", "joint7"
         ]
         
-        # 3. 映射逻辑
-        # robot2sim: 运动学名称 -> 仿真器名称
-        self.robot2sim_map = {
-            "joint1": "joint1", "joint2": "joint2",
-            "joint3": "joint3", "joint4": "joint4",
-            "joint5": "joint5", "joint6": "joint6",
-            "joint7": "joint7",
-            # 夹爪映射 (假设 XML 中夹爪关节名为 finger_joint1)
-        }
-        self.sim2robot_map = {v: k for k, v in self.robot2sim_map.items()}
         
         # 关节方向修正 (如果 XML 和 URDF 定义方向不一致，在此修改，Panda 通常一致)
         self.joint_direction = np.ones(7) 
@@ -122,14 +112,8 @@ class SimRobotPandaHil(SimRobotPanda):
         sim_joint_state = self.get_present_joint_state() # 返回 {sim_name: degrees}
         
         # 转换为 URDF 需要的顺序和单位 (FK/IK 需要度数或弧度，Lerobot Kinematics 默认通常是度数)
-        current_joint_pos_list = []
-        for name in PANDA_URDF_JOINT_NAMES:
-            sim_name = self.robot2sim_map.get(name)
-            # 注意: get_present_joint_state 返回的是度数 (SimRobot 父类处理)
-            val = sim_joint_state.get(sim_name, 0.0)
-            current_joint_pos_list.append(val)
-            
-        self.current_joint_pos = np.array(current_joint_pos_list)
+        self.current_joint_pos = np.array([sim_joint_state[name] for name in self.get_joint_names()])
+
 
         # --- 3. 正运动学 (FK) 获取当前 EE 位姿 ---
         # self.current_ee_pos 是一个 4x4 齐次矩阵
@@ -251,8 +235,8 @@ class SimRobotPandaHil(SimRobotPanda):
         
         for i, sim_name in enumerate(sim_names):
             # 检查该仿真关节是否有对应的机器人映射名称
-            if sim_name in self.sim2robot_map:
-                robot_name = self.sim2robot_map[sim_name]
+            if sim_name in self.sim2robot:
+                robot_name = self.sim2robot[sim_name]
                 raw_val = joint_positions_raw[i]
                 
                 # 3. 单位转换逻辑
