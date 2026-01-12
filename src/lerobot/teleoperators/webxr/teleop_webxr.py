@@ -285,7 +285,7 @@ class WebxrTeleop(Teleoperator):
 
         curr_pos = np.array([
              -raw_p[0] * scale, # Robot X
-             -raw_p[2] * scale, # Robot Y
+             raw_p[2] * scale, # Robot Y
              raw_p[1] * scale, # Robot Z
         ])
         # 处理旋转
