@@ -116,6 +116,7 @@ class SimRobotPandaHil(SimRobotPanda):
                 logger.warning(f"Invalid action keys: {list(action.keys())}")
                 return {}
 
+        logger.info(f"Action: {action},delta_ee: {delta_ee}")
         # --- 2. 获取当前状态 (Feedback) ---
         # 获取仿真器中的当前关节角度
         sim_joint_state = self.get_present_joint_state() # 返回 {sim_name: degrees}
@@ -265,7 +266,7 @@ class SimRobotPandaHil(SimRobotPanda):
                     state_dict[robot_name] = math.degrees(raw_val)
         
         # 4. 可选：如果需要在日志中查看当前状态
-        # logger.debug(f"Present Joint State: {state_dict}")
+        logger.debug(f"Present Joint State: {state_dict}")
         
         return state_dict    
     
