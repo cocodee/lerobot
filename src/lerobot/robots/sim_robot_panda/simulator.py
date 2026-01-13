@@ -98,7 +98,7 @@ class MujocoSimulator:
             <worldbody>
                 <light pos="0 0 3" dir="0 0 -1" directional="true"/>
                 <geom name="floor" size="0 0 0.05" type="plane" material="groundplane"/>
-                <body name="robot_mount" pos="0 0 {mount_height}" euler="0 3.1415926 0"></body>
+                <body name="robot_mount" pos="0 0 {mount_height}" euler="0 1.5707963 0"></body>
             </worldbody>
         </mujoco>
         """
@@ -160,7 +160,7 @@ class MujocoSimulator:
 
                 <!-- 机械臂底座：将机械臂固定在这个 Body 上 -->
                 <!-- pos="0 0 {mount_height}" 将机械臂抬高 -->
-                <body name="robot_mount" pos="0 0 {mount_height}" euler="0 180 0">              <!-- 引用外部机械臂文件 -->
+                <body name="robot_mount" pos="0 0 {mount_height}" euler="0 90 0">              <!-- 引用外部机械臂文件 -->
                     <include file="{robot_file_path}"/>
                 </body>
             </worldbody>
