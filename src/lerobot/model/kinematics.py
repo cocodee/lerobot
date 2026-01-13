@@ -115,6 +115,8 @@ class RobotKinematics:
         # Solve IK
         self.solver.solve(True)
         self.solver.dump_status()
+        self.solver.enable_joint_limits(True)#dkkopt
+        self.solver.regularization = 1e-4 #dkkopt
         self.robot.update_kinematics()
 
         # === 新增：误差分析 ===
