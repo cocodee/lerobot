@@ -98,7 +98,7 @@ class MujocoSimulator:
             <worldbody>
                 <light pos="0 0 3" dir="0 0 -1" directional="true"/>
                 <geom name="floor" size="0 0 0.05" type="plane" material="groundplane"/>
-                <body name="robot_mount" pos="0 0 {mount_height}" euler="0 1.5707963 0"></body>
+                <body name="robot_mount" pos="0 0 {mount_height}" euler="0 -1.5707963 0"></body>
             </worldbody>
         </mujoco>
         """
