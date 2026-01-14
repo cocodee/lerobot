@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional
 from scipy.spatial.transform import Rotation as R
 
 from lerobot.errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
-from lerobot.model.be_kinematics import BeRobotKinematics
+from lerobot.model.kinematics import RobotKinematics
 from ..sim_robot.config_sim_robot import SimRobotPandaHilConfig
 from .sim_robot_panda import SimRobotPanda  # 确保这里导入的是 MuJoCo 版本的 SimRobot
 
@@ -41,7 +41,7 @@ class SimRobotPandaHil(SimRobotPanda):
                 "Ensure config.urdf_path points to 'panda.urdf'."
             )
 
-        self.kinematics = BeRobotKinematics(
+        self.kinematics = RobotKinematics(
             urdf_path=self.config.urdf_path,
             target_frame_name=self.config.target_frame_name, # 通常是 "panda_link8" 或 "panda_hand"
             joint_names=PANDA_URDF_JOINT_NAMES,
@@ -159,7 +159,7 @@ class SimRobotPandaHil(SimRobotPanda):
         # --- 5. 逆运动学 (IK) ---
         # 计算目标关节角度 (Degrees)
         target_joint_values_deg = self.kinematics.inverse_kinematics(
-            self.current_joint_pos, desired_ee_pos,use_posture=False
+            self.current_joint_pos, desired_ee_pos
         )
 
         # --- 6. 构造发送给 SimRobot 的 Joint Action ---
