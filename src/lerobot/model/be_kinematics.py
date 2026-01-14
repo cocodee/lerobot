@@ -112,8 +112,23 @@ class BeRobotKinematics:
             if joint_name not in self.joint_names:
                 self.solver.mask_dof(joint_name)
 
-    # ... (forward_kinematics 保持不变)
-
+    def forward_kinematics(self, joint_pos_deg):
+        """
+        Compute forward kinematics for given joint configuration given the target frame name in the constructor.
+    
+        Args:
+            joint_pos_deg: Joint positions in degrees (numpy array)
+    
+        Returns:
+            4x4 transformation matrix of the end-effector pose
+        """
+    
+        # Convert degrees to radians
+        joint_pos_rad = np.deg2rad(joint_pos_deg[: len(self.joint_names)])
+        logger.info(f"joint_pos_rad: {joint_pos_rad}")
+        # Update joint positions in placo robot
+        for i, joint_name in enumerate(self.joint_names):
+            self.robot.set_joint(joint_name, joint_pos_rad[i])
     def inverse_kinematics(
         self,
         current_joint_pos,
