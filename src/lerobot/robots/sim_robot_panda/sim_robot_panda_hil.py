@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional
 from scipy.spatial.transform import Rotation as R
 
 from lerobot.errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
-from lerobot.model.kinematics import RobotKinematics, BeRobotKinematics
+from lerobot.model.be_kinematics import RobotKinematics, BeRobotKinematics
 from ..sim_robot.config_sim_robot import SimRobotPandaHilConfig
 from .sim_robot_panda import SimRobotPanda  # 确保这里导入的是 MuJoCo 版本的 SimRobot
 
