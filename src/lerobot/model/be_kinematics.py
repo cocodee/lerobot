@@ -97,10 +97,16 @@ class BeRobotKinematics:
         # Priority 3: Posture Task
         # 修改点：add_posture_task 通常不需要参数，或者直接传引用
         # ========================================
-        self.posture_task = self.solver.add_posture_task()
-        self.posture_task.set_target(self.posture_reference)
-        self.posture_task.configure("posture", "soft", self.posture_weight)
-
+        self.posture_task = self.solver.add_joints_task()
+        
+        # 为每个关节设置参考位置
+        for i, joint_name in enumerate(self.joint_names):
+            self.posture_task.set_joint(joint_name, float(self.posture_reference[i]))
+            
+        # 设置权重
+        self.posture_task.configure("posture", "soft", float(self.posture_weight))
+        logger.info(f"[Priority 3] Joints task created with weight={self.posture_weight}")
+        
         # Mask unused DOFs
         for joint_name in self.robot.joint_names():
             if joint_name not in self.joint_names:
@@ -141,10 +147,15 @@ class BeRobotKinematics:
         self.orientation_task.weight = ori_w
 
         if use_posture:
-            self.posture_task.set_target(self.posture_reference)
+            # 更新每个关节的参考值（如果 posture_reference 发生变化）
+            for i, joint_name in enumerate(self.joint_names):
+                self.posture_task.set_joint(joint_name, float(self.posture_reference[i]))
+            
             self.posture_task.weight = float(self.posture_weight)
+            logger.info(f"[Priority 3] Posture task enabled")
         else:
             self.posture_task.weight = 0.0
+            logger.info(f"[Priority 3] Posture task disabled")
 
         # 解算
         self.solver.solve(True)
