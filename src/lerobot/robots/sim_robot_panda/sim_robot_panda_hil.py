@@ -80,7 +80,26 @@ class SimRobotPandaHil(SimRobotPanda):
         if not self.is_connected:
             raise DeviceNotConnectedError(f"{self} is not connected.")
 
-        # --- 1. 解析 Action (Delta EE) ---
+        # --- 1. 获取当前状态 (Feedback) ---
+        # 获取仿真器中的当前关节角度
+        sim_joint_state = self.get_present_joint_state() # 返回 {sim_name: degrees}
+
+        # 转换为 URDF 需要的顺序和单位 (FK/IK 需要度数或弧度，Lerobot Kinematics 默认通常是度数)
+        self.current_joint_pos = np.array([sim_joint_state[name] for name in self.get_joint_names()])
+
+        # --- 2. 正运动学 (FK) 获取当前 EE 位姿 ---
+        # self.current_ee_pos 是一个 4x4 齐次矩阵
+        try:
+            self.current_ee_pos = self.kinematics.forward_kinematics(self.current_joint_pos)
+            if self.current_ee_pos is None:
+                logger.error("forward_kinematics returned None")
+                return {}
+        except Exception as e:
+            logger.error(f"forward_kinematics failed: {e}")
+            traceback.print_exc()
+            return {}
+
+        # --- 3. 解析 Action (Delta EE) ---
         delta_quat = None
         delta_ee = np.zeros(3)
         gripper_val = 1.0
@@ -92,14 +111,14 @@ class SimRobotPandaHil(SimRobotPanda):
                     action["delta_y"] * self.config.end_effector_step_sizes["y"],
                     action["delta_z"] * self.config.end_effector_step_sizes["z"],
                 ], dtype=np.float32)
-                
+
                 # 提取四元数 (x, y, z, w)
                 if "delta_qw" in action:
                     delta_quat = np.array([
-                        action["delta_qx"], action["delta_qy"], 
+                        action["delta_qx"], action["delta_qy"],
                         action["delta_qz"], action["delta_qw"]
                     ], dtype=np.float32)
-                
+
                 if "gripper" in action:
                     gripper_val = action["gripper"]
             else:
@@ -107,21 +126,10 @@ class SimRobotPandaHil(SimRobotPanda):
                 return {}
 
         logger.info(f"send_action Action: {action},delta_ee: {delta_ee}")
-        # --- 2. 获取当前状态 (Feedback) ---
-        # 获取仿真器中的当前关节角度
-        sim_joint_state = self.get_present_joint_state() # 返回 {sim_name: degrees}
-        
-        # 转换为 URDF 需要的顺序和单位 (FK/IK 需要度数或弧度，Lerobot Kinematics 默认通常是度数)
-        self.current_joint_pos = np.array([sim_joint_state[name] for name in self.get_joint_names()])
-
-
-        # --- 3. 正运动学 (FK) 获取当前 EE 位姿 ---
-        # self.current_ee_pos 是一个 4x4 齐次矩阵
-        self.current_ee_pos = self.kinematics.forward_kinematics(self.current_joint_pos)
 
         # --- 4. 计算目标 EE 位姿 ---
         desired_ee_pos = np.eye(4)
-        
+
         # 旋转计算 (使用 Scipy 替代 PyBullet)
         current_rot_mat = self.current_ee_pos[:3, :3]
         
