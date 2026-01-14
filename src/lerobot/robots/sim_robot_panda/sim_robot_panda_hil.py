@@ -159,7 +159,7 @@ class SimRobotPandaHil(SimRobotPanda):
         # --- 5. 逆运动学 (IK) ---
         # 计算目标关节角度 (Degrees)
         target_joint_values_deg = self.kinematics.inverse_kinematics(
-            self.current_joint_pos, desired_ee_pos
+            self.current_joint_pos, desired_ee_pos,use_posture=False
         )
 
         # --- 6. 构造发送给 SimRobot 的 Joint Action ---
