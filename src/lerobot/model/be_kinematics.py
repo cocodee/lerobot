@@ -137,13 +137,11 @@ class BeRobotKinematics:
 
         # 更新任务目标
         pos_w = float(position_weight if position_weight is not None else self.position_weight)
-        self.position_task.set_target(desired_pos)
-        # 注意：某些 placo 版本 configure 接受 (weight) 或 (name, type, weight)
-        # 根据你之前的代码逻辑，这里改为最兼容的写法：
-        self.position_task.weight = pos_w 
+        self.position_task.target_world = desired_pos  # 改为属性赋值
+        self.position_task.weight = pos_w
 
         ori_w = float(orientation_weight if orientation_weight is not None else self.orientation_weight)
-        self.orientation_task.set_target(desired_rot)
+        self.orientation_task.R_world_frame = desired_rot  # 改为属性赋值
         self.orientation_task.weight = ori_w
 
         if use_posture:
