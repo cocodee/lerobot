@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from .be_kinematics import BeRobotKinematics
+from be_kinematics import BeRobotKinematics
 
 PANDA_URDF_JOINT_NAMES = [
     "joint1", "joint2", "joint3", 
