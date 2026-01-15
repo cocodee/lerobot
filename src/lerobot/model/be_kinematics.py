@@ -87,6 +87,8 @@ class BeRobotKinematics:
             )
             # placo 的 Task 通常使用 configure 设置权重和类型 ("soft" 或 "hard")
             self.position_task.configure("position", "soft", self.position_weight)
+            logger.info(f"[Priority 1] Position task enabled,target_frame_name: {self.target_frame_name}")
+
         
         # ========================================
         # Priority 2: Orientation Task
@@ -168,6 +170,8 @@ class BeRobotKinematics:
             pos_w = float(position_weight if position_weight is not None else self.position_weight)
             self.position_task.target_world = desired_pos  # 改为属性赋值
             self.position_task.weight = pos_w
+            logger.info(f"[Priority 1] Position task enabled,position_weight={pos_w}")
+
         
         if self.use_rotation:
             ori_w = float(orientation_weight if orientation_weight is not None else self.orientation_weight)
@@ -184,6 +188,7 @@ class BeRobotKinematics:
 
         # 解算
         self.solver.solve(True)
+        self.solver.dump_status()
         self.robot.update_kinematics()
 
         # ... (后续 delta limit 和返回逻辑保持不变，但确保运算使用 numpy float64)
