@@ -180,10 +180,7 @@ class BeRobotKinematics:
                 self.posture_task.set_joint(joint_name, float(self.posture_reference[i]))
             
             self.posture_task.weight = float(self.posture_weight)
-            logger.info(f"[Priority 3] Posture task enabled")
-        else:
-            self.posture_task.weight = 0.0
-            logger.info(f"[Priority 3] Posture task disabled")
+            logger.info(f"[Priority 3] Posture task enabled"))
 
         # 解算
         self.solver.solve(True)
