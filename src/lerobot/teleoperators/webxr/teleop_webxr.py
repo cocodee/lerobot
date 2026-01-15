@@ -320,8 +320,8 @@ class WebxrTeleop(Teleoperator):
             # 绕 WebXR Z轴转 (水平旋转) -> Robot X轴 (Roll)
             # 注意方向符号
             mapped_rv = np.array([
-                -rv[2],  # Robot X (Roll)  <~ WebXR Z (水平旋转)
-                 rv[1],  # Robot Y (Pitch) <~ WebXR Y (左右倾斜)
+                 rv[1],  # Robot X (Roll)  <~ WebXR Z (水平旋转)
+                 -rv[2],  # Robot Y (Pitch) <~ WebXR Y (左右倾斜)
                  rv[0]   # Robot Z (Yaw)   <~ WebXR X
             ])
             
