@@ -163,7 +163,7 @@ class BeRobotKinematics:
 
         ori_w = float(orientation_weight if orientation_weight is not None else self.orientation_weight)
         self.orientation_task.R_world_frame = desired_rot  # 改为属性赋值
-        self.orientation_task.weight = ori_w
+        self.orientation_task.weight = 0.0
 
         if use_posture:
             # 更新每个关节的参考值（如果 posture_reference 发生变化）
