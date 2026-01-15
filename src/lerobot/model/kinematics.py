@@ -112,7 +112,7 @@ class RobotKinematics:
         # Configure the task based on position_only flag
         self.tip_frame.configure(self.target_frame_name, "soft", position_weight, orientation_weight)
 
-        self.solver.enable_joint_limits(True)#dkkopt
+        #self.solver.enable_joint_limits(True)#dkkopt
         self.solver.regularization = 1e-4 #dkkopt
         # Solve IK
         self.solver.solve(True)
