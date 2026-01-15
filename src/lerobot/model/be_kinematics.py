@@ -37,6 +37,9 @@ class BeRobotKinematics:
                 "placo is required for BeRobotKinematics. "
                 "Please install it via pip or from source."
             ) from e
+        self.use_posture = False
+        self.use_postion = False
+        self.use_rotation = False
 
         self.robot = placo.RobotWrapper(urdf_path)
         self.solver = placo.KinematicsSolver(self.robot)
@@ -76,38 +79,41 @@ class BeRobotKinematics:
         # 修改点：去掉 weight= 参数，改用 configure
         # ========================================
         # 确保传入的是 float64 的 3D 向量
-        initial_pos = np.zeros(3)
-        self.position_task = self.solver.add_position_task(
-            self.target_frame_name, 
-            initial_pos
-        )
-        # placo 的 Task 通常使用 configure 设置权重和类型 ("soft" 或 "hard")
-        self.position_task.configure("position", "soft", self.position_weight)
+        if self.use_postion:
+            initial_pos = np.zeros(3)
+            self.position_task = self.solver.add_position_task(
+                self.target_frame_name, 
+                initial_pos
+            )
+            # placo 的 Task 通常使用 configure 设置权重和类型 ("soft" 或 "hard")
+            self.position_task.configure("position", "soft", self.position_weight)
         
         # ========================================
         # Priority 2: Orientation Task
         # 修改点：去掉 weight= 参数
         # ========================================
-        initial_rot = np.eye(3)
-        self.orientation_task = self.solver.add_orientation_task(
-            self.target_frame_name, 
-            initial_rot
-        )
-        self.orientation_task.configure("orientation", "soft", self.orientation_weight)
+        if self.use_rotation:
+            initial_rot = np.eye(3)
+            self.orientation_task = self.solver.add_orientation_task(
+                self.target_frame_name, 
+                initial_rot
+            )
+            self.orientation_task.configure("orientation", "soft", self.orientation_weight)
 
         # ========================================
         # Priority 3: Posture Task
         # 修改点：add_posture_task 通常不需要参数，或者直接传引用
         # ========================================
-        self.posture_task = self.solver.add_joints_task()
-        
-        # 为每个关节设置参考位置
-        for i, joint_name in enumerate(self.joint_names):
-            self.posture_task.set_joint(joint_name, float(self.posture_reference[i]))
+        if self.use_posture:
+            self.posture_task = self.solver.add_joints_task()
             
-        # 设置权重
-        self.posture_task.configure("posture", "soft", float(self.posture_weight))
-        logger.info(f"[Priority 3] Joints task created with weight={self.posture_weight}")
+            # 为每个关节设置参考位置
+            for i, joint_name in enumerate(self.joint_names):
+                self.posture_task.set_joint(joint_name, float(self.posture_reference[i]))
+                
+            # 设置权重
+            self.posture_task.configure("posture", "soft", float(self.posture_weight))
+            logger.info(f"[Priority 3] Joints task created with weight={self.posture_weight}")
         
         # Mask unused DOFs
         for joint_name in self.robot.joint_names():
@@ -142,7 +148,6 @@ class BeRobotKinematics:
         desired_ee_pose,
         position_weight: float = None,
         orientation_weight: float = None,
-        use_posture: bool = False,
     ):
         # 确保输入是 float64
         current_joint_rad = np.deg2rad(current_joint_pos[: len(self.joint_names)])
@@ -159,15 +164,17 @@ class BeRobotKinematics:
         desired_rot = desired_ee_pose[:3, :3]
 
         # 更新任务目标
-        pos_w = float(position_weight if position_weight is not None else self.position_weight)
-        self.position_task.target_world = desired_pos  # 改为属性赋值
-        self.position_task.weight = pos_w
+        if self.use_postion
+            pos_w = float(position_weight if position_weight is not None else self.position_weight)
+            self.position_task.target_world = desired_pos  # 改为属性赋值
+            self.position_task.weight = pos_w
+        
+        if self.use_rotation:
+            ori_w = float(orientation_weight if orientation_weight is not None else self.orientation_weight)
+            self.orientation_task.R_world_frame = desired_rot  # 改为属性赋值
+            self.orientation_task.weight = ori_w
 
-        ori_w = float(orientation_weight if orientation_weight is not None else self.orientation_weight)
-        self.orientation_task.R_world_frame = desired_rot  # 改为属性赋值
-        self.orientation_task.weight = 0.0
-
-        if use_posture:
+        if self.use_posture:
             # 更新每个关节的参考值（如果 posture_reference 发生变化）
             for i, joint_name in enumerate(self.joint_names):
                 self.posture_task.set_joint(joint_name, float(self.posture_reference[i]))
