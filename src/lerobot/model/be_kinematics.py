@@ -44,7 +44,9 @@ class BeRobotKinematics:
 
         self.target_frame_name = target_frame_name
         self.joint_names = list(self.robot.joint_names()) if joint_names is None else joint_names
-
+        
+        logger.info(f"joint_names: {self.joint_names}")
+        logger.info(f"robot joint_names: {self.robot.joint_names()}")
         self.position_weight = position_weight
         self.orientation_weight = orientation_weight
         self.posture_weight = posture_weight
