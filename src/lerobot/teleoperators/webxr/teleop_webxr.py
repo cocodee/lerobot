@@ -299,7 +299,7 @@ class WebxrTeleop(Teleoperator):
 
         logger.info(f"[XR] pos: {curr_pos}, quat: {xr_rot}")
         logger.info(f"[XR] curr_pos: {curr_pos}, prev_pos: {self.prev_pos}")
-        logger.info(f"[XR] raw_p: {raw_p}, scale: {scale}")        
+        logger.info(f"[XR] raw_p: {raw_p}, scale: {scale}")
         # 3. 计算 Delta
         # 位置增量
         delta_pos = curr_pos - self.prev_pos
@@ -309,20 +309,20 @@ class WebxrTeleop(Teleoperator):
         if use_delta_rot:
             # 旋转增量 (Global Frame Delta): Q_delta = Q_curr * Q_prev_inv
             delta_rot_raw = xr_rot * self.prev_quat.inv()
-            
+
             # 4. 旋转轴映射
             # 将 WebXR 坐标系的旋转变化映射到 Robot 坐标系
             rv = delta_rot_raw.as_rotvec()
-            
-            # 映射规则 (需要根据实际手感调整):
-            # 绕 WebXR X轴转 (点头) -> Robot Y轴 (Pitch)
-            # 绕 WebXR Y轴转 (摇头) -> Robot Z轴 (Yaw)
-            # 绕 WebXR Z轴转 (歪头) -> Robot X轴 (Roll)
+
+            # 映射规则 (根据实际手感调整):
+            # 绕 WebXR X轴转 (前后倾斜) -> Robot Z轴
+            # 绕 WebXR Y轴转 (左右倾斜) -> Robot X轴
+            # 绕 WebXR Z轴转 (水平旋转) -> Robot Y轴 (Pitch)
             # 注意方向符号
             mapped_rv = np.array([
-                -rv[2], # Robot Roll (X)  <~ WebXR -Roll (Z)
-                -rv[0], # Robot Pitch (Y) <~ WebXR -Pitch (X)
-                 rv[1]  # Robot Yaw (Z)   <~ WebXR Yaw (Y)
+                 rv[1],  # Robot X (Roll)  <~ WebXR Y
+                -rv[2],  # Robot Y (Pitch) <~ WebXR Z (水平旋转)
+                 rv[0]   # Robot Z (Yaw)   <~ WebXR X
             ])
             
             final_delta_rot = R.from_rotvec(mapped_rv)

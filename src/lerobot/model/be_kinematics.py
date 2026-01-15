@@ -25,7 +25,7 @@ class BeRobotKinematics:
         joint_names: list[str] = None,
         position_weight: float = 1.0,
         orientation_weight: float = 0.2,
-        posture_weight: float = 1e-4,
+        posture_weight: float = 1e-3,
         posture_reference: np.ndarray = None,
         velocity_limits: dict[str, float] = None,
         joint_delta_limit: float = 0.1,
