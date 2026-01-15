@@ -53,9 +53,9 @@ class BeRobotKinematics:
         self.prev_joint_pos = None
 
         if posture_reference is not None:
-            self.posture_reference = np.deg2rad(posture_reference).astype(np.float64)
+            self.posture_reference = np.deg2rad(posture_reference)
         else:
-            self.posture_reference = self._get_default_posture().astype(np.float64)
+            self.posture_reference = self._get_default_posture()
 
         # ========================================
         # Priority 0: Hard Constraints
@@ -74,7 +74,7 @@ class BeRobotKinematics:
         # 修改点：去掉 weight= 参数，改用 configure
         # ========================================
         # 确保传入的是 float64 的 3D 向量
-        initial_pos = np.zeros(3, dtype=np.float64)
+        initial_pos = np.zeros(3)
         self.position_task = self.solver.add_position_task(
             self.target_frame_name, 
             initial_pos
@@ -86,7 +86,7 @@ class BeRobotKinematics:
         # Priority 2: Orientation Task
         # 修改点：去掉 weight= 参数
         # ========================================
-        initial_rot = np.eye(3, dtype=np.float64)
+        initial_rot = np.eye(3)
         self.orientation_task = self.solver.add_orientation_task(
             self.target_frame_name, 
             initial_rot
@@ -143,7 +143,7 @@ class BeRobotKinematics:
         use_posture: bool = False,
     ):
         # 确保输入是 float64
-        current_joint_rad = np.deg2rad(current_joint_pos[: len(self.joint_names)]).astype(np.float64)
+        current_joint_rad = np.deg2rad(current_joint_pos[: len(self.joint_names)])
 
         if self.prev_joint_pos is None:
             self.prev_joint_pos = current_joint_rad.copy()
@@ -153,8 +153,8 @@ class BeRobotKinematics:
 
         self.robot.update_kinematics()
         # 确保位姿矩阵是 float64
-        desired_pos = desired_ee_pose[:3, 3].astype(np.float64)
-        desired_rot = desired_ee_pose[:3, :3].astype(np.float64)
+        desired_pos = desired_ee_pose[:3, 3]
+        desired_rot = desired_ee_pose[:3, :3]
 
         # 更新任务目标
         pos_w = float(position_weight if position_weight is not None else self.position_weight)
