@@ -298,6 +298,8 @@ class WebxrTeleop(Teleoperator):
             return self._empty_action()
 
         logger.info(f"[XR] pos: {curr_pos}, quat: {xr_rot}")
+        logger.info(f"[XR] curr_pos: {curr_pos}, prev_pos: {self.prev_pos}")
+        logger.info(f"[XR] raw_p: {raw_p}, scale: {scale}")        
         # 3. 计算 Delta
         # 位置增量
         delta_pos = curr_pos - self.prev_pos
