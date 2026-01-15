@@ -1,1 +1,2 @@
 from .jodell_gripper_hardware import JodellGripperHardware
+from .misumi_gripper_hardware import MisumiGripperHardware

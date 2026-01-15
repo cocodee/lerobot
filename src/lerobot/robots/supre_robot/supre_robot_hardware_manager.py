@@ -6,7 +6,7 @@ from typing import List, Dict, Any, Tuple
 # 导入你提供的两个硬件类
 # 假设它们在名为 eyou_hardware.py 和 gripper_hardware.py 的文件中
 from lerobot.motors.eyou import EyouMotorHardware,AsyncInterpolator
-from lerobot.motors.gripper import JodellGripperHardware
+from lerobot.motors.gripper import JodellGripperHardware,MisumiGripperHardware
 from lerobot.utils.monitor_utils import monitor_performance
 
 class SupreRobotHardwareManager:
@@ -19,6 +19,7 @@ class SupreRobotHardwareManager:
     HARDWARE_TYPE_MAP = {
         "EyouMotorHardware": EyouMotorHardware,
         "JodellGripperHardware": JodellGripperHardware,
+        "MisumiGripperHardware": MisumiGripperHardware,
     }
 
     def __init__(self, config_path: str,control_frequency:float = 30,use_interpolation:bool = False):
@@ -153,7 +154,7 @@ class SupreRobotHardwareManager:
                 self.velocities[global_index] = 0.0
                 self.forces[global_index] = result[hw_index][1]
 
-            elif isinstance(instance, JodellGripperHardware):
+            elif isinstance(instance, JodellGripperHardware) or isinstance(instance, MisumiGripperHardware):
                 # JodellGripperHardware.read() -> list[float | None]
                 pos = result[hw_index][0]
                 force = result[hw_index][1]

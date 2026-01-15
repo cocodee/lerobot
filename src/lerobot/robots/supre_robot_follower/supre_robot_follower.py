@@ -13,8 +13,6 @@ import numpy as np
 import dataclasses
 # 导入我们之前设计的硬件管理器
 from lerobot.robots.supre_robot import SupreRobotHardwareManager
-# from eyou_hardware import EyouMotorHardware  # Manager will import these
-# from gripper_hardware import JodellGripperHardware # Manager will import these
 from ..robot import Robot
 from .supre_robot_follower_config import SupreRobotFollowerConfig
 from ..utils import ensure_safe_goal_position
