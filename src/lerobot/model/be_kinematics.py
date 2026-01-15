@@ -140,7 +140,7 @@ class BeRobotKinematics:
         desired_ee_pose,
         position_weight: float = None,
         orientation_weight: float = None,
-        use_posture: bool = True,
+        use_posture: bool = False,
     ):
         # 确保输入是 float64
         current_joint_rad = np.deg2rad(current_joint_pos[: len(self.joint_names)]).astype(np.float64)
@@ -180,15 +180,18 @@ class BeRobotKinematics:
         self.robot.update_kinematics()
 
         # ... (后续 delta limit 和返回逻辑保持不变，但确保运算使用 numpy float64)
-        joint_pos_rad = []
-        for joint_name in self.joint_names:
-            joint_val = self.robot.get_joint(joint_name)
-            idx = self.joint_names.index(joint_name)
-            prev_val = self.prev_joint_pos[idx]
-            delta = joint_val - prev_val
-            delta_clamped = np.clip(delta, -self.joint_delta_limit, self.joint_delta_limit)
-            joint_pos_rad.append(prev_val + delta_clamped)
-
+        if False:
+            joint_pos_rad = []
+            for joint_name in self.joint_names:
+                joint_val = self.robot.get_joint(joint_name)
+                idx = self.joint_names.index(joint_name)
+                prev_val = self.prev_joint_pos[idx]
+                delta = joint_val - prev_val
+                delta_clamped = np.clip(delta, -self.joint_delta_limit, self.joint_delta_limit)
+                joint_pos_rad.append(prev_val + delta_clamped)
+        else:
+            joint_pos_rad = self.robot.get_joints(self.joint_names)
+            
         self.prev_joint_pos = np.array(joint_pos_rad)
         return np.rad2deg(joint_pos_rad) # 这里根据需要处理 gripper
 
