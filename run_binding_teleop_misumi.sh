@@ -8,7 +8,7 @@ CONFIG_FILE_PATH="$SCRIPT_DIR/src/lerobot/teleoperators/supre_robot_leader/trunk
 
 python ./src/lerobot/teleop_trajectory_align.py \
     --teleop.type=supre_robot_leader \
-    --robot.type=supre_robot_follower
+    --robot.type=supre_robot_follower \
     --config_path="$CONFIG_FILE_PATH"
 # 运行 Python 程序
 echo "Using config file: $CONFIG_FILE_PATH"
