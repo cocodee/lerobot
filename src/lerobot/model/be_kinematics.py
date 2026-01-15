@@ -38,7 +38,7 @@ class BeRobotKinematics:
                 "Please install it via pip or from source."
             ) from e
         self.use_posture = False
-        self.use_postion = False
+        self.use_position = True
         self.use_rotation = False
 
         self.robot = placo.RobotWrapper(urdf_path)
@@ -79,7 +79,7 @@ class BeRobotKinematics:
         # 修改点：去掉 weight= 参数，改用 configure
         # ========================================
         # 确保传入的是 float64 的 3D 向量
-        if self.use_postion:
+        if self.use_position:
             initial_pos = np.zeros(3)
             self.position_task = self.solver.add_position_task(
                 self.target_frame_name, 
@@ -164,7 +164,7 @@ class BeRobotKinematics:
         desired_rot = desired_ee_pose[:3, :3]
 
         # 更新任务目标
-        if self.use_postion
+        if self.use_position:
             pos_w = float(position_weight if position_weight is not None else self.position_weight)
             self.position_task.target_world = desired_pos  # 改为属性赋值
             self.position_task.weight = pos_w
