@@ -24,8 +24,8 @@ class BeRobotKinematics:
         target_frame_name: str = "gripper_frame_link",
         joint_names: list[str] = None,
         position_weight: float = 1.0,
-        orientation_weight: float = 0.7,
-        posture_weight: float = 0.1,
+        orientation_weight: float = 0.2,
+        posture_weight: float = 1e-4,
         posture_reference: np.ndarray = None,
         velocity_limits: dict[str, float] = None,
         joint_delta_limit: float = 0.1,
@@ -37,7 +37,7 @@ class BeRobotKinematics:
                 "placo is required for BeRobotKinematics. "
                 "Please install it via pip or from source."
             ) from e
-        self.use_posture = False
+        self.use_posture = True
         self.use_position = True
         self.use_rotation = True
 
