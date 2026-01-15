@@ -151,6 +151,7 @@ class BeRobotKinematics:
         for i, joint_name in enumerate(self.joint_names):
             self.robot.set_joint(joint_name, current_joint_rad[i])
 
+        self.robot.update_kinematics()
         # 确保位姿矩阵是 float64
         desired_pos = desired_ee_pose[:3, 3].astype(np.float64)
         desired_rot = desired_ee_pose[:3, :3].astype(np.float64)
