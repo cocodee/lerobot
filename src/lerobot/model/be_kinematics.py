@@ -37,7 +37,7 @@ class BeRobotKinematics:
                 "placo is required for BeRobotKinematics. "
                 "Please install it via pip or from source."
             ) from e
-        self.use_posture = True
+        self.use_posture = False
         self.use_position = True
         self.use_rotation = True
 
