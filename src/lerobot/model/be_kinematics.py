@@ -65,7 +65,7 @@ class BeRobotKinematics:
         # ========================================
         # Priority 0: Hard Constraints
         # ========================================
-        self.solver.enable_joint_limits(True)
+        #self.solver.enable_joint_limits(True)
         if self.velocity_limits:
             for joint_name, limit in self.velocity_limits.items():
                 if joint_name in self.joint_names:
