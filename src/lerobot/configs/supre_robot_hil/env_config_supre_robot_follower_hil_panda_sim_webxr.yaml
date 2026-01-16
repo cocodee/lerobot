@@ -50,8 +50,8 @@ wrapper:
   gripper_penalty: -0.02
   gripper_penalty_in_reward: false
   fixed_reset_joint_positions:
-    - 100.0
-    - 80.0
+    - 10.0
+    - 10.0
     - 10.0
     - 10.0
     - 10.0
