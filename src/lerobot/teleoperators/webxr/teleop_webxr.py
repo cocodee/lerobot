@@ -308,7 +308,7 @@ class WebxrTeleop(Teleoperator):
         use_delta_rot = True
         if use_delta_rot:
             # 旋转增量 (Global Frame Delta): Q_delta = Q_curr * Q_prev_inv
-            delta_rot_raw = xr_rot * self.prev_quat.inv()
+            delta_rot_raw = self.prev_quat.inv()*xr_rot 
 
             # 4. 旋转轴映射
             # 将 WebXR 坐标系的旋转变化映射到 Robot 坐标系
@@ -322,7 +322,7 @@ class WebxrTeleop(Teleoperator):
             mapped_rv = np.array([
                  rv[1],  # Robot X (Roll)  <~ WebXR Z (水平旋转)
                 -rv[0], # Robot Y (Pitch) <~ WebXR Y (左右倾斜)
-                -rv[2], # Robot Z (Yaw)   <~ WebXR X
+                rv[2], # Robot Z (Yaw)   <~ WebXR X
             ])
             
             final_delta_rot = R.from_rotvec(mapped_rv)
