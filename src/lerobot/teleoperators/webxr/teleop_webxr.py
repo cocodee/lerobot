@@ -376,7 +376,6 @@ class WebxrTeleop(Teleoperator):
         # p_robot = T * p_xr
         pos_robot_frame = T_xr_to_robot @ raw_p * scale
 
-        #pos_robot_frame[0] = -pos_robot_frame[0]
         # C. 旋转映射 (绝对旋转转换)
         # 1. 构造 WebXR 旋转对象
         r_xr = R.from_quat(raw_q)

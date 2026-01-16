@@ -39,7 +39,7 @@ class BeRobotKinematics:
             ) from e
         self.use_posture = False
         self.use_position = True
-        self.use_rotation = False
+        self.use_rotation = True
 
         self.robot = placo.RobotWrapper(urdf_path)
         self.solver = placo.KinematicsSolver(self.robot)
