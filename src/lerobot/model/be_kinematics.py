@@ -24,7 +24,7 @@ class BeRobotKinematics:
         target_frame_name: str = "gripper_frame_link",
         joint_names: list[str] = None,
         position_weight: float = 1.0,
-        orientation_weight: float = 0.2,
+        orientation_weight: float = 0.1,
         posture_weight: float = 1e-3,
         posture_reference: np.ndarray = None,
         velocity_limits: dict[str, float] = None,
