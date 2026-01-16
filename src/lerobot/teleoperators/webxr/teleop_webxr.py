@@ -251,7 +251,7 @@ class WebxrTeleop(Teleoperator):
             "gripper": float(gripper_state)
         }
 
-    def get_action_sim_robot_panda(self) -> dict[str, Any]:
+    def get_action_sim_robot_panda_obsolete(self) -> dict[str, Any]:
         """
         计算上一帧到当前帧的 Delta，并进行坐标系转换。
         """
@@ -268,21 +268,8 @@ class WebxrTeleop(Teleoperator):
         gripper_state = self.latest_data.get('g', 1.0)
 
         # 2. 坐标系映射与缩放 (WebXR -> Robot)
-        # 假设 Robot: Z-Up, X Forward, Y Left
-        # 映射逻辑:
-        #   WebXR -Z (前) -> Robot X (前)
-        #   WebXR -X (左) -> Robot Y (左)  (注意：WebXR X是右，所以取反)
-        #   WebXR  Y (上) -> Robot Z (上)
-        # 红色=X轴(-Right), 绿色=Y轴(UP), 蓝色=Z轴(Forward)基座标系
-        # (WebXR 坐标系: Y Up, Z -Forward, X Right)
         scale = self.config.pos_scale
         
-        #curr_pos = np.array([
-        #    -raw_p[2] * scale, # Robot X
-        #    -raw_p[0] * scale, # Robot Y
-        #     raw_p[1] * scale  # Robot Z
-        #])
-
         curr_pos = np.array([
              raw_p[1] * scale,# Robot X
              -raw_p[2] * scale,# Robot Y
@@ -311,18 +298,13 @@ class WebxrTeleop(Teleoperator):
             delta_rot_raw = self.prev_quat.inv()*xr_rot 
 
             # 4. 旋转轴映射
-            # 将 WebXR 坐标系的旋转变化映射到 Robot 坐标系
             rv = delta_rot_raw.as_rotvec()
 
             # 映射规则 (根据实际手感调整):
-            # 绕 WebXR X轴转 (前后倾斜) -> Robot Z轴
-            # 绕 WebXR Y轴转 (左右倾斜) -> Robot Y轴 (Pitch)
-            # 绕 WebXR Z轴转 (水平旋转) -> Robot X轴 (Roll)
-            # 注意方向符号
             mapped_rv = np.array([
-                 rv[2],  # Robot X (Roll)  <~ WebXR Z (水平旋转)
-                -rv[0], # Robot Y (Pitch) <~ WebXR Y (左右倾斜)
-                rv[1], # Robot Z (Yaw)   <~ WebXR X
+                 rv[2], 
+                -rv[0], 
+                rv[1],
             ])
             
             final_delta_rot = R.from_rotvec(mapped_rv)
@@ -365,6 +347,87 @@ class WebxrTeleop(Teleoperator):
             "gripper": float(gripper_state)
         }
 
+    def get_action_sim_robot_panda(self) -> dict[str, Any]:
+        if not self.is_connected or self.latest_data is None:
+            return self._empty_action()
+
+        # 1. 提取原始数据 (WebXR: Y-Up, -Z Forward, X Right)
+        raw_p = np.array(self.latest_data.get('p', [0, 0, 0]))
+        raw_q = self.latest_data.get('q', [0, 0, 0, 1]) # [x, y, z, w]
+        gripper_state = self.latest_data.get('g', 1.0)
+        
+        scale = self.config.pos_scale
+
+        # ==========================================
+        # 修正部分：使用矩阵变换而非手动置换
+        # ==========================================
+
+        # A. 定义坐标系转换矩阵 (WebXR -> Robot Base)
+        # 假设机器人基座：X前, Y左, Z上
+        # WebXR: -Z前, -X左, Y上
+        # 这种矩阵把 WebXR 的 vector 转换到 Robot Base 坐标系下
+        T_xr_to_robot = np.array([
+            [ 0,  0, -1], # Robot X 来自 -WebXR Z
+            [-1,  0,  0], # Robot Y 来自 -WebXR X
+            [ 0,  1,  0]  # Robot Z 来自  WebXR Y
+        ])
+
+        # B. 位置映射 (绝对位置转换)
+        # p_robot = T * p_xr
+        pos_robot_frame = T_xr_to_robot @ raw_p * scale
+
+        # C. 旋转映射 (绝对旋转转换)
+        # 1. 构造 WebXR 旋转对象
+        r_xr = R.from_quat(raw_q)
+        
+        # 2. 转换到 Robot Base 坐标系: R_robot_base = T_base_xr * R_xr * R_offset
+        # T_base_xr: 坐标系变换 (上面定义的矩阵)
+        r_base_transform = R.from_matrix(T_xr_to_robot)
+
+        # 3. 手柄与末端执行器的初始对齐 (Grip Offset)
+        # WebXR手柄通常 -Z 是指向，Panda Gripper 通常 +Z 是指向。
+        # 需要绕 X 轴转 180 度 (或者根据实际手柄模型调整)
+        r_grip_offset = R.from_euler('x', 180, degrees=True) 
+
+        # 组合旋转：先应用手柄偏移，这是相对于手柄自身的(右乘)；
+        # 再应用坐标系变换，这是相对于世界的(左乘)。
+        r_curr_robot = r_base_transform * r_xr * r_grip_offset
+
+        # ==========================================
+        # 计算 Delta
+        # ==========================================
+        
+        if self.prev_pos is None:
+            self.prev_pos = pos_robot_frame
+            self.prev_rot = r_curr_robot
+            return self._empty_action()
+
+        # 1. 位置 Delta (在 Robot Base 坐标系下)
+        delta_pos = pos_robot_frame - self.prev_pos
+
+        # 2. 旋转 Delta
+        # 机器人控制器通常需要 Base 坐标系下的角速度/增量
+        # Delta = R_curr * R_prev_inv 
+        # (这样得到的 delta_rot 是相对于 Base 坐标系的旋转，可以直接加在当前 pose 上)
+        delta_rot = r_curr_robot * self.prev_rot.inv()
+        delta_quat = delta_rot.as_quat() # [x,y,z,w]
+
+        # 更新状态
+        self.prev_pos = pos_robot_frame
+        self.prev_rot = r_curr_robot
+
+        return {
+            "delta_x": float(delta_pos[0]),
+            "delta_y": float(delta_pos[1]),
+            "delta_z": float(delta_pos[2]),
+            # 注意：如果你的 controller 接收的是 axis-angle，可以用 delta_rot.as_rotvec()
+            # 这里保持 quat 接口
+            "delta_qx": float(delta_quat[0]),
+            "delta_qy": float(delta_quat[1]),
+            "delta_qz": float(delta_quat[2]),
+            "delta_qw": float(delta_quat[3]),
+            "gripper": float(gripper_state)
+        }
     def _empty_action(self):
         #return {
         #    "delta_x": 0.0, "delta_y": 0.0, "delta_z": 0.0,
