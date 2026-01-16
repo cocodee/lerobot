@@ -367,7 +367,7 @@ class WebxrTeleop(Teleoperator):
         # WebXR: -Z前, -X左, Y上
         # 这种矩阵把 WebXR 的 vector 转换到 Robot Base 坐标系下
         T_xr_to_robot = np.array([
-            [ 0,  1, 0], # Robot X 来自 WebXR Y
+            [ 0,  -1, 0], # Robot X 来自 WebXR Y
             [0,  0,  1], # Robot Y 来自 -WebXR X
             [ -1,  0,  0]  # Robot Z 来自  WebXR Y
         ])
