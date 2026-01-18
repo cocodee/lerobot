@@ -387,12 +387,12 @@ class WebxrTeleop(Teleoperator):
         # 3. 手柄与末端执行器的初始对齐 (Grip Offset)
         # WebXR手柄通常 -Z 是指向，Panda Gripper 通常 +Z 是指向。
         # 需要绕 X 轴转 180 度 (或者根据实际手柄模型调整)
-        r_grip_offset = R.from_euler('x', 180, degrees=True) 
+        #r_grip_offset = R.from_euler('x', 180, degrees=True) 
 
         # 组合旋转：先应用手柄偏移，这是相对于手柄自身的(右乘)；
         # 再应用坐标系变换，这是相对于世界的(左乘)。
-        r_curr_robot = r_base_transform * r_xr * r_grip_offset
-
+        #r_curr_robot = r_base_transform * r_xr * r_grip_offset
+        r_curr_robot = r_base_transform * r_xr 
         # ==========================================
         # 计算 Delta
         # ==========================================
