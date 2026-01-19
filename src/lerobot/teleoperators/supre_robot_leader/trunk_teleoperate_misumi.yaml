@@ -120,5 +120,5 @@ robot:
       min_position: -45.0
       max_position: 45.0
     - joint_name: "trunk_joint_2"
-      min_position: -45.0
-      max_position: 0.0
+      min_position: 0.0
+      max_position: 45.0
