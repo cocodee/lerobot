@@ -41,10 +41,10 @@ hardware_interfaces:
         - { name: right_arm_joint_4, parameters: { node_id: 14 } }
         - { name: right_arm_joint_5, parameters: { node_id: 15 } }
         - { name: right_arm_joint_6, parameters: { node_id: 16 } }
-        - { name: trunk_joint_1, parameters: { node_id: 2 } }
-        - { name: trunk_joint_2, parameters: { node_id: 1 } }
+        - { name: trunk_joint_1, parameters: { node_id: 1 } }
+        - { name: trunk_joint_2, parameters: { node_id: 2 } }
   # 左臂夹爪控制器
-  - name: right_gripper
+  - name: left_gripper
     type: MisumiGripperHardware
     interpolation:
       interpolation_n: 1   
@@ -54,11 +54,11 @@ hardware_interfaces:
       default_speed_percent: 100
       default_torque_percent: 100      
       joints:
-        - name: right_arm_joint_7
+        - name: left_arm_joint_7
           parameters: { slave_id: 27 }
 
   # 右臂夹爪控制器
-  - name: left_gripper
+  - name: right_gripper
     type: MisumiGripperHardware
     interpolation:
       interpolation_n: 1   
@@ -68,5 +68,5 @@ hardware_interfaces:
       default_speed_percent: 100
       default_torque_percent: 100
       joints:
-        - name: left_arm_joint_7
+        - name: right_arm_joint_7
           parameters: { slave_id: 17 }
