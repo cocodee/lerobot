@@ -55,7 +55,7 @@ hardware_interfaces:
       default_torque_percent: 100      
       joints:
         - name: right_arm_joint_7
-          parameters: { slave_id: 17 }
+          parameters: { slave_id: 27 }
 
   # 右臂夹爪控制器
   - name: left_gripper
@@ -69,4 +69,4 @@ hardware_interfaces:
       default_torque_percent: 100
       joints:
         - name: left_arm_joint_7
-          parameters: { slave_id: 27 }
+          parameters: { slave_id: 17 }
