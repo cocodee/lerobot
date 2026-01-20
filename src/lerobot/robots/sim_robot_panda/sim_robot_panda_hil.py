@@ -13,6 +13,7 @@ from lerobot.errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
 from lerobot.model.be_kinematics import BeRobotKinematics
 from ..sim_robot.config_sim_robot import SimRobotPandaHilConfig
 from .sim_robot_panda import SimRobotPanda  # 确保这里导入的是 MuJoCo 版本的 SimRobot
+from .webxr_intent_translator import WebXRIntentTranslator
 
 import traceback
 
@@ -50,6 +51,14 @@ class SimRobotPandaHil(SimRobotPanda):
         self.end_effector_bounds = self.config.end_effector_bounds
         self.current_ee_pos = None
         self.current_joint_pos = None
+
+        # 3. 初始化 WebXR 意图翻译器 
+        matrix = np.array([
+            [1, 0,  0],
+            [0, 0, -1],
+            [0, 1,  0]
+        ])
+        self.webxr_translator = WebXRIntentTranslator(xr_to_robot_matrix=matrix)
         
         # 2. 定义仿真器中的关节名称 (对应 MuJoCo XML)
         # MuJoCo Menagerie 的 panda.xml 通常使用 joint1...joint7
@@ -76,6 +85,7 @@ class SimRobotPandaHil(SimRobotPanda):
     def send_action(self, action: dict[str, Any]) -> dict[str, Any]:
         """
         接收末端执行器 (EE) 的 Delta 动作，通过 IK 转换为关节角度，发送给 MuJoCo 仿真器。
+        或者接收 WebXR 原始数据，使用 WebXRIntentTranslator 转换为目标 EE 位姿。
         """
         if not self.is_connected:
             raise DeviceNotConnectedError(f"{self} is not connected.")
@@ -99,54 +109,23 @@ class SimRobotPandaHil(SimRobotPanda):
             traceback.print_exc()
             return {}
 
-        # --- 3. 解析 Action (Delta EE) ---
-        delta_quat = None
-        delta_ee = np.zeros(3)
-        gripper_val = 1.0
+        # --- 3. 解析 Action ---
+        # 检查是否为 WebXR 格式 (包含 p, q, g, m, type)
+        if isinstance(action, dict) and action.get("type") == "webxr":
+            # 使用 WebXRIntentTranslator 计算目标 EE 位姿
+            desired_ee_pos = self.webxr_translator.update(
+                frame=action,
+                T_current=self.current_ee_pos
+            )
 
-        if isinstance(action, dict):
-            if all(k in action for k in ["delta_x", "delta_y", "delta_z"]):
-                delta_ee = np.array([
-                    action["delta_x"] * self.config.end_effector_step_sizes["x"],
-                    action["delta_y"] * self.config.end_effector_step_sizes["y"],
-                    action["delta_z"] * self.config.end_effector_step_sizes["z"],
-                ], dtype=np.float32)
+            # 如果翻译器返回 None (IDLE 模式或无有效转换)，保持当前位置
+            if desired_ee_pos is None:
+                desired_ee_pos = self.current_ee_pos.copy()
 
-                # 提取四元数 (x, y, z, w)
-                if "delta_qw" in action:
-                    delta_quat = np.array([
-                        action["delta_qx"], action["delta_qy"],
-                        action["delta_qz"], action["delta_qw"]
-                    ], dtype=np.float32)
+            # 获取夹爪值
+            gripper_val = float(action.get("g", 1.0))
 
-                if "gripper" in action:
-                    gripper_val = action["gripper"]
-            else:
-                logger.warning(f"Invalid action keys: {list(action.keys())}")
-                return {}
-
-        logger.info(f"send_action Action: {action},delta_ee: {delta_ee}")
-
-        # --- 4. 计算目标 EE 位姿 ---
-        desired_ee_pos = np.eye(4)
-
-        # 旋转计算 (使用 Scipy 替代 PyBullet)
-        current_rot_mat = self.current_ee_pos[:3, :3]
-        
-        if delta_quat is not None:
-            # Scipy Rotation 输入顺序是 (x, y, z, w)
-            r_delta = R.from_quat(delta_quat)
-            delta_rot_mat = r_delta.as_matrix()
-            
-            # R_new = R_delta * R_curr (或者根据控制逻辑 R_curr * R_delta)
-            # 这里沿用 SimRobotHil 逻辑：左乘 delta
-            new_rot_mat = delta_rot_mat @ current_rot_mat
-            desired_ee_pos[:3, :3] = new_rot_mat
-        else:
-            desired_ee_pos[:3, :3] = current_rot_mat
-
-        # 位置计算
-        desired_ee_pos[:3, 3] = self.current_ee_pos[:3, 3] + delta_ee
+            logger.info(f"send_action WebXR mode: {action.get('m', 'IDLE')}, desired_ee_pos: {desired_ee_pos}")
 
         # 边界截断
         if self.end_effector_bounds is not None:
@@ -200,7 +179,6 @@ class SimRobotPandaHil(SimRobotPanda):
 
         # 发送给父类 (SimRobot) 执行底层 step
         return super().send_action(joint_action)
-
     def get_joint_names(self) -> List[str]:
         """返回 URDF 中定义的关节名称"""
         return ["left_arm_joint_1",
