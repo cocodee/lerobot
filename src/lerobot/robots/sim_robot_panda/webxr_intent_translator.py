@@ -111,8 +111,13 @@ class WebXRIntentTranslator:
             # 那么结果就是绕 Robot Z 轴转。
             delta_rot_robot = self.R_align * delta_rot_xr * self.R_align_inv
 
+            R_map = R.from_euler("x", -90, degrees=True)
+
+            # 映射到机器人 EE frame
+            R_delta_robot = R_map * delta_rot_robot * R_map.inv()
+
             # 3. 应用于机械臂锚点姿态
-            target_rot = delta_rot_robot * self.anchor_rot
+            target_rot = R_delta_robot * self.anchor_rot
 
             T = np.eye(4)
             T[:3, :3] = target_rot.as_matrix()
