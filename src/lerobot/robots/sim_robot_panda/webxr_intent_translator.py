@@ -101,23 +101,13 @@ class WebXRIntentTranslator:
         if mode == "ROTATE":
             xr_rot = R.from_quat(frame["q"])
             
-            # 1. 计算 WebXR 下的相对旋转 (Delta)
-            # 这里的乘法顺序取决于你的定义，通常是 Global Frame 下的差值
-            delta_rot_xr = xr_rot * self.anchor_xr_rot.inv()
+            delta_rot_xr =  self.anchor_xr_rot.inv()*xr_rot 
 
-            # 2. 【关键】将旋转增量变换到 机械臂系 (Basis Change)
-            # 公式: R_new = M * R_old * M_inv
-            # 这一步保证了：如果你绕 WebXR 的 Y 轴转，且 WebXR Y 对应 Robot Z，
-            # 那么结果就是绕 Robot Z 轴转。
+
             delta_rot_robot = self.R_align * delta_rot_xr * self.R_align_inv
 
-            R_map = R.from_euler("x", -90, degrees=True)
-
-            # 映射到机器人 EE frame
-            R_delta_robot = R_map * delta_rot_robot * R_map.inv()
-
             # 3. 应用于机械臂锚点姿态
-            target_rot = R_delta_robot * self.anchor_rot
+            target_rot = self.anchor_rot*delta_rot_robot
 
             T = np.eye(4)
             T[:3, :3] = target_rot.as_matrix()
