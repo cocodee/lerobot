@@ -128,6 +128,56 @@ class SimRobotPandaHil(SimRobotPanda):
 
             logger.info(f"send_action WebXR mode: {action.get('m', 'IDLE')}, desired_ee_pos: {desired_ee_pos}")
 
+        else:
+            # --- 传统的 Delta EE 动作处理 ---
+            delta_quat = None
+            delta_ee = np.zeros(3)
+            gripper_val = 1.0
+
+            if isinstance(action, dict):
+                if all(k in action for k in ["delta_x", "delta_y", "delta_z"]):
+                    delta_ee = np.array([
+                        action["delta_x"] * self.config.end_effector_step_sizes["x"],
+                        action["delta_y"] * self.config.end_effector_step_sizes["y"],
+                        action["delta_z"] * self.config.end_effector_step_sizes["z"],
+                    ], dtype=np.float32)
+
+                    # 提取四元数 (x, y, z, w)
+                    if "delta_qw" in action:
+                        delta_quat = np.array([
+                            action["delta_qx"], action["delta_qy"],
+                            action["delta_qz"], action["delta_qw"]
+                        ], dtype=np.float32)
+
+                    if "gripper" in action:
+                        gripper_val = action["gripper"]
+                else:
+                    logger.warning(f"Invalid action keys: {list(action.keys())}, keeping current position")
+                    desired_ee_pos = self.current_ee_pos.copy()
+
+            logger.info(f"send_action Action: {action}, delta_ee: {delta_ee}")
+
+            # --- 4. 计算目标 EE 位姿 ---
+            desired_ee_pos = np.eye(4)
+
+            # 旋转计算 (使用 Scipy 替代 PyBullet)
+            current_rot_mat = self.current_ee_pos[:3, :3]
+
+            if delta_quat is not None:
+                # Scipy Rotation 输入顺序是 (x, y, z, w)
+                r_delta = R.from_quat(delta_quat)
+                delta_rot_mat = r_delta.as_matrix()
+
+                # R_new = R_delta * R_curr (或者根据控制逻辑 R_curr * R_delta)
+                # 这里沿用 SimRobotHil 逻辑：左乘 delta
+                new_rot_mat = delta_rot_mat @ current_rot_mat
+                desired_ee_pos[:3, :3] = new_rot_mat
+            else:
+                desired_ee_pos[:3, :3] = current_rot_mat
+
+            # 位置计算
+            desired_ee_pos[:3, 3] = self.current_ee_pos[:3, 3] + delta_ee
+
         # 边界截断
         if self.end_effector_bounds is not None:
             desired_ee_pos[:3, 3] = np.clip(
