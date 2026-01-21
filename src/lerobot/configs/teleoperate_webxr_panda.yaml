@@ -37,8 +37,6 @@ robot:
 # Teleoperator (WebXR) Configuration
 # ===============================================
 teleop:
-  type: webxr
-
   # Zenoh connection endpoint
   # Format: "tcp/<ip>:<port>" or "ws/<url>"
   zenoh_connect_key: "tcp/47.116.8.214:7447"
