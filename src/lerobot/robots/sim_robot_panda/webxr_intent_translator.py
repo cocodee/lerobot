@@ -123,7 +123,7 @@ class WebXRIntentTranslator:
             # 3. 应用于机械臂锚点姿态
             # 因为是全局旋转（相对于基座），所以要【左乘 / Pre-multiply】
             # target = delta_global * anchor
-            target_rot = delta_rot_robot_global * self.anchor_rot
+            target_rot = delta_rot_robot_fix * self.anchor_rot
 
             T = np.eye(4)
             T[:3, :3] = target_rot.as_matrix()
