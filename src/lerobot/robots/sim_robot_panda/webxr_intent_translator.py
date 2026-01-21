@@ -112,20 +112,14 @@ class WebXRIntentTranslator:
         if mode == "ROTATE":
             xr_rot = R.from_quat(frame["q"])
 
-            # 1. 计算 XR 坐标系下的【全局】旋转差值
-            # 公式：R_diff = R_current * R_anchor_inv
-            # 物理含义：这是相对于 XR 世界坐标系的旋转量
-            delta_rot_xr_global = xr_rot * self.anchor_xr_rot.inv()
+            delta_rot_xr_local = self.anchor_xr_rot.inv() * xr_rot
 
-            # 2. 将此全局旋转差值变换到 机械臂基座坐标系
-            # 公式：R_diff_robot = R_align * R_diff_xr * R_align_inv
-            delta_rot_robot_global = self.R_align * delta_rot_xr_global * self.R_align_inv
+            # 2. 应用轴重映射 (R_fix * Delta * R_fix_inv)
+            # 这会修正 手机轴 到 机械臂末端轴 的对应关系
+            delta_rot_robot_local = self.R_fix * delta_rot_xr_local * self.R_fix_inv
 
-            delta_rot_robot_fix = self.R_fix * delta_rot_xr_global * self.R_fix_inv
-            # 3. 应用于机械臂锚点姿态
-            # 因为是全局旋转（相对于基座），所以要【左乘 / Pre-multiply】
-            # target = delta_global * anchor
-            target_rot = delta_rot_robot_fix * self.anchor_rot
+            # 3. 应用于机械臂锚点 (Anchor * Delta) -> 右乘/局部叠加
+            target_rot = self.anchor_rot * delta_rot_robot_local
 
             T = np.eye(4)
             T[:3, :3] = target_rot.as_matrix()
