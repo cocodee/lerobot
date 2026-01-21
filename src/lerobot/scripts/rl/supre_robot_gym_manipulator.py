@@ -73,6 +73,12 @@ logging.basicConfig(level=logging.INFO)
 
 logger = logging.getLogger(__name__)
 
+
+ACTION_TYPE_ABS = "ABS_EE"
+ACTION_TYPE_TWIST = "TWIST_EE"
+ACTION_TYPE_DELTA = "DELTA_EE"
+ACTION_TYPE = ACTION_TYPE_ABS
+
 def get_present_position(robot_arm):
     #leader and follower
     return robot_arm.get_present_position()
@@ -400,12 +406,18 @@ class RobotEnv(gym.Env):
                 - truncated (bool): True if the episode was truncated (e.g., time constraints).
                 - info (dict): Additional debugging information including intervention status.
         """
-        action_dict = {"delta_x": action[0], "delta_y": action[1], "delta_z": action[2],
+        if ACTION_TYPE == ACTION_TYPE_DELTA:
+            action_dict = {"delta_x": action[0], "delta_y": action[1], "delta_z": action[2],
                        "delta_qx":action[3], "delta_qy":action[4], "delta_qz":action[5], "delta_qw":action[6]}
-
-        # 1.0 action corresponds to no-op action
-        action_dict["gripper"] = action[7] if self.use_gripper else 1.0
-
+            # 1.0 action corresponds to no-op action
+            action_dict["gripper"] = action[7] if self.use_gripper else 1.0
+        elif ACTION_TYPE == ACTION_TYPE_ABS:
+            action_dict = {"x": action[0], "y": action[1], "z": action[2],
+                       "qx":action[3], "qy":action[4], "qz":action[5], "qw":action[6]}
+            action_dict["gripper"] = action[7] if self.use_gripper else 1.0
+            action_dict["mode"] = "IDLE"
+            action_dict["type"] = "webxr"
+            
         self.robot.send_action(action_dict)
 
         self._get_observation()
@@ -1990,16 +2002,23 @@ class WebxrControlWrapper(gym.Wrapper):
         logger.info(f"Action dict: {action_dict}")
         # Convert action_dict to numpy array based on expected structure
         # Order: delta_x, delta_y, delta_z, gripper (if use_gripper)
-        action_list = [action_dict["delta_x"], action_dict["delta_y"], action_dict["delta_z"],
-                       action_dict["delta_qx"],action_dict["delta_qy"],action_dict["delta_qz"],action_dict["delta_qw"]]
-        if self.use_gripper:
-            # GamepadTeleop returns gripper action as 0 (close), 1 (stay), 2 (open)
-            # This needs to be consistent with what EEActionWrapper expects if it's used downstream
-            # EEActionWrapper for gripper typically expects 0.0 (closed) to 2.0 (open)
-            # For now, we pass the direct value from GamepadTeleop, ensure downstream compatibility.
-            gripper_val = action_dict.get("gripper", 1.0)  # Default to 1.0 (stay) if not present
-            action_list.append(float(gripper_val))
-
+        if ACTION_TYPE == ACTION_TYPE_DELTA:
+            action_list = [action_dict["delta_x"], action_dict["delta_y"], action_dict["delta_z"],
+                           action_dict["delta_qx"],action_dict["delta_qy"],action_dict["delta_qz"],action_dict["delta_qw"]]
+            if self.use_gripper:
+                # GamepadTeleop returns gripper action as 0 (close), 1 (stay), 2 (open)
+                # This needs to be consistent with what EEActionWrapper expects if it's used downstream
+                # EEActionWrapper for gripper typically expects 0.0 (closed) to 2.0 (open)
+                # For now, we pass the direct value from GamepadTeleop, ensure downstream compatibility.
+                gripper_val = action_dict.get("gripper", 1.0)  # Default to 1.0 (stay) if not present
+                action_list.append(float(gripper_val))
+        else:
+            action_list = [action_dict["x"], action_dict["y"], action_dict["z"],
+                           action_dict["qx"],action_dict["qy"],action_dict["qz"],action_dict["qw"]]
+            if self.use_gripper:
+                gripper_val = action_dict.get("gripper", 1.0)  # Default to 1.0 (stay) if not present
+                action_list.append(float(gripper_val))
+                
         gamepad_action_np = np.array(action_list, dtype=np.float32)
 
         return (

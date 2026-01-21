@@ -60,13 +60,17 @@ class WebxrTeleop(Teleoperator):
             return {
                 "dtype": "float32",
                 "shape": (4,),
-                "names": {"delta_x": 0, "delta_y": 1, "delta_z": 2, "gripper": 3},
+                "names": {"x": 0, "y": 1, "z": 2, 
+                          "qx": 3, "qy": 4, "qz": 5, "qw": 6,
+                          "gripper": 7},
             }
         else:
             return {
                 "dtype": "float32",
                 "shape": (3,),
-                "names": {"delta_x": 0, "delta_y": 1, "delta_z": 2},
+                "names": {"x": 0, "y": 1, "z": 2, 
+                          "qx": 3, "qy": 4, "qz": 5, "qw": 6
+                        }
             }
 
     def send_feedback(self, feedback: dict[str, Any]) -> None:
@@ -133,14 +137,30 @@ class WebxrTeleop(Teleoperator):
 
     def get_action(self) -> dict[str, Any]:
         if self.latest_data is None:
+            # 对应空数据时的默认返回值
+            # 注意：四元数默认值通常是 [0, 0, 0, 1] (Identity)
             return self._empty_action()
         else:
+            # 获取原始列表数据
+            p = self.latest_data["p"]  # 预期是 [x, y, z]
+            q = self.latest_data["q"]  # 预期是 [x, y, z, w]
+            
             return {
-                    "p": np.array(self.latest_data["p"], dtype=float),
-                    "q": np.array(self.latest_data["q"], dtype=float),
-                    "g": float(self.latest_data.get("g", 0.0)),
-                    "m": self.latest_data.get("m", "IDLE"),
-                    "type": "webxr"
+                # 展开 Position (p)
+                "x": float(p[0]),
+                "y": float(p[1]),
+                "z": float(p[2]),
+                
+                # 展开 Rotation (q) - 假设顺序对应输入顺序
+                "qx": float(q[0]),
+                "qy": float(q[1]),
+                "qz": float(q[2]),
+                "qw": float(q[3]),
+                
+                # 其他字段
+                "gripper": float(self.latest_data.get("g", 0.0)),
+                "mode": self.latest_data.get("m", "IDLE"),
+                "type": "webxr"
             }
     def _empty_action(self):
         #return {
@@ -148,10 +168,12 @@ class WebxrTeleop(Teleoperator):
         #    "delta_qx": 0.0, "delta_qy": 0.0, "delta_qz": 0.0, "delta_qw": 1.0, # Identity Quat
         #    "gripper": 1.0
         #}
-        return {
-            "delta_x": 0.0, "delta_y": 0.0, "delta_z": 0.0,
-            "delta_qx": 0.0, "delta_qy": 0.0, "delta_qz": 0.0, "delta_qw": 1.0, # Identity Quat
-            "gripper": 0.0
+        return  {
+            "x": 0.0, "y": 0.0, "z": 0.0,
+            "qx": 0.0, "qy": 0.0, "qz": 0.0, "qw": 1.0,
+            "gripper": 0.0,
+            "mode": "IDLE",
+            "type": "webxr"
         }
 
     def disconnect(self) -> None:
