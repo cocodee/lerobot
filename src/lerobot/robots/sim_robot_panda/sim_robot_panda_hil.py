@@ -64,7 +64,7 @@ class SimRobotPandaHil(SimRobotPanda):
         ##    [0, 0, -1],
         ##    [0, 1,  0]
         ##])
-        self.webxr_translator = WebXRIntentTranslator(xr_to_robot_matrix=matrix,axis_map_rotation=R.from_euler('zyx', [0, 0, 90], degrees=True))
+        self.webxr_translator = WebXRIntentTranslator(xr_to_robot_matrix=matrix,axis_map_rotation=R.from_euler('zyx', [0, 0, 0], degrees=True))
         
         # 2. 定义仿真器中的关节名称 (对应 MuJoCo XML)
         # MuJoCo Menagerie 的 panda.xml 通常使用 joint1...joint7
