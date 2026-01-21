@@ -54,10 +54,15 @@ class SimRobotPandaHil(SimRobotPanda):
 
         # 3. 初始化 WebXR 意图翻译器 
         matrix = np.array([
-            [1, 0,  0],
-            [0, 0, -1],
-            [0, 1,  0]
+            [ 0,  1, 0], # Robot X 来自 WebXR Y
+            [0,  0,  -1], # Robot Y 来自 -WebXR X
+            [ -1,  0,  0]  # Robot Z 来自  WebXR Y
         ])
+        ##matrix = np.array([
+        ##    [1, 0,  0],
+        ##    [0, 0, -1],
+        ##    [0, 1,  0]
+        ##])
         self.webxr_translator = WebXRIntentTranslator(xr_to_robot_matrix=matrix)
         
         # 2. 定义仿真器中的关节名称 (对应 MuJoCo XML)
