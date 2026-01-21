@@ -110,6 +110,7 @@ class SimRobotPandaHil(SimRobotPanda):
             return {}
 
         # --- 3. 解析 Action ---
+        logger.info(f"send_action: {action}")
         # 检查是否为 WebXR 格式 (包含 p, q, g, m, type)
         if isinstance(action, dict) and action.get("type") == "webxr":
             # 使用 WebXRIntentTranslator 计算目标 EE 位姿
