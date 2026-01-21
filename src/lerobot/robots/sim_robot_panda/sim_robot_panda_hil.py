@@ -65,9 +65,9 @@ class SimRobotPandaHil(SimRobotPanda):
         ##    [0, 1,  0]
         ##])
         mapping_matrix = np.array([
-            [0, 0, 1],  # Row 0
+            [0, 1, 0],  # Row 0
             [1, 0, 0],  # Row 1
-            [0, 1, 0]   # Row 2
+            [0, 0, 1]   # Row 2
         ])
 
         # 确保这是一个合法的旋转矩阵（行列式为1）
