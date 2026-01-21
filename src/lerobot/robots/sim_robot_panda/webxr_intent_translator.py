@@ -79,7 +79,7 @@ class WebXRIntentTranslator:
         # -----------------------------
         # POSITION mode
         # -----------------------------
-        if mode == "TRANSLATE:
+        if mode == "TRANSLATE":
             # 1. 计算 WebXR 下的位移增量
             delta_xr = frame["p"] - self.anchor_xr_pos
             
