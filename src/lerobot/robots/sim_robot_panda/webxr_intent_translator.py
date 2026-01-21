@@ -64,7 +64,7 @@ class WebXRIntentTranslator:
         # Mode transition → set anchor
         # -----------------------------
         if mode != self.last_mode:
-            if mode in ("POSITION", "ROTATE"):
+            if mode in ("TRANSLATE", "ROTATE"):
                 self.anchor_pos = T_current[:3, 3].copy()
                 self.anchor_rot = R.from_matrix(T_current[:3, :3])
 
@@ -79,7 +79,7 @@ class WebXRIntentTranslator:
         # -----------------------------
         # POSITION mode
         # -----------------------------
-        if mode == "POSITION":
+        if mode == "TRANSLATE:
             # 1. 计算 WebXR 下的位移增量
             delta_xr = frame["p"] - self.anchor_xr_pos
             
