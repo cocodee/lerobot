@@ -73,7 +73,6 @@ class WebXRIntentTranslator:
         # Mode transition → set anchor
         # -----------------------------
         if mode != self.last_mode:
-            if mode in ("TRANSLATE", "ROTATE"):
                 self.anchor_pos = T_current[:3, 3].copy()
                 self.anchor_rot = R.from_matrix(T_current[:3, :3])
 
