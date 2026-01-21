@@ -29,8 +29,36 @@ class WebXRIntentTranslator:
         # 缓存逆矩阵，用于旋转计算优化
         self.R_align_inv = self.R_align.inv()
 
+    def _normalize_frame(self, frame):
+        """
+        将两种格式的 frame 标准化为内部使用的格式。
+        支持的格式：
+        1. 新格式：x, y, z, qx, qy, qz, qw, mode, type
+        2. 旧格式：p, q, m, type (保持兼容性)
+        """
+        # 检查是否为新格式（包含 x, y, z 单独字段）
+        if "x" in frame and "y" in frame and "z" in frame:
+            # 新格式：转换为内部使用的 p 和 q 数组格式
+            normalized = {
+                "p": np.array([frame["x"], frame["y"], frame["z"]]),
+                "q": np.array([frame["qx"], frame["qy"], frame["qz"], frame["qw"]]),
+                "mode": frame.get("mode", "IDLE"),
+                "type": frame.get("type", "webxr")
+            }
+        else:
+            # 旧格式：直接使用（p, q, m, type）
+            normalized = {
+                "p": frame["p"],
+                "q": frame["q"],
+                "mode": frame.get("m", "IDLE"),
+                "type": frame.get("type", "webxr")
+            }
+        return normalized
+
     def update(self, frame, T_current):
-        mode = frame["m"]
+        # 标准化 frame 格式
+        frame = self._normalize_frame(frame)
+        mode = frame["mode"]
 
         # -----------------------------
         # Mode transition → set anchor
