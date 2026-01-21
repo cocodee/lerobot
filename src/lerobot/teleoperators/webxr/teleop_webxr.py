@@ -132,13 +132,16 @@ class WebxrTeleop(Teleoperator):
         pass
 
     def get_action(self) -> dict[str, Any]:
-        return {
-                "p": np.array(self.latest_data["p"], dtype=float),
-                "q": np.array(self.latest_data["q"], dtype=float),
-                "g": float(self.latest_data.get("g", 0.0)),
-                "m": self.latest_data.get("m", "IDLE"),
-                "type": "webxr"
-        }
+        if self.latest_data is None:
+            return self._empty_action()
+        else:
+            return {
+                    "p": np.array(self.latest_data["p"], dtype=float),
+                    "q": np.array(self.latest_data["q"], dtype=float),
+                    "g": float(self.latest_data.get("g", 0.0)),
+                    "m": self.latest_data.get("m", "IDLE"),
+                    "type": "webxr"
+            }
     def _empty_action(self):
         #return {
         #    "delta_x": 0.0, "delta_y": 0.0, "delta_z": 0.0,
