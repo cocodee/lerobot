@@ -141,6 +141,7 @@ class WebxrTeleop(Teleoperator):
             # 注意：四元数默认值通常是 [0, 0, 0, 1] (Identity)
             return self._empty_action()
         else:
+            logger.info(f"Received WebXR data: {self.latest_data}")
             # 获取原始列表数据
             p = self.latest_data["p"]  # 预期是 [x, y, z]
             q = self.latest_data["q"]  # 预期是 [x, y, z, w]

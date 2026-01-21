@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.spatial.transform import Rotation as R
-
+import logging
+logger = logging.getLogger(__name__)
 class WebXRIntentTranslator:
     """
     WebXR → EE Target Pose (with Coordinate System Alignment)
@@ -66,7 +67,9 @@ class WebXRIntentTranslator:
 
     def update(self, frame, T_current):
         # 标准化 frame 格式
+        logger.info(f"frame: {frame}")
         frame = self._normalize_frame(frame)
+        logger.info(f"normalized frame: {frame}")
         mode = frame["mode"]
 
         # -----------------------------
