@@ -7,7 +7,6 @@
 # Robot (SimRobotPandaHil) Configuration
 # ===============================================
 robot:
-  type: sim_robot_panda_hil
 
   # URDF path for IK/FK calculations
   # Update this to your actual URDF file path
