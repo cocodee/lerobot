@@ -14,7 +14,7 @@ from lerobot.model.be_kinematics import BeRobotKinematics
 from ..sim_robot.config_sim_robot import SimRobotPandaHilConfig
 from .sim_robot_panda import SimRobotPanda  # 确保这里导入的是 MuJoCo 版本的 SimRobot
 from .webxr_intent_translator import WebXRIntentTranslator
-
+from .differential_ik_wrapper import DifferentialIKWrapper
 import traceback
 
 logger = logging.getLogger(__name__)
@@ -47,6 +47,7 @@ class SimRobotPandaHil(SimRobotPanda):
             target_frame_name=self.config.target_frame_name, # 通常是 "panda_link8" 或 "panda_hand"
             joint_names=PANDA_URDF_JOINT_NAMES,
         )
+        self.diff_ik = DifferentialIKWrapper(self.kinematics)
 
         self.end_effector_bounds = self.config.end_effector_bounds
         self.current_ee_pos = None
@@ -193,7 +194,10 @@ class SimRobotPandaHil(SimRobotPanda):
 
         # --- 5. 逆运动学 (IK) ---
         # 计算目标关节角度 (Degrees)
-        target_joint_values_deg = self.kinematics.inverse_kinematics(
+        #target_joint_values_deg = self.kinematics.inverse_kinematics(
+        #    self.current_joint_pos, desired_ee_pos
+        #)
+        target_joint_values_deg = self.diff_ik.step(
             self.current_joint_pos, desired_ee_pos
         )
 
