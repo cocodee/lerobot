@@ -442,6 +442,7 @@ def create_camera_display_from_observation(
         camera_display = CameraDisplay(**kwargs)
 
     # Update camera images
+    logger.info(f"Updating camera display with {len(camera_keys)} cameras.")
     for key in camera_keys:
         if key in observation:
             camera_display.add_camera(key, observation[key])
