@@ -144,8 +144,9 @@ from lerobot.utils.utils import (
 )
 from lerobot.utils.camera_display import CameraDisplay, create_camera_display_from_observation
 from lerobot.utils.visualization_utils import _init_rerun, log_rerun_data
+import logging
 
-
+logger = logging.getLogger(__name__)
 @dataclass
 class DatasetRecordConfig:
     # Dataset identifier. By convention it should match '{hf_username}/{dataset_name}' (e.g. `lerobot/test`).
@@ -326,6 +327,7 @@ def record_loop(
             log_rerun_data(observation, action)
 
         if camera_display is not None:
+            logger.info("Updating camera display")
             camera_display, _ = create_camera_display_from_observation(
                 observation,
                 camera_display,
