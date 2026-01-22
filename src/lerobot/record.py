@@ -55,6 +55,34 @@ python -m lerobot.record \
   --dataset.num_episodes=25 \
   --dataset.single_task="Grab and handover the red cube to the other arm"
 ```
+
+Example with lightweight camera display (alternative to --display_data):
+```shell
+python -m lerobot.record \
+  --robot.type=so100_follower \
+  --robot.port=/dev/tty.usbmodem58760431541 \
+  --robot.cameras='{
+    cam_high: {"type": "opencv", "index_or_path": 0, "width": 640, "height": 480},
+    cam_low: {"type": "opencv", "index_or_path": 1, "width": 640, "height": 480}
+  }' \
+  --teleop.type=so100_leader \
+  --teleop.port=/dev/tty.usbmodem58760431551 \
+  --dataset.repo_id=${HF_USER}/my-dataset \
+  --dataset.num_episodes=10 \
+  --dataset.single_task="Pick up object" \
+  --display_cameras=true \
+  --camera_display_layout=horizontal \
+  --camera_display_max_fps=30
+```
+
+Camera display options:
+- `--display_cameras=true`: Enable lightweight camera display using OpenCV
+- `--camera_display_layout=grid|horizontal|vertical`: Layout mode for multiple cameras (default: grid)
+- `--camera_display_max_fps=30`: Maximum display frame rate (lower = less CPU usage)
+- `--camera_display_show_names=true`: Show camera names on display
+- `--camera_keys_to_display='["observation.images.cam_high"]`: Specific cameras to display (auto-detect if omitted)
+- Press 'q' in the camera window to close the display
+```
 """
 
 import logging
@@ -114,6 +142,7 @@ from lerobot.utils.utils import (
     init_logging,
     log_say,
 )
+from lerobot.utils.camera_display import CameraDisplay, create_camera_display_from_observation
 from lerobot.utils.visualization_utils import _init_rerun, log_rerun_data
 
 
@@ -164,8 +193,19 @@ class RecordConfig:
     teleop: TeleoperatorConfig | None = None
     # Whether to control the robot with a policy
     policy: PreTrainedConfig | None = None
-    # Display all cameras on screen
+    # Display all data on screen using Rerun SDK
     display_data: bool = False
+    # Display camera feeds using OpenCV in a single window (lightweight alternative to Rerun)
+    display_cameras: bool = False
+    # Camera keys to display (e.g., ["observation.images.cam_high", "observation.images.cam_low"])
+    # If None, all cameras will be auto-detected and displayed
+    camera_keys_to_display: list[str] | None = None
+    # Layout for camera display: 'grid' (auto), 'horizontal', 'vertical'
+    camera_display_layout: str = "grid"
+    # Maximum FPS for camera display (lower = less CPU usage)
+    camera_display_max_fps: int = 30
+    # Show camera names on the display
+    camera_display_show_names: bool = True
     # Use vocal synthesis to read events.
     play_sounds: bool = True
     # Resume recording on an existing dataset.
@@ -199,6 +239,8 @@ def record_loop(
     control_time_s: int | None = None,
     single_task: str | None = None,
     display_data: bool = False,
+    camera_display: CameraDisplay | None = None,
+    camera_keys_to_display: list[str] | None = None,
 ):
     if dataset is not None and dataset.fps != fps:
         raise ValueError(f"The dataset fps should be equal to requested fps ({dataset.fps} != {fps}).")
@@ -283,6 +325,17 @@ def record_loop(
         if display_data:
             log_rerun_data(observation, action)
 
+        if camera_display is not None:
+            camera_display, _ = create_camera_display_from_observation(
+                observation,
+                camera_display,
+                camera_keys_to_display,
+            )
+            if camera_display.update():
+                # User pressed 'q' to close display
+                logging.info("Camera display closed by user")
+                camera_display.close()
+
         dt_s = time.perf_counter() - start_loop_t
         busy_wait(1 / fps - dt_s)
         print(f"sleep time: {1/fps - dt_s}")
@@ -295,6 +348,21 @@ def record(cfg: RecordConfig) -> LeRobotDataset:
     logging.info(pformat(asdict(cfg)))
     if cfg.display_data:
         _init_rerun(session_name="recording")
+
+    # Initialize camera display if enabled
+    camera_display = None
+    if cfg.display_cameras:
+        camera_display = CameraDisplay(
+            window_name=f"Recording - {cfg.dataset.repo_id}",
+            layout=cfg.camera_display_layout,
+            show_names=cfg.camera_display_show_names,
+            max_fps=cfg.camera_display_max_fps,
+        )
+        logging.info(f"Camera display enabled with layout '{cfg.camera_display_layout}'")
+        if cfg.camera_keys_to_display:
+            logging.info(f"Displaying specific cameras: {cfg.camera_keys_to_display}")
+        else:
+            logging.info("Auto-detecting and displaying all cameras")
 
     robot = make_robot_from_config(cfg.robot)
     teleop = make_teleoperator_from_config(cfg.teleop) if cfg.teleop is not None else None
@@ -351,6 +419,8 @@ def record(cfg: RecordConfig) -> LeRobotDataset:
             control_time_s=cfg.dataset.episode_time_s,
             single_task=cfg.dataset.single_task,
             display_data=cfg.display_data,
+            camera_display=camera_display,
+            camera_keys_to_display=cfg.camera_keys_to_display,
         )
 
         # Execute a few seconds without recording to give time to manually reset the environment
@@ -367,6 +437,8 @@ def record(cfg: RecordConfig) -> LeRobotDataset:
                 control_time_s=cfg.dataset.reset_time_s,
                 single_task=cfg.dataset.single_task,
                 display_data=cfg.display_data,
+                camera_display=camera_display,
+                camera_keys_to_display=cfg.camera_keys_to_display,
             )
 
         if events["rerecord_episode"]:
@@ -384,6 +456,9 @@ def record(cfg: RecordConfig) -> LeRobotDataset:
     robot.disconnect()
     if teleop is not None:
         teleop.disconnect()
+
+    if camera_display is not None:
+        camera_display.close()
 
     if not is_headless() and listener is not None:
         listener.stop()
