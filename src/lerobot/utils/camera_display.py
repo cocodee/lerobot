@@ -20,7 +20,7 @@ Uses OpenCV for low-latency real-time display.
 import time
 from collections import OrderedDict
 from typing import Any, Dict, List, Optional, Tuple
-
+import logging
 import numpy as np
 
 try:
@@ -29,7 +29,7 @@ try:
 except ImportError:
     CV2_AVAILABLE = False
 
-
+logger = logging.getLogger(__name__)
 class CameraDisplay:
     """
     Lightweight multi-camera display tool supporting various layout options.
