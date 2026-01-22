@@ -10,7 +10,7 @@ class DifferentialIKWrapper:
     def __init__(
         self,
         kinematics,
-        pos_step=0.1,      # meters per step
+        pos_step=0.3,      # meters per step
         rot_step=0.1,       # rad per step
         max_pos_step=0.05,
         max_rot_step=0.3,
