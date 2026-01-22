@@ -126,4 +126,33 @@ class WebXRIntentTranslator:
             T[:3, 3] = self.anchor_pos
             return T
 
+        # -----------------------------
+        # BOTH mode (Position + Rotation)
+        # -----------------------------
+        if mode == "BOTH":
+            # Calculate position delta (same as TRANSLATE mode)
+            delta_xr = frame["p"] - self.anchor_xr_pos
+
+            # Transform position delta from XR frame to robot frame
+            delta_robot = self.R_align.apply(delta_xr)
+
+            # Apply position delta to anchor position
+            target_pos = self.anchor_pos + delta_robot
+
+            # Calculate rotation delta (same as ROTATE mode)
+            xr_rot = R.from_quat(frame["q"])
+            delta_rot_xr_local = self.anchor_xr_rot.inv() * xr_rot
+
+            # Apply axis mapping for rotation
+            delta_rot_robot_local = self.R_fix * delta_rot_xr_local * self.R_fix_inv
+
+            # Apply rotation delta to anchor rotation
+            target_rot = self.anchor_rot * delta_rot_robot_local
+
+            # Combine position and rotation
+            T = np.eye(4)
+            T[:3, :3] = target_rot.as_matrix()
+            T[:3, 3] = target_pos
+            return T
+
         return None
