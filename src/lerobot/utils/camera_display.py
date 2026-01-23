@@ -30,16 +30,10 @@ except ImportError:
     CV2_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
+
 class CameraDisplay:
     """
     Lightweight multi-camera display tool supporting various layout options.
-
-    Features:
-    - Single window displaying all cameras
-    - Customizable layouts (grid, horizontal, vertical)
-    - Camera name watermark overlay support
-    - Low-latency design, minimal impact on recording performance
-    - Automatic handling of cameras with different resolutions
     """
 
     def __init__(
@@ -55,21 +49,6 @@ class CameraDisplay:
         max_display_width: int = 1920,
         max_display_height: int = 1080,
     ):
-        """
-        Initialize camera display.
-
-        Args:
-            window_name: Window title
-            layout: Layout mode - 'grid' (grid), 'horizontal' (side-by-side), 'vertical' (stacked)
-            show_names: Whether to show camera names
-            name_font_scale: Camera name font scale
-            name_color: Camera name text color (BGR)
-            name_bg_color: Camera name background color (BGR)
-            name_position: Camera name position - 'top-left', 'top-right', 'bottom-left', 'bottom-right'
-            max_fps: Maximum display frame rate to avoid excessive CPU usage
-            max_display_width: Maximum display width
-            max_display_height: Maximum display height
-        """
         if not CV2_AVAILABLE:
             raise ImportError("OpenCV is required for camera display. Install with: pip install opencv-python")
 
@@ -84,16 +63,9 @@ class CameraDisplay:
         self.max_display_width = max_display_width
         self.max_display_height = max_display_height
 
-        # Store camera data
         self.camera_data: "OrderedDict[str, Dict[str, Any]]" = OrderedDict()
-
-        # Last display time
         self.last_display_time = 0
-
-        # Whether window is created
         self.window_created = False
-
-        # Close flag
         self._should_close = False
 
         cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
@@ -101,7 +73,6 @@ class CameraDisplay:
     def add_camera(self, camera_id: str, image: Any) -> None:
         """
         Add or update camera image.
-
         Args:
             camera_id: Camera identifier
             image: Image data (numpy array, RGB or BGR format)
@@ -110,20 +81,28 @@ class CameraDisplay:
 
         # Convert to BGR format if needed
         if isinstance(image, np.ndarray) and len(image.shape) >= 2:
-            # Convert to uint8 if needed
+            # Handle float images (0.0-1.0) -> uint8
             if image.dtype != np.uint8:
-                image = (image * 255).astype(np.uint8)
+                if image.max() <= 1.0:
+                    image = (image * 255).astype(np.uint8)
+                else:
+                    image = image.astype(np.uint8)
 
-            # Handle CHW format (common in PyTorch)
-            if len(image.shape) == 3 and image.shape[0] == image.shape[1] == 3:
-                image = image.transpose(1, 2, 0)
+            # [修正] 改进 CHW (Channel-First) 格式检测逻辑
+            # 原代码逻辑有误，这里检查是否第一维是 3 (RGB) 或 1 (Gray)，且后续维度更大
+            if len(image.shape) == 3:
+                c, h, w = image.shape
+                # 如果 C 是 1 或 3，且 H 和 W 都大于 C，通常意味着是 (C, H, W) 格式
+                if c in [1, 3] and h > c and w > c:
+                    image = image.transpose(1, 2, 0)
 
             # Convert RGB to BGR (if in RGB format)
+            # OpenCV assumes BGR, most envs provide RGB
             if len(image.shape) == 3 and image.shape[2] == 3:
                 try:
                     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
                 except cv2.error:
-                    pass  # Already in BGR format
+                    pass 
 
         self.camera_data[camera_id] = {
             "image": image,
@@ -131,49 +110,24 @@ class CameraDisplay:
         }
 
     def remove_camera(self, camera_id: str) -> None:
-        """Remove a camera."""
         if camera_id in self.camera_data:
             del self.camera_data[camera_id]
 
     def get_layout_grid(self, num_cameras: int) -> Tuple[int, int]:
-        """
-        Calculate grid layout rows and columns.
-
-        Args:
-            num_cameras: Number of cameras
-
-        Returns:
-            (rows, cols): Number of rows and columns
-        """
         if num_cameras <= 0:
             return 0, 0
-
-        # Try to get a near-square layout
         cols = int(np.ceil(np.sqrt(num_cameras)))
         rows = int(np.ceil(num_cameras / cols))
-
         return rows, cols
 
     def _add_name_overlay(self, image: np.ndarray, camera_id: str) -> np.ndarray:
-        """
-        Add camera name overlay to image.
-
-        Args:
-            image: Input image
-            camera_id: Camera identifier
-
-        Returns:
-            Processed image with name overlay
-        """
         if not self.show_names:
             return image
 
-        # Get text size
         font = cv2.FONT_HERSHEY_SIMPLEX
         text = camera_id
         (text_width, text_height), _ = cv2.getTextSize(text, font, self.name_font_scale, 1)
 
-        # Calculate position
         h, w = image.shape[:2]
         if self.name_position == "top-left":
             x, y = 5, text_height + 5
@@ -183,10 +137,9 @@ class CameraDisplay:
             x, y = 5, h - 5
         elif self.name_position == "bottom-right":
             x, y = w - text_width - 5, h - 5
-        else:  # Default to top-left
+        else:
             x, y = 5, text_height + 5
 
-        # Add background rectangle
         cv2.rectangle(
             image,
             (x - 2, y - text_height - 2),
@@ -195,7 +148,6 @@ class CameraDisplay:
             -1,
         )
 
-        # Add text
         cv2.putText(
             image,
             text,
@@ -206,16 +158,9 @@ class CameraDisplay:
             1,
             cv2.LINE_AA,
         )
-
         return image
 
     def combine_images(self) -> Optional[np.ndarray]:
-        """
-        Combine all camera images according to layout mode.
-
-        Returns:
-            Combined image, or None if no cameras
-        """
         if not self.camera_data:
             return None
 
@@ -223,14 +168,10 @@ class CameraDisplay:
         num_cameras = len(images)
 
         if num_cameras == 1:
-            # Single camera, return directly
             camera_id = list(self.camera_data.keys())[0]
             return self._add_name_overlay(images[0]["image"], camera_id)
 
-        # Get all image shapes
         img_shapes = [img["image"].shape for img in images]
-
-        # Resize all to max dimensions (maintain aspect ratio)
         max_img_height = max(shape[0] for shape in img_shapes)
         max_img_width = max(shape[1] for shape in img_shapes)
 
@@ -239,167 +180,122 @@ class CameraDisplay:
 
         for i, (img_data, name) in enumerate(zip(images, camera_names)):
             h, w = img_data["image"].shape[:2]
-
-            # Resize to maintain uniform size
             if h != max_img_height or w != max_img_width:
-                # Maintain aspect ratio
                 scale = min(max_img_height / h, max_img_width / w)
                 new_w = int(w * scale)
                 new_h = int(h * scale)
                 img = cv2.resize(img_data["image"], (new_w, new_h), interpolation=cv2.INTER_AREA)
             else:
                 img = img_data["image"]
-
-            # Add name watermark
             img = self._add_name_overlay(img, name)
             resized_images.append(img)
 
-        # Combine according to layout
         return self._layout_combine(resized_images)
 
     def _layout_combine(self, resized_images: List[np.ndarray]) -> np.ndarray:
-        """Combine images based on layout configuration."""
         num_cameras = len(resized_images)
         rows, cols = self._get_layout(num_cameras)
 
         if self.layout == "horizontal":
-            # Horizontal layout
             total_width = sum(img.shape[1] for img in resized_images)
             total_height = max(img.shape[0] for img in resized_images)
-
             combined = np.zeros((total_height, total_width, 3), dtype=np.uint8)
             x_offset = 0
             for img in resized_images:
                 h, w = img.shape[:2]
-                y_offset = (total_height - h) // 2  # Vertically center
+                y_offset = (total_height - h) // 2
                 combined[y_offset : y_offset + h, x_offset : x_offset + w] = img
                 x_offset += w
 
         elif self.layout == "vertical":
-            # Vertical layout
             total_width = max(img.shape[1] for img in resized_images)
             total_height = sum(img.shape[0] for img in resized_images)
-
             combined = np.zeros((total_height, total_width, 3), dtype=np.uint8)
             y_offset = 0
             for img in resized_images:
                 h, w = img.shape[:2]
-                x_offset = (total_width - w) // 2  # Horizontally center
+                x_offset = (total_width - w) // 2
                 combined[y_offset : y_offset + h, x_offset : x_offset + w] = img
                 y_offset += h
 
-        else:  # Grid layout (default)
-            # Grid layout
+        else:  # Grid
+            # 简化 Grid 计算逻辑以避免原代码中潜在的索引越界或对齐问题
             row_heights = []
             col_widths = [0] * cols
-
-            # Calculate max width for each column
+            
+            # 计算每列最大宽度
             for i, img in enumerate(resized_images):
                 col = i % cols
-                row_heights.append(img.shape[0])
                 col_widths[col] = max(col_widths[col], img.shape[1])
-
-            # Calculate max height for each row
-            row_heights = []
-            for i in range(rows):
-                row_start = i * cols
-                row_end = min(row_start + cols, num_cameras)
-                row_heights.append(
-                    max(
-                        resized_images[j].shape[0]
-                        for j in range(row_start, row_end)
-                        if j < len(resized_images)
-                    )
-                )
+            
+            # 计算每行最大高度
+            for r in range(rows):
+                max_h = 0
+                for c in range(cols):
+                    idx = r * cols + c
+                    if idx < num_cameras:
+                        max_h = max(max_h, resized_images[idx].shape[0])
+                row_heights.append(max_h)
 
             total_width = sum(col_widths)
             total_height = sum(row_heights)
-
             combined = np.zeros((total_height, total_width, 3), dtype=np.uint8)
 
             y_offset = 0
-            for i in range(rows):
+            for r in range(rows):
                 x_offset = 0
-                row_start = i * cols
-                row_end = min(row_start + cols, num_cameras)
-
-                for j in range(row_start, row_end):
-                    if j < len(resized_images):
-                        img = resized_images[j]
+                for c in range(cols):
+                    idx = r * cols + c
+                    if idx < num_cameras:
+                        img = resized_images[idx]
                         h, w = img.shape[:2]
-                        combined[y_offset : y_offset + h, x_offset : x_offset + w] = img
-                        x_offset += col_widths[j - row_start]
+                        # 居中放置
+                        y_pos = y_offset + (row_heights[r] - h) // 2
+                        x_pos = x_offset + (col_widths[c] - w) // 2
+                        combined[y_pos : y_pos + h, x_pos : x_pos + w] = img
+                    x_offset += col_widths[c]
+                y_offset += row_heights[r]
 
-                y_offset += row_heights[i]
-
-        # Limit maximum display size
-        combined = self._limit_display_size(combined)
-        return combined
+        return self._limit_display_size(combined)
 
     def _limit_display_size(self, combined: np.ndarray) -> np.ndarray:
-        """Limit combined image to maximum display dimensions."""
         h, w = combined.shape[:2]
-
         if w > self.max_display_width:
             scale = self.max_display_width / w
             new_h = int(h * scale)
-            combined = cv2.resize(
-                combined, (self.max_display_width, new_h), interpolation=cv2.INTER_AREA
-            )
-
+            combined = cv2.resize(combined, (self.max_display_width, new_h), interpolation=cv2.INTER_AREA)
         h, w = combined.shape[:2]
-
         if h > self.max_display_height:
             scale = self.max_display_height / h
             new_w = int(w * scale)
-            combined = cv2.resize(
-                combined, (new_w, self.max_display_height), interpolation=cv2.INTER_AREA
-            )
-
+            combined = cv2.resize(combined, (new_w, self.max_display_height), interpolation=cv2.INTER_AREA)
         return combined
 
     def _get_layout(self, num_cameras: int) -> Tuple[int, int]:
-        """Get layout configuration."""
         if self.layout == "horizontal":
             return 1, num_cameras
         elif self.layout == "vertical":
             return num_cameras, 1
-        else:  # Grid
+        else:
             return self.get_layout_grid(num_cameras)
 
     def update(self) -> bool:
-        """
-        Update display by showing combined image in window.
-
-        Returns:
-            Whether the display should be closed
-        """
         current_time = time.time()
-
-        # Limit display frame rate
         if current_time - self.last_display_time < 1.0 / self.max_fps:
             return self._should_close
-
         self.last_display_time = current_time
-
-        # Combine and display image
         combined = self.combine_images()
         if combined is not None:
             cv2.imshow(self.window_name, combined)
-
-        # Check if should close
         if cv2.waitKey(1) & 0xFF == ord("q"):
             self._should_close = True
-
         return self._should_close
 
     def close(self) -> None:
-        """Close display window."""
         self._should_close = True
         cv2.destroyAllWindows()
 
     def should_close(self) -> bool:
-        """Check if display should be closed."""
         return self._should_close
 
 
@@ -411,29 +307,33 @@ def create_camera_display_from_observation(
 ) -> Tuple[Optional[CameraDisplay], List[str]]:
     """
     Create or update camera display from observation dictionary.
-
-    Args:
-        observation: Observation dictionary
-        camera_display: Existing camera display object, creates new if None
-        camera_keys: Camera key names to display, auto-detects if None
-        **kwargs: Arguments passed to CameraDisplay
-
-    Returns:
-        (camera_display, found_camera_keys)
     """
     if not CV2_AVAILABLE:
         return camera_display, []
 
-    # Auto-detect camera keys
+    # Auto-detect camera keys if not provided
     if camera_keys is None:
         camera_keys = []
         for key, value in observation.items():
-            logger.info(f"Checking {key} for camera image.value shape: {value}")
-            if isinstance(value, np.ndarray) and "image" in key.lower():
-                # Check if it's an image format
-                if len(value.shape) >= 2:  # At least HxW
-                    camera_keys.append(key)
-    logger.info(f"Found {len(camera_keys)} cameras: {camera_keys}")
+            # -------------------------------------------------------------
+            # [修正重点]
+            # 移除 "image" in key 的字符串匹配
+            # 改为基于维度判断：
+            # 1. 必须是 numpy 数组
+            # 2. 必须是 3 维 (图像)
+            # 3. 排除掉可能是 3D 的非图像状态（通过检查最小维度，Channel通常很小）
+            # -------------------------------------------------------------
+            if isinstance(value, np.ndarray) and value.ndim == 3:
+                # 检查最小维度是否像 Channel (通常 1, 3, 4)
+                # 这可以有效区分 3D 图像 (H, W, 3) 和 2D 状态的 Batch (Batch, Dim) 或者其他 Tensor
+                if min(value.shape) <= 4:
+                     logger.info(f"Detected camera: {key}, shape: {value.shape}")
+                     camera_keys.append(key)
+            # -------------------------------------------------------------
+            
+    if camera_keys:
+        logger.info(f"Found {len(camera_keys)} cameras: {camera_keys}")
+    
     # Return if no cameras
     if not camera_keys:
         return camera_display, camera_keys
@@ -443,7 +343,6 @@ def create_camera_display_from_observation(
         camera_display = CameraDisplay(**kwargs)
 
     # Update camera images
-    logger.info(f"Updating camera display with {len(camera_keys)} cameras.")
     for key in camera_keys:
         if key in observation:
             camera_display.add_camera(key, observation[key])
