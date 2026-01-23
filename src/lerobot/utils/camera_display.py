@@ -428,7 +428,7 @@ def create_camera_display_from_observation(
     if camera_keys is None:
         camera_keys = []
         for key, value in observation.items():
-            logger.info(f"Checking {key} for camera image.value shape: {value.shape}")
+            logger.info(f"Checking {key} for camera image.value shape: {value}")
             if isinstance(value, np.ndarray) and "image" in key.lower():
                 # Check if it's an image format
                 if len(value.shape) >= 2:  # At least HxW
