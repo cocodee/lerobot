@@ -1,0 +1,75 @@
+# WebXR 差分控制配置
+# 使用 Differential IK 替代 Absolute IK
+# 实现稳定的控制，避免 wrist roll 抖动
+
+# Robot configuration
+robot_type: sim_robot_panda
+robot_urdf_path: /path/to/panda.urdf  # 需要替换为实际路径
+robot_srdf_path: /path/to/panda.srdf  # 需要替换为实际路径
+end_effector_name: panda_hand
+target_frame_name: panda_hand
+
+# WebXR connection configuration
+control_mode: webxr_differential  # 新的差分控制模式
+zenoh_connect_key: "tcp/localhost:7447"
+zenoh_topic: "lerobot/webxr/teleop"
+pos_scale: 1.0
+use_gripper: true
+
+# Differential IK parameters
+differential_ik:
+  dt: 0.02  # 时间步长 (秒)
+  damping: 1e-4  # Jacobian 阻尼系数
+
+  # 限幅参数
+  max_delta_pos: 0.01  # 最大位置变化量 (米)
+  max_delta_rot: 0.1   # 最大旋转变化量 (弧度)
+
+  # Wrist 控制
+  wrist_joint_name: "panda_joint7"
+  wrist_gain: 2.0      # wrist 关节稳定增益
+
+  # 姿态正则化
+  posture_gain: 0.2    # 姿态正则化增益
+
+  # 参考姿态 (rad)
+  reference_posture:
+    - 0.0
+    - 0.0
+    - 0.0
+    - -2.356  # -135度
+    - 0.0
+    - 1.571   # 90度
+    - 0.0
+    - 0.0
+    - 0.0
+
+# Observation features (保持原有配置)
+observation_features:
+  - joint_positions
+  - joint_velocities
+  - end_effector_pose
+  - end_effector_velocity
+  - gripper_position
+
+# Action features
+action_features:
+  - joint_positions
+
+# Wrapper configuration
+wrapper:
+  type: WebXRDifferentialWrapper
+  kwargs:
+    kin:
+      type: BeRobotKinematics
+      kwargs:
+        robot_type: sim_robot_panda
+        target_frame_name: panda_hand
+        posture_reference: [0.0, 0.0, 0.0, -2.356, 0.0, 1.571, 0.0, 0.0, 0.0]
+    dt: 0.02
+    max_delta_pos: 0.01
+    max_delta_rot: 0.1
+    damping: 1e-4
+    wrist_gain: 2.0
+    posture_gain: 0.2
+    wrist_joint_name: "panda_joint7"
