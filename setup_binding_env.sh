@@ -1,5 +1,6 @@
 #!/bin/bash
 conda activate ros2_env
+source /opt/ros/humble/setup.bash
 sudo chmod 666 /dev/ttyTHS1
 sudo chmod 666 /dev/ttyTHS2
 #export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
