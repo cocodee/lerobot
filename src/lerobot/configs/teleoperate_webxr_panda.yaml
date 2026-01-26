@@ -7,7 +7,7 @@
 # Robot (SimRobotPandaHil) Configuration
 # ===============================================
 robot:
-
+  type: sim_robot_panda_hil
   # URDF path for IK/FK calculations
   # Update this to your actual URDF file path
   urdf_path: "/home/smai/workspace/dikeke/franka_description/fr3_urdfs/fr3_franka_hand_obj.urdf"
@@ -39,6 +39,7 @@ robot:
 teleop:
   # Zenoh connection endpoint
   # Format: "tcp/<ip>:<port>" or "ws/<url>"
+  type: webxr
   zenoh_connect_key: "tcp/47.116.8.214:7447"
   robot_type: "sim_robot_panda"
 
