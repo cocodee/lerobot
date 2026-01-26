@@ -36,6 +36,6 @@ teleop:
 # Control Configuration
 # ===============================================
 fps: 30
-
+robot_type: "sim_robot_hil"
 # Teleoperation duration in seconds (null = unlimited)
 teleop_time_s: null
