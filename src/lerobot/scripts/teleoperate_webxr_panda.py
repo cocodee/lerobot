@@ -51,8 +51,8 @@ from lerobot.configs import parser
 class TeleoperateWebxrPandaConfig:
     """Configuration for WebXR teleoperation of SimRobotPandaHil."""
 
-    robot_type: str = "panda"
-    robot: Any
+    robot: Any = field(default_factory=SimRobotPandaHilConfig)
+    robot_type: str = "sim_robot_panda"
     teleop: WebxrTeleopConfig
     fps: int = 30
     teleop_time_s: float | None = None
