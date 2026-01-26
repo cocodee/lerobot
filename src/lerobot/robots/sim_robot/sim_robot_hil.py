@@ -203,8 +203,8 @@ class SimRobotHil(SimRobot):
         joint_action = {}
 
         # 映射回仿真器名称
-        for i, urdf_name in enumerate(URDF_JOINT_NAMES):
-            name = self.sim2robot[urdf_name]
+        for i, joint_name in self.get_joint_names():
+            name = self.sim2robot[joint_name]
             # SimRobot 父类接受 f"{sim_name}.pos"
             joint_action[f"{name}.pos"] = target_joint_values_deg[i] * self.joint_direction[i]
 
