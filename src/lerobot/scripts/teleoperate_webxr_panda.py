@@ -38,7 +38,8 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from lerobot.robots.sim_robot_panda.sim_robot_panda_hil import SimRobotPandaHil
-from lerobot.robots.sim_robot.config_sim_robot import SimRobotPandaHilConfig
+from lerobot.robots.sim_robot.sim_robot_hil import SimRobotHil
+from lerobot.robots.sim_robot.config_sim_robot import SimRobotPandaHilConfig, SimRobotConfig
 from lerobot.teleoperators.webxr.teleop_webxr import WebxrTeleop
 from lerobot.teleoperators.webxr.configuration_webxr import WebxrTeleopConfig
 from lerobot.utils.robot_utils import busy_wait
@@ -50,7 +51,8 @@ from lerobot.configs import parser
 class TeleoperateWebxrPandaConfig:
     """Configuration for WebXR teleoperation of SimRobotPandaHil."""
 
-    robot: SimRobotPandaHilConfig
+    robot_type: str = "panda"
+    robot: Any
     teleop: WebxrTeleopConfig
     fps: int = 30
     teleop_time_s: float | None = None
@@ -107,16 +109,22 @@ def teleoperate(cfg: TeleoperateWebxrPandaConfig):
 
     # Create teleoperator and robot instances
     teleop = WebxrTeleop(cfg.teleop)
-    robot = SimRobotPandaHil(cfg.robot)
+
+    if cfg.robot_type == "panda":
+        robot = SimRobotPandaHil(cfg.robot)
+    elif cfg.robot_type == "sim_robot":
+        robot = SimRobotHil(cfg.robot)
+    else:
+        raise ValueError(f"Unknown robot type: {cfg.robot_type}")
 
     # Connect to teleoperator and robot
     logging.info("Connecting to WebXR teleoperator...")
     teleop.connect()
     logging.info("WebXR teleoperator connected.")
 
-    logging.info("Connecting to SimRobotPandaHil...")
+    logging.info(f"Connecting to {cfg.robot_type.capitalize()}...")
     robot.connect()
-    logging.info("SimRobotPandaHil connected.")
+    logging.info(f"{cfg.robot_type.capitalize()} connected.")
 
     try:
         # Run teleoperation loop
@@ -142,7 +150,7 @@ def teleoperate(cfg: TeleoperateWebxrPandaConfig):
 
         try:
             robot.disconnect()
-            logging.info("SimRobotPandaHil disconnected.")
+            logging.info(f"{cfg.robot_type.capitalize()} disconnected.")
         except Exception as e:
             logging.warning(f"Error disconnecting robot: {e}")
 
