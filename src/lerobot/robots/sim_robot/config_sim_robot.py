@@ -103,9 +103,14 @@ class SimRobotHilConfig(SimRobotConfig):
     gripper_joint_name: str = "left_arm_joint_7"    
 
 
+@RobotConfig.register_subclass("sim_robot_panda")
+@dataclass
+class SimRobotPandaConfig(RobotConfig):
+    # 仿真环境参数
+
 @RobotConfig.register_subclass("sim_robot_panda_hil")
 @dataclass
-class SimRobotPandaHilConfig(SimRobotConfig):
+class SimRobotPandaHilConfig(SimRobotPandaConfig):
     # 仿真环境参数
     urdf_path: str = "/home/smai/workspace/dikeke/franka_description/fr3_urdfs/fr3_franka_hand_obj.xml"
     xml_path: str = "/home/smai/workspace/dikeke/franka_description/fr3_urdfs/fr3_franka_hand_obj.urdf"

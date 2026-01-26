@@ -6,16 +6,16 @@ from functools import cached_property
 
 from lerobot.errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
 from lerobot.robots import Robot
-from ..sim_robot.config_sim_robot import SimRobotConfig
+from ..sim_robot.config_sim_robot import SimRobotPandaConfig
 from ..utils import ensure_safe_goal_position
 
 logger = logging.getLogger(__name__)
 
 class SimRobotPanda(Robot):
-    config_class = SimRobotConfig
-    name = "franka_sim_robot"
+    config_class = SimRobotPandaConfig
+    name = "sim_robot_panda"
 
-    def __init__(self, config: SimRobotConfig):
+    def __init__(self, config: SimRobotPandaConfig):
         super().__init__(config)
         self.config = config
         self._is_connected = False

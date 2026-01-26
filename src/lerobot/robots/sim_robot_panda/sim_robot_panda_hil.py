@@ -28,7 +28,7 @@ PANDA_URDF_JOINT_NAMES = [
 
 class SimRobotPandaHil(SimRobotPanda):
     config_class = SimRobotPandaHilConfig
-    name = "sim_robot_panda"
+    name = "sim_robot_panda_hil"
 
     def __init__(self, config: SimRobotPandaHilConfig):
         super().__init__(config)

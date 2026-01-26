@@ -52,7 +52,7 @@ class TeleoperateWebxrPandaConfig:
     """Configuration for WebXR teleoperation of SimRobotPandaHil."""
 
     robot: Any = field(default_factory=SimRobotPandaHilConfig)
-    robot_type: str = "sim_robot_panda"
+    robot_type: str = "sim_robot_panda_hil"
     teleop: WebxrTeleopConfig = field(default_factory=WebxrTeleopConfig)
     fps: int = 30
     teleop_time_s: float | None = None
@@ -110,9 +110,9 @@ def teleoperate(cfg: TeleoperateWebxrPandaConfig):
     # Create teleoperator and robot instances
     teleop = WebxrTeleop(cfg.teleop)
 
-    if cfg.robot_type == "sim_robot_panda":
+    if cfg.robot_type == "sim_robot_panda_hil":
         robot = SimRobotPandaHil(cfg.robot)
-    elif cfg.robot_type == "sim_robot":
+    elif cfg.robot_type == "sim_robot_hil":
         robot = SimRobotHil(cfg.robot)
     else:
         raise ValueError(f"Unknown robot type: {cfg.robot_type}")
