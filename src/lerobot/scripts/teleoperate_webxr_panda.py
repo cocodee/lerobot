@@ -60,7 +60,7 @@ class TeleoperateWebxrPandaConfig:
 
 def teleop_loop(
     teleop: WebxrTeleop,
-    robot: SimRobotPandaHil,
+    robot,
     fps: int,
     duration: float | None = None,
 ):
@@ -110,7 +110,7 @@ def teleoperate(cfg: TeleoperateWebxrPandaConfig):
     # Create teleoperator and robot instances
     teleop = WebxrTeleop(cfg.teleop)
 
-    if cfg.robot_type == "panda":
+    if cfg.robot_type == "sim_robot_panda":
         robot = SimRobotPandaHil(cfg.robot)
     elif cfg.robot_type == "sim_robot":
         robot = SimRobotHil(cfg.robot)

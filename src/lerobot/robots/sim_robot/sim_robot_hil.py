@@ -37,7 +37,7 @@ URDF_JOINT_NAMES = [
         ]
 class SimRobotHil(SimRobot):
     config_class = SimRobotHilConfig
-    name = "sim_robot_hil"
+    name = "sim_robot"
 
     def __init__(self, config: SimRobotHilConfig):
         super().__init__(config)
