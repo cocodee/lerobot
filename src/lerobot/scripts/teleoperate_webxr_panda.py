@@ -42,6 +42,10 @@ from lerobot.robots.sim_robot.sim_robot_hil import SimRobotHil
 from lerobot.robots.sim_robot.config_sim_robot import SimRobotPandaHilConfig, SimRobotConfig
 from lerobot.teleoperators.webxr.teleop_webxr import WebxrTeleop
 from lerobot.teleoperators.webxr.configuration_webxr import WebxrTeleopConfig
+from lerobot.robots import (  # noqa: F401
+    Robot,
+    RobotConfig,
+)
 from lerobot.utils.robot_utils import busy_wait
 from lerobot.utils.utils import init_logging
 from lerobot.configs import parser
@@ -51,7 +55,7 @@ from lerobot.configs import parser
 class TeleoperateWebxrPandaConfig:
     """Configuration for WebXR teleoperation of SimRobotPandaHil."""
 
-    robot: Any = field(default_factory=SimRobotPandaHilConfig)
+    robot: RobotConfig
     robot_type: str = "sim_robot_panda_hil"
     teleop: WebxrTeleopConfig = field(default_factory=WebxrTeleopConfig)
     fps: int = 30
