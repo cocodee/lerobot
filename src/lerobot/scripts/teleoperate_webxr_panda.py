@@ -46,6 +46,10 @@ from lerobot.robots import (  # noqa: F401
     Robot,
     RobotConfig,
 )
+from lerobot.teleoperators import (  # noqa: F401
+    Teleoperator,
+    TeleoperatorConfig,
+)
 from lerobot.utils.robot_utils import busy_wait
 from lerobot.utils.utils import init_logging
 from lerobot.configs import parser
@@ -57,7 +61,7 @@ class TeleoperateWebxrPandaConfig:
 
     robot: RobotConfig
     robot_type: str = "sim_robot_panda_hil"
-    teleop: WebxrTeleopConfig = field(default_factory=WebxrTeleopConfig)
+    teleop: TeleoperatorConfig
     fps: int = 30
     teleop_time_s: float | None = None
 
