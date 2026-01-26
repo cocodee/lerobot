@@ -52,7 +52,7 @@ class TeleoperateWebxrPandaConfig:
     """Configuration for WebXR teleoperation of SimRobotPandaHil."""
 
     robot: Any = field(default_factory=SimRobotPandaHilConfig)
-    robot_type: str = "panda"
+    robot_type: str = "sim_robot_panda"
     teleop: WebxrTeleopConfig = field(default_factory=WebxrTeleopConfig)
     fps: int = 30
     teleop_time_s: float | None = None
