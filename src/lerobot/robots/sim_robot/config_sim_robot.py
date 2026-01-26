@@ -106,6 +106,7 @@ class SimRobotHilConfig(SimRobotConfig):
 @RobotConfig.register_subclass("sim_robot_panda")
 @dataclass
 class SimRobotPandaConfig(RobotConfig):
+    pass
     # 仿真环境参数
 
 @RobotConfig.register_subclass("sim_robot_panda_hil")
