@@ -60,8 +60,8 @@ class TeleoperateWebxrPandaConfig:
     """Configuration for WebXR teleoperation of SimRobotPandaHil."""
 
     robot: RobotConfig
-    robot_type: str = "sim_robot_panda_hil"
     teleop: TeleoperatorConfig
+    robot_type: str = "sim_robot_panda_hil"
     fps: int = 30
     teleop_time_s: float | None = None
 
