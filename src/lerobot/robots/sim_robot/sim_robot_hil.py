@@ -7,6 +7,7 @@ import pybullet_data
 import numpy as np
 from functools import cached_property
 from typing import Any, Dict, Tuple,List
+from scipy.spatial.transform import Rotation as R
 
 from lerobot.cameras.utils import make_cameras_from_configs
 from lerobot.errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
@@ -14,6 +15,8 @@ from lerobot.robots import Robot
 from lerobot.model.kinematics import RobotKinematics
 from .config_sim_robot import SimRobotConfig, SimRobotHilConfig
 from .sim_robot import SimRobot
+from ..sim_robot_panda.differential_ik_wrapper import DifferentialIKWrapper
+from ..sim_robot_panda.webxr_intent_translator import WebXRIntentTranslator
 from ..utils import ensure_safe_goal_position
 
 import traceback
@@ -51,6 +54,21 @@ class SimRobotHil(SimRobot):
             target_frame_name=self.config.target_frame_name,
             joint_names=URDF_JOINT_NAMES,
         )
+        self.diff_ik = DifferentialIKWrapper(self.kinematics)
+
+        # Initialize WebXR Intent Translator
+        matrix = np.array([
+            [ 0,  1, 0], # Robot X 来自 WebXR Y
+            [0,  0,  -1], # Robot Y 来自 -WebXR X
+            [ -1,  0,  0]  # Robot Z 来自  WebXR Y
+        ])
+        mapping_matrix = np.array([
+            [0, 0, 1],  # Row 0
+            [1, 0, 0],  # Row 1
+            [0, 1, 0]   # Row 2
+        ])
+        r_fix = R.from_matrix(mapping_matrix)
+        self.webxr_translator = WebXRIntentTranslator(xr_to_robot_matrix=matrix, axis_map_rotation=r_fix)
 
         # Store the bounds for end-effector position
         self.end_effector_bounds = self.config.end_effector_bounds
@@ -76,159 +94,144 @@ class SimRobotHil(SimRobot):
     def send_action(self, action: dict[str, Any]) -> dict[str, Any]:
         """
         Transform action from end-effector space to joint space and send to motors.
-
-        Args:
-            action: Dictionary with keys 'delta_x', 'delta_y', 'delta_z' for end-effector control
-                   or a numpy array with [delta_x, delta_y, delta_z]
-
-        Returns:
-            The joint-space action that was sent to the motors
+        Supports WebXR format actions and traditional delta EE actions.
         """
-
         if not self.is_connected:
             raise DeviceNotConnectedError(f"{self} is not connected.")
 
-        # Convert action to numpy array if not already
-        delta_quat = None
-        if isinstance(action, dict):
-            if all(k in action for k in ["delta_x", "delta_y", "delta_z"]):
-                logger.debug(f"action: {action}")
-                delta_ee = np.array(
-                    [
+        # --- 1. 获取当前状态 (Feedback) ---
+        # 获取仿真器中的当前关节角度
+        sim_joint_state = self.get_present_joint_state()  # 返回 {sim_name: degrees}
+
+        # 转换为 URDF 需要的顺序和单位
+        self.current_joint_pos = np.array([sim_joint_state[name] for name in self.get_joint_names()])
+
+        # --- 2. 正运动学 (FK) 获取当前 EE 位姿 ---
+        try:
+            self.current_ee_pos = self.kinematics.forward_kinematics(self.current_joint_pos[:-1])
+            if self.current_ee_pos is None:
+                logger.error("forward_kinematics returned None")
+                return {}
+        except Exception as e:
+            logger.error(f"forward_kinematics failed: {e}")
+            traceback.print_exc()
+            return {}
+
+        # --- 3. 解析 Action ---
+        logger.info(f"send_action: {action}")
+        # 检查是否为 WebXR 格式 (包含 p, q, g, m, type)
+        if isinstance(action, dict) and action.get("type") == "webxr":
+            # 使用 WebXRIntentTranslator 计算目标 EE 位姿
+            desired_ee_pos = self.webxr_translator.update(
+                frame=action,
+                T_current=self.current_ee_pos
+            )
+
+            # 如果翻译器返回 None (IDLE 模式或无有效转换)，保持当前位置
+            if desired_ee_pos is None:
+                desired_ee_pos = self.current_ee_pos.copy()
+
+            # 获取夹爪值
+            gripper_val = float(action.get("g", 1.0))
+
+            logger.info(f"send_action WebXR mode: {action.get('m', 'IDLE')}, desired_ee_pos: {desired_ee_pos}")
+
+        else:
+            # --- 传统的 Delta EE 动作处理 ---
+            delta_quat = None
+            delta_ee = np.zeros(3)
+            gripper_val = 1.0
+
+            if isinstance(action, dict):
+                if all(k in action for k in ["delta_x", "delta_y", "delta_z"]):
+                    delta_ee = np.array([
                         action["delta_x"] * self.config.end_effector_step_sizes["x"],
                         action["delta_y"] * self.config.end_effector_step_sizes["y"],
                         action["delta_z"] * self.config.end_effector_step_sizes["z"],
-                    ],
-                    dtype=np.float32,
-                )
-                # 旋转增量 (四元数)
-                delta_quat = np.array([
-                    action["delta_qx"],
-                    action["delta_qy"],
-                    action["delta_qz"],
-                    action["delta_qw"]
-                ], dtype=np.float32)
+                    ], dtype=np.float32)
 
-                logger.info(f"delta_ee: {delta_ee}")
-                if "gripper" not in action:
-                    action["gripper"] = [1.0]
-                action = np.append(delta_ee, action["gripper"])
-            else:
-                logger.warning(
-                    f"Expected action keys 'delta_x', 'delta_y', 'delta_z', got {list(action.keys())}"
-                )
-                traceback.print_stack()
-                action = np.zeros(4, dtype=np.float32)
+                    # 提取四元数 (x, y, z, w)
+                    if "delta_qw" in action:
+                        delta_quat = np.array([
+                            action["delta_qx"], action["delta_qy"],
+                            action["delta_qz"], action["delta_qw"]
+                        ], dtype=np.float32)
 
-        #if self.current_joint_pos is None:
-        if True:
-            # Read current joint positions
-            #TODO:获取当前关节位置
-            current_joint_pos = self.get_present_joint_state()
-            logger.info(f"Current joint positions: {current_joint_pos}")
-            self.current_joint_pos = np.array([current_joint_pos[name] for name in self.get_joint_names()])
+                    if "gripper" in action:
+                        gripper_val = action["gripper"]
+                else:
+                    logger.warning(f"Invalid action keys: {list(action.keys())}, keeping current position")
+                    desired_ee_pos = self.current_ee_pos.copy()
 
-        logger.info(f"self.Current joint positions: {self.current_joint_pos}")
-        # Calculate current end-effector position using forward kinematics
-        #if self.current_ee_pos is None:
-        if True:
-            self.current_ee_pos = self.kinematics.forward_kinematics(self.current_joint_pos[:-1])
+            logger.info(f"send_action Action: {action}, delta_ee: {delta_ee}")
 
-        use_delta_rot = True
-        if use_delta_rot:
+            # --- 4. 计算目标 EE 位姿 ---
+            desired_ee_pos = np.eye(4)
+
+            # 旋转计算 (使用 Scipy 替代 PyBullet)
             current_rot_mat = self.current_ee_pos[:3, :3]
-            delta_rot_mat = np.reshape(p.getMatrixFromQuaternion(delta_quat), (3, 3))
-            
-            # 应用旋转增量
-            new_rot_mat = delta_rot_mat @ current_rot_mat
-            
-            logger.info(f"Current end-effector position: {self.current_ee_pos}")
-            # Set desired end-effector position by adding delta
-            desired_ee_pos = np.eye(4)
-            #desired_ee_pos[:3, :3] = self.current_ee_pos[:3, :3]  # Keep orientation
-            desired_ee_pos[:3, :3] = new_rot_mat
-        else:
-            # --- 旋转部分：直接使用传入的绝对姿态 ---
-            # 因为 WebXR 那边已经处理好了 R_base * R_xr，所以这里直接转换即可
-            desired_ee_pos = np.eye(4)
-            new_rot_mat = np.reshape(p.getMatrixFromQuaternion(delta_quat), (3, 3))
-            desired_ee_pos[:3, :3] = new_rot_mat
-            # Add delta to position and clip to bounds
-        
-        # ----------------------------------------------------------------
-        # [新增/修改] 3. 纯 Action 累积 Debug 坐标 (Commanded Pose)
-        # ----------------------------------------------------------------
-        
-        # 如果是刚启动或刚 Reset，将 Debug 坐标对齐到当前机械臂实际位置
-        if self.debug_accumulated_pose is None:
-            self.debug_accumulated_pose = self.current_ee_pos.copy()
 
-        # 计算旋转增量矩阵
-        if delta_quat is not None:
-            delta_rot_mat = np.reshape(p.getMatrixFromQuaternion(delta_quat), (3, 3))
-        else:
-            delta_rot_mat = np.eye(3)
+            if delta_quat is not None:
+                # Scipy Rotation 输入顺序是 (x, y, z, w)
+                r_delta = R.from_quat(delta_quat)
+                delta_rot_mat = r_delta.as_matrix()
 
-        # === 更新 Debug 坐标 (无视 IK，无视边界) ===
-        # 1. 更新旋转: R_new = R_delta * R_old
-        self.debug_accumulated_pose[:3, :3] = delta_rot_mat @ self.debug_accumulated_pose[:3, :3]
-        # 2. 更新位置: P_new = P_old + Delta
-        self.debug_accumulated_pose[:3, 3] += delta_ee
+                # R_new = R_delta * R_curr
+                new_rot_mat = delta_rot_mat @ current_rot_mat
+                desired_ee_pos[:3, :3] = new_rot_mat
+            else:
+                desired_ee_pos[:3, :3] = current_rot_mat
 
-        # === 绘制 Debug 坐标 ===
-        # 使用上一轮修正后的 _debug_draw_frame 方法
-        # 这个坐标系完全由摇杆/输入控制，哪怕机械臂卡死，它也会动
-        self._debug_draw_frame(self.debug_accumulated_pose, label="Command", life_time=0.5)
+            # 位置计算
+            desired_ee_pos[:3, 3] = self.current_ee_pos[:3, 3] + delta_ee
 
-        desired_ee_pos[:3, 3] = self.current_ee_pos[:3, 3] + action[:3]
-
+        # --- 5. 边界截断 ---
         if self.end_effector_bounds is not None:
-            logger.info(f"Clip desired end-effector position to bounds {self.end_effector_bounds}")
             desired_ee_pos[:3, 3] = np.clip(
                 desired_ee_pos[:3, 3],
                 self.end_effector_bounds["min"],
                 self.end_effector_bounds["max"],
             )
 
-        # Compute inverse kinematics to get joint positions
-        target_joint_values_in_degrees = self.kinematics.inverse_kinematics(
+        # --- 6. 逆运动学 (IK) ---
+        # 使用 DifferentialIKWrapper 进行微分 IK 计算
+        target_joint_values_deg = self.diff_ik.step(
             self.current_joint_pos[:-1], desired_ee_pos
         )
 
-        logger.info(f"target_joint_values_in_degrees: {target_joint_values_in_degrees}")
-        # Create joint space action dictionary
-        #TODO: joint names
-        joint_action = {
-            f"{key}.pos": target_joint_values_in_degrees[i]*self.joint_direction[i] for i, key in enumerate(self.get_joint_names()[:-1])
-        }
+        # --- 7. 构造发送给 SimRobot 的 Joint Action ---
+        joint_action = {}
 
-        # Handle gripper separately if included in action
-        # Gripper delta action is in the range 0 - 2,
-        # We need to shift the action to the range -1, 1 so that we can expand it to -Max_gripper_pos, Max_gripper_pos
-        #TODO:gripper
-        gripper_pos_name = self.config.gripper_joint_name+'.pos'
+        # 映射回仿真器名称
+        for i, urdf_name in enumerate(URDF_JOINT_NAMES):
+            name = self.sim2robot[urdf_name]
+            # SimRobot 父类接受 f"{sim_name}.pos"
+            joint_action[f"{name}.pos"] = target_joint_values_deg[i] * self.joint_direction[i]
+
+        # --- 8. 处理夹爪 ---
+        gripper_pos_name = self.config.gripper_joint_name + '.pos'
         joint_action[gripper_pos_name] = np.clip(
-            self.current_joint_pos[-1] + (action[-1] - 1) * self.config.max_gripper_pos,
+            self.current_joint_pos[-1] + (gripper_val - 1) * self.config.max_gripper_pos,
             5,
             self.config.max_gripper_pos,
         )
 
-        logger.info(f"current_ee_pos: {self.current_ee_pos}")
-        logger.info(f"desired_ee_pos: {desired_ee_pos}")
         logger.info(f"current_joint_pos: {self.current_joint_pos}")
-        logger.info(f"target_joint_values_in_degrees: {target_joint_values_in_degrees}")
+        logger.info(f"Target Joints (deg): {target_joint_values_deg}")
+        logger.info(f"joint_action: {joint_action}")
 
+        # Debug Drawing
         self._debug_draw_frame(desired_ee_pos, label="Target", life_time=0.5)
-        
-        # 2. 画出当前的实际位置 (Actual)
-        self._debug_draw_frame(self.current_ee_pos, label="Current", life_time=0.5)        
+        self._debug_draw_frame(self.current_ee_pos, label="Current", life_time=0.5)
+
+        # 更新当前状态
         self.current_ee_pos = desired_ee_pos.copy()
         self.current_joint_pos = np.append(
-            target_joint_values_in_degrees.copy(), 
+            target_joint_values_deg.copy(),
             joint_action[gripper_pos_name]
         )
-        logger.info(f"Current joint positions: {self.current_joint_pos}")
-        # Send joint space action to parent class
+
+        # 发送给父类 (SimRobot) 执行底层 step
         return super().send_action(joint_action)        
 
     def get_observation(self) -> dict[str, Any]:
