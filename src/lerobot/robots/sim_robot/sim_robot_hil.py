@@ -63,9 +63,9 @@ class SimRobotHil(SimRobot):
             [ 0,  0,  -1]  
         ])
         mapping_matrix = np.array([
-            [0, 0, 1],  # Row 0
-            [1, 0, 0],  # Row 1
-            [0, 1, 0]   # Row 2
+            [1, 0, 0],  # Row 0   r->p,p->y,y->r
+            [0, 1, 0],  # Row 1   r->p,
+            [0, 0, 1]   # Row 2
         ])
         r_fix = R.from_matrix(mapping_matrix)
         self.webxr_translator = WebXRIntentTranslator(xr_to_robot_matrix=matrix, axis_map_rotation=r_fix)
