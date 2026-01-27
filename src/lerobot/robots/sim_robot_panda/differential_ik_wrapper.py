@@ -27,7 +27,10 @@ class DifferentialIKWrapper:
             return v
         return v * min(1.0, max_norm / n)
 
-    def step(self, q_current_deg, T_target):
+    def step(self, q_current_deg, T_target,
+        joint_task_weight: float = 0.0, # 如果为 None，则使用 self.posture_weight
+        target_joints: dict = {},      # {joint_name: angle_deg}
+        ):
         """
         q_current_deg: current joint positions (deg)
         T_target: absolute desired EE pose (4x4)
@@ -69,7 +72,9 @@ class DifferentialIKWrapper:
         # -----------------------------
         q_next_deg = self.kin.inverse_kinematics(
             q_current_deg,
-            T_step
+            T_step,
+            joint_task_weight,
+            target_joints,
         )
 
         return q_next_deg

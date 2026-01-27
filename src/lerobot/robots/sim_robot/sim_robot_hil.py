@@ -12,7 +12,7 @@ from scipy.spatial.transform import Rotation as R
 from lerobot.cameras.utils import make_cameras_from_configs
 from lerobot.errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
 from lerobot.robots import Robot
-from lerobot.model.kinematics import RobotKinematics
+from lerobot.model.be_kinematics import BeRobotKinematics
 from .config_sim_robot import SimRobotConfig, SimRobotHilConfig
 from .sim_robot import SimRobot
 from ..sim_robot_panda.differential_ik_wrapper import DifferentialIKWrapper
@@ -49,7 +49,7 @@ class SimRobotHil(SimRobot):
                 "Please set urdf_path in your SupreRobotFollowerEndEffectorConfig."
             )
 
-        self.kinematics = RobotKinematics(
+        self.kinematics = BeRobotKinematics(
             urdf_path=self.config.urdf_path,
             target_frame_name=self.config.target_frame_name,
             joint_names=URDF_JOINT_NAMES,
@@ -196,7 +196,7 @@ class SimRobotHil(SimRobot):
         # --- 6. 逆运动学 (IK) ---
         # 使用 DifferentialIKWrapper 进行微分 IK 计算
         target_joint_values_deg = self.diff_ik.step(
-            self.current_joint_pos[:-1], desired_ee_pos
+            self.current_joint_pos[:-1], desired_ee_pos,joint_task_weight=0.001,target_joints={"arml_joint3": 90},
         )
 
         # --- 7. 构造发送给 SimRobot 的 Joint Action ---
