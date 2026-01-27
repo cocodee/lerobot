@@ -58,9 +58,9 @@ class SimRobotHil(SimRobot):
 
         # Initialize WebXR Intent Translator
         matrix = np.array([
-            [ 1,  0, 0], 
+            [ -1,  0, 0], 
             [ 0,  1,  0], 
-            [ 0,  0,  1]  
+            [ 0,  0,  -1]  
         ])
         mapping_matrix = np.array([
             [0, 0, 1],  # Row 0
