@@ -196,7 +196,7 @@ class SimRobotHil(SimRobot):
         # --- 6. 逆运动学 (IK) ---
         # 使用 DifferentialIKWrapper 进行微分 IK 计算
         target_joint_values_deg = self.diff_ik.step(
-            self.current_joint_pos[:-1], desired_ee_pos,joint_task_weight=0.001,target_joints={"arml_joint3": 90},
+            self.current_joint_pos[:-1], desired_ee_pos,joint_task_weight=0.0005,target_joints={"arml_joint3": 90},
         )
 
         # --- 7. 构造发送给 SimRobot 的 Joint Action ---
