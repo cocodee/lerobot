@@ -442,7 +442,7 @@ class TestSafetyValidator:
             enabled=True,
             control_frequency=30.0,
             collision=CollisionConfig(enabled=True),
-            emergency_stop=EmergencyStopConfig(enabled=True),
+            emergency_stop=EmergencyStopConfig(enabled=False),
         )
         return SafetyValidator(
             config=config,
