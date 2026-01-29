@@ -69,3 +69,13 @@ def patch_builtins_input(monkeypatch):
             print(text)
 
     monkeypatch.setattr("builtins.input", print_text)
+
+
+def pytest_addoption(parser):
+    """Add custom command line options for pytest."""
+    parser.addoption(
+        "--custom-urdf",
+        action="store",
+        default=None,
+        help="Path to a custom URDF file for testing (default: use temporary mock URDF)",
+    )

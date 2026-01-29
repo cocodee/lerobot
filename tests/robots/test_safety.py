@@ -55,9 +55,19 @@ def joint_names():
 
 
 @pytest.fixture
-def temp_urdf_file():
-    """Create a temporary URDF file for testing."""
-    urdf_content = """<?xml version="1.0"?>
+def temp_urdf_file(request):
+    """Create a temporary URDF file for testing, or use custom URDF if provided."""
+    custom_urdf_path = request.config.getoption("--custom-urdf")
+
+    if custom_urdf_path:
+        # Use custom URDF file provided by user
+        custom_path = Path(custom_urdf_path)
+        if not custom_path.exists():
+            raise FileNotFoundError(f"Custom URDF file not found: {custom_urdf_path}")
+        yield str(custom_path)
+    else:
+        # Create a temporary URDF file for testing
+        urdf_content = """<?xml version="1.0"?>
 <robot name="test_robot">
   <link name="base_link">
     <inertial>
@@ -79,11 +89,11 @@ def temp_urdf_file():
   </link>
 </robot>
 """
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".urdf", delete=False) as f:
-        f.write(urdf_content)
-        temp_path = f.name
-    yield temp_path
-    Path(temp_path).unlink(missing_ok=True)
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".urdf", delete=False) as f:
+            f.write(urdf_content)
+            temp_path = f.name
+        yield temp_path
+        Path(temp_path).unlink(missing_ok=True)
 
 
 # =============================================================================
