@@ -185,12 +185,17 @@ class SupreRobotFollower(Robot):
         """获取机器人的当前位置。"""
         if not self.is_connected:
             raise RuntimeError("Robot is not connected.")
-        
+
         positions = self._hardware_manager.read()[0]
-        
+
         pos_dict = {f"{self.observation_joint_names[i]}": positions[i] for i in range(len(self.observation_joint_names))}
         print("current_pos: ", pos_dict)
         return {self.observation_joint_names[i]: positions[i] for i in range(len(self.observation_joint_names))}
+
+    def get_current_position_action(self) -> dict[str, Any]:
+        """获取机器人的当前位置作为动作格式（用于安全场景）。"""
+        current_pos = self.get_current_position()
+        return {f"{name}.pos": pos for name, pos in current_pos.items()}
 
     def _prepare_and_clamp_action(self, action: dict[str, Any]) -> Tuple[List[float], Dict[str, Any]]:
         if action is None:
@@ -315,6 +320,34 @@ class SupreRobotFollower(Robot):
         if not self.is_connected:
             raise RuntimeError("Follower robot is not connected.")
         logger.debug(f"Sending action: {action}")
+
+        # Safety validation: Check if action is safe before sending to hardware
+        if self.safety_validator:
+            import time
+            current_state = self.get_current_position()
+            safe_action, validation_info = self.safety_validator.validate_action(
+                action=action,
+                current_state=current_state,
+                current_time=time.time(),
+            )
+
+            # If emergency stop or collision detected, don't send the action
+            if validation_info.get('emergency_stop'):
+                logger.error("Emergency stop active, not sending action")
+                # Return current positions to maintain robot state
+                return self.get_current_position_action()
+
+            if validation_info.get('collision_detected'):
+                logger.warning("Collision detected, not sending action")
+                # Return current positions to maintain robot state
+                return self.get_current_position_action()
+
+            # Use the validated action (may be velocity/acceleration limited)
+            action = safe_action
+
+            if validation_info.get('modified'):
+                logger.info(f"Action modified by safety validator: {validation_info}")
+
         # 1. 调用辅助方法来完成所有的计算和安全检查
         final_target_positions, final_action_dict = self._prepare_and_clamp_action(action)
         print("final_target_positions: ",final_target_positions)
@@ -324,7 +357,7 @@ class SupreRobotFollower(Robot):
         # --- 直接发送逻辑 ---
         self.send_target_position(final_target_positions)
 
-        
+
         return final_action_dict
         
     def send_target_position(self, target_positions: list[float]) -> None:

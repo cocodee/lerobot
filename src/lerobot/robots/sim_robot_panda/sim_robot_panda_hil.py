@@ -211,6 +211,61 @@ class SimRobotPandaHil(SimRobotPanda):
             self.current_joint_pos, desired_ee_pos
         )
 
+        # --- 5.5 Safety validation (NEW) ---
+        # Apply safety checks to joint positions after IK
+        if self.safety_validator:
+            import time
+            # Create joint action for validation
+            joint_action_for_validation = {}
+            for i, urdf_name in enumerate(PANDA_URDF_JOINT_NAMES):
+                name = self.sim2robot[urdf_name]
+                joint_action_for_validation[f"{name}.pos"] = target_joint_values_deg[i]
+
+            # Create current state for validation
+            current_state = {}
+            for i, urdf_name in enumerate(PANDA_URDF_JOINT_NAMES):
+                name = self.sim2robot[urdf_name]
+                current_state[f"{name}.pos"] = self.current_joint_pos[i]
+
+            # Validate action
+            safe_action, validation_info = self.safety_validator.validate_action(
+                action=joint_action_for_validation,
+                current_state=current_state,
+                current_time=time.time(),
+            )
+
+            # If emergency stop or collision detected, don't send the action
+            if validation_info.get('emergency_stop'):
+                logger.error("Emergency stop active, not sending action")
+                # Return current positions to maintain robot state
+                current_action = {}
+                for i, urdf_name in enumerate(PANDA_URDF_JOINT_NAMES):
+                    name = self.sim2robot[urdf_name]
+                    current_action[f"{name}.pos"] = self.current_joint_pos[i]
+                current_action["finger_joint1.pos"] = 0.0
+                current_action["finger_joint2.pos"] = 0.0
+                return current_action
+
+            if validation_info.get('collision_detected'):
+                logger.warning("Collision detected, not sending action")
+                # Return current positions to maintain robot state
+                current_action = {}
+                for i, urdf_name in enumerate(PANDA_URDF_JOINT_NAMES):
+                    name = self.sim2robot[urdf_name]
+                    current_action[f"{name}.pos"] = self.current_joint_pos[i]
+                current_action["finger_joint1.pos"] = 0.0
+                current_action["finger_joint2.pos"] = 0.0
+                return current_action
+
+            # Use the validated joint positions (may be velocity/acceleration limited)
+            if validation_info.get('modified'):
+                logger.info(f"Action modified by safety validator: {validation_info}")
+                # Update target_joint_values_deg with safe values
+                for i, urdf_name in enumerate(PANDA_URDF_JOINT_NAMES):
+                    name = self.sim2robot[urdf_name]
+                    if f"{name}.pos" in safe_action:
+                        target_joint_values_deg[i] = safe_action[f"{name}.pos"]
+
         # --- 6. 构造发送给 SimRobot 的 Joint Action ---
         joint_action = {}
         

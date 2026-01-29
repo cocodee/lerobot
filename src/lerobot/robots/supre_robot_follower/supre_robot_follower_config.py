@@ -1,8 +1,13 @@
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import TYPE_CHECKING
 from lerobot.cameras import CameraConfig
 
 from lerobot.robots.config import RobotConfig
+
+# Avoid circular import for safety config
+if TYPE_CHECKING:
+    from lerobot.robots.safety import SafetyConfig
 # 1. 定义与 SupreRobot 相关的配置类
 @dataclass
 class MotorCalibration:
@@ -23,6 +28,10 @@ class SupreRobotFollowerConfig(RobotConfig):
     max_relative_joint_move: float = 15.0 #30.0
     prometheus_port: int | None = 8000
     control_frequency: int = 30
+
+    # Safety configuration (optional, defaults to disabled)
+    # Import SafetyConfig at runtime to avoid circular import
+    safety: field = field(default=None)
     calibration:list[MotorCalibration] = field(default_factory=lambda: [
         MotorCalibration(
             joint_name="left_arm_joint_1",

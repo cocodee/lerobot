@@ -1,9 +1,14 @@
 # lerobot/src/lerobot/robots/sim_robot/config_sim_robot.py
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 from lerobot.cameras.configs import CameraConfig, Cv2Rotation
 # from lerobot.cameras.opencv.configuration_opencv import OpenCVCameraConfig
 from lerobot.cameras.pybullet.pybullet_camera import PyBulletCameraConfig
 from ..config import RobotConfig
+
+# Avoid circular import for safety config
+if TYPE_CHECKING:
+    from lerobot.robots.safety import SafetyConfig
 
 def sim_robot_cameras_config() -> dict[str, CameraConfig]:
     """仿真环境相机配置，匹配camera_cfg参数"""
@@ -115,6 +120,11 @@ class SimRobotPandaHilConfig(SimRobotPandaConfig):
     # 仿真环境参数
     urdf_path: str = "/home/smai/workspace/dikeke/franka_description/fr3_urdfs/fr3_franka_hand_obj.xml"
     xml_path: str = "/home/smai/workspace/dikeke/franka_description/fr3_urdfs/fr3_franka_hand_obj.urdf"
+
+    # Safety configuration (optional, defaults to disabled)
+    # Import SafetyConfig at runtime to avoid circular import
+    safety: field = field(default=None)
+
     # End-effector frame name in the URDF
     target_frame_name: str = "hand"
 

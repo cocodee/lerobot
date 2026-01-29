@@ -54,6 +54,19 @@ class Robot(abc.ABC):
         if self.calibration_fpath.is_file():
             self._load_calibration()
 
+        # Initialize safety validator if config provides it
+        self.safety_validator = None
+        if hasattr(config, 'safety') and config.safety and config.safety.enabled:
+            urdf_path = getattr(config, 'urdf_path', None)
+            joint_names = getattr(self, 'observation_joint_names', None)
+            if urdf_path and joint_names:
+                from .safety import SafetyValidator
+                self.safety_validator = SafetyValidator(
+                    config=config.safety,
+                    urdf_path=urdf_path,
+                    joint_names=joint_names,
+                )
+
     def __str__(self) -> str:
         return f"{self.id} {self.__class__.__name__}"
 
