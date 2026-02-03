@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Tuple
 
 # Logger setup
-logger_mp = logging.get_logger(__name__)
+logger_mp = logging.getLogger(__name__)
 parent2_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(parent2_dir)
 
