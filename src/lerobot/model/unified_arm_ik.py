@@ -337,14 +337,14 @@ def get_base_paths(unit_test: bool, asset_subdir: str, urdf_name: str) -> Tuple[
 
 def create_g1_29_config(unit_test=False) -> ArmIKConfig:
     urdf, directory = get_base_paths(unit_test, "g1", "g1_body29_hand14.urdf")
-    joints = [
+    joints_to_lock = [
         "left_hip_pitch_joint", "left_hip_roll_joint", "left_hip_yaw_joint", "left_knee_joint",
         "left_ankle_pitch_joint", "left_ankle_roll_joint",
         "right_hip_pitch_joint", "right_hip_roll_joint", "right_hip_yaw_joint", "right_knee_joint",
         "right_ankle_pitch_joint", "right_ankle_roll_joint",
         "waist_yaw_joint", "waist_roll_joint", "waist_pitch_joint",
         "left_hand_thumb_0_joint", "left_hand_thumb_1_joint", "left_hand_thumb_2_joint",
-        "left_hand_middle_0_joint", "left_hand_middle_1_joint", 
+        "left_hand_middle_0_joint", "left_hand_middle_1_joint",
         "left_hand_index_0_joint", "left_hand_index_1_joint",
         "right_hand_thumb_0_joint", "right_hand_thumb_1_joint", "right_hand_thumb_2_joint",
         "right_hand_index_0_joint", "right_hand_index_1_joint",
@@ -352,6 +352,7 @@ def create_g1_29_config(unit_test=False) -> ArmIKConfig:
     ]
     return ArmIKConfig(
         name="G1_29", urdf_path=urdf, model_dir=directory, cache_filename="g1_29_model_cache.pkl",
+        joints_to_lock=joints_to_lock,
         ee_left=EndEffectorConfig("left_wrist_yaw_joint", np.array([0.05, 0, 0])),
         ee_right=EndEffectorConfig("right_wrist_yaw_joint", np.array([0.05, 0, 0])),
         weights=IKWeights(translation=50, rotation=1, regularization=0.02, smooth=0.1),
@@ -360,7 +361,7 @@ def create_g1_29_config(unit_test=False) -> ArmIKConfig:
 
 def create_g1_23_config(unit_test=False) -> ArmIKConfig:
     urdf, directory = get_base_paths(unit_test, "g1", "g1_body23.urdf")
-    joints = [
+    joints_to_lock = [
         "left_hip_pitch_joint", "left_hip_roll_joint", "left_hip_yaw_joint", "left_knee_joint",
         "left_ankle_pitch_joint", "left_ankle_roll_joint",
         "right_hip_pitch_joint", "right_hip_roll_joint", "right_hip_yaw_joint", "right_knee_joint",
@@ -368,6 +369,7 @@ def create_g1_23_config(unit_test=False) -> ArmIKConfig:
     ]
     return ArmIKConfig(
         name="G1_23", urdf_path=urdf, model_dir=directory, cache_filename="g1_23_model_cache.pkl",
+        joints_to_lock=joints_to_lock,
         ee_left=EndEffectorConfig("left_wrist_roll_joint", np.array([0.20, 0, 0])),
         ee_right=EndEffectorConfig("right_wrist_roll_joint", np.array([0.20, 0, 0])),
         weights=IKWeights(translation=50, rotation=0.5, regularization=0.02, smooth=0.1),
@@ -376,11 +378,11 @@ def create_g1_23_config(unit_test=False) -> ArmIKConfig:
 
 def create_h1_2_config(unit_test=False) -> ArmIKConfig:
     urdf, directory = get_base_paths(unit_test, "h1_2", "h1_2.urdf")
-    joints = [
+    joints_to_lock = [
         "left_hip_yaw_joint", "left_hip_pitch_joint", "left_hip_roll_joint", "left_knee_joint",
         "left_ankle_pitch_joint", "left_ankle_roll_joint", "right_hip_yaw_joint", "right_hip_pitch_joint",
         "right_hip_roll_joint", "right_knee_joint", "right_ankle_pitch_joint", "right_ankle_roll_joint",
-        "torso_joint", 
+        "torso_joint",
         "L_index_proximal_joint", "L_index_intermediate_joint", "L_middle_proximal_joint", "L_middle_intermediate_joint",
         "L_pinky_proximal_joint", "L_pinky_intermediate_joint", "L_ring_proximal_joint", "L_ring_intermediate_joint",
         "L_thumb_proximal_yaw_joint", "L_thumb_proximal_pitch_joint", "L_thumb_intermediate_joint", "L_thumb_distal_joint",
@@ -390,6 +392,7 @@ def create_h1_2_config(unit_test=False) -> ArmIKConfig:
     ]
     return ArmIKConfig(
         name="H1_2", urdf_path=urdf, model_dir=directory, cache_filename="h1_2_model_cache.pkl",
+        joints_to_lock=joints_to_lock,
         ee_left=EndEffectorConfig("left_wrist_yaw_joint", np.array([0.05, 0, 0])),
         ee_right=EndEffectorConfig("right_wrist_yaw_joint", np.array([0.05, 0, 0])),
         weights=IKWeights(translation=50, rotation=1, regularization=0.02, smooth=0.1),
@@ -398,7 +401,7 @@ def create_h1_2_config(unit_test=False) -> ArmIKConfig:
 
 def create_h1_config(unit_test=False) -> ArmIKConfig:
     urdf, directory = get_base_paths(unit_test, "h1", "h1_with_hand.urdf")
-    joints = [
+    joints_to_lock = [
         "right_hip_roll_joint", "right_hip_pitch_joint", "right_knee_joint", "left_hip_roll_joint",
         "left_hip_pitch_joint", "left_knee_joint", "torso_joint", "left_hip_yaw_joint", "right_hip_yaw_joint",
         "left_ankle_joint", "right_ankle_joint",
@@ -412,6 +415,7 @@ def create_h1_config(unit_test=False) -> ArmIKConfig:
     ]
     return ArmIKConfig(
         name="H1", urdf_path=urdf, model_dir=directory, cache_filename="h1_model_cache.pkl",
+        joints_to_lock=joints_to_lock,
         ee_left=EndEffectorConfig("left_elbow_joint", np.array([0.2605 + 0.05, 0, 0])),
         ee_right=EndEffectorConfig("right_elbow_joint", np.array([0.2605 + 0.05, 0, 0])),
         weights=IKWeights(translation=50, rotation=0.5, regularization=0.02, smooth=0.1),
