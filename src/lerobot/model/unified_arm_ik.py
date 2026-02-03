@@ -422,6 +422,23 @@ def create_h1_config(unit_test=False) -> ArmIKConfig:
         smooth_window_size=8
     )
 
+def create_panda_config(unit_test=False) -> ArmIKConfig:
+    urdf, directory = get_base_paths(unit_test, "panda", "fr3.urdf")
+    # For Panda, we typically don't lock joints since it's just a single arm
+    # Users can specify active_joint_names if needed
+    active_joint_names = [
+        "joint1", "joint2", "joint3", "joint4", "joint5", "joint6", "joint7"
+    ]
+    return ArmIKConfig(
+        name="Panda", urdf_path=urdf, model_dir=directory, cache_filename="panda_model_cache.pkl",
+        joints_to_lock=None,  # No joints to lock by default for single arm
+        active_joint_names=active_joint_names,
+        ee_left=EndEffectorConfig("joint7", np.array([0.0, 0.0, 0.0])),  # end effector link
+        ee_right=None,  # Panda is single arm
+        left_ee_frame_name="hand",
+        weights=IKWeights(translation=50, rotation=1.0, regularization=0.02, smooth=0.1),
+        smooth_window_size=14
+    )
 # ==========================================
 # UnifiedArmKinematics (BeRobotKinematics-like Interface)
 # ==========================================
@@ -431,6 +448,7 @@ class UnifiedArmKinematics:
         self,
         robot_type: str,
         target_frame_name: str,
+        urdf_path: str,
         unit_test: bool = False,
         cache_filename: Optional[str] = None,
         joint_names: Optional[List[str]] = None,
@@ -458,6 +476,7 @@ class UnifiedArmKinematics:
 
         arm_ik_config = create_unified_kinematics_config(
             robot_type=robot_type,
+            urdf_path=urdf_path,
             target_frame_name=target_frame_name,
             unit_test=unit_test,
             cache_filename=cache_filename,
@@ -600,6 +619,7 @@ class UnifiedArmKinematics:
 
 def create_unified_kinematics_config(
     robot_type: str,
+    urdf_path: str,
     target_frame_name: str,
     unit_test: bool = False,
     cache_filename: Optional[str] = None,
@@ -614,13 +634,21 @@ def create_unified_kinematics_config(
         "g1_23": create_g1_23_config,
         "h1_2": create_h1_2_config,
         "h1": create_h1_config,
+        "panda": create_panda_config,
     }
 
     if robot_type not in config_factory:
         raise ValueError(f"Unsupported robot_type: {robot_type}. Choose from {list(config_factory.keys())}")
 
     base_config = config_factory[robot_type](unit_test=unit_test)
-    
+
+    # Override urdf_path and model_dir if provided
+    if urdf_path is not None:
+        base_config.urdf_path = urdf_path
+        # Extract model_dir from urdf_path (directory containing the URDF)
+        from pathlib import Path
+        base_config.model_dir = str(Path(urdf_path).parent)
+
     # Override cache filename if provided
     if cache_filename is not None:
         base_config.cache_filename = cache_filename
@@ -637,13 +665,8 @@ def create_unified_kinematics_config(
     if 'posture_weight' in kwargs: base_config.weights.regularization = kwargs.pop('posture_weight')
     if 'smooth_window_size' in kwargs: base_config.smooth_window_size = kwargs.pop('smooth_window_size')
 
-    # For the target_frame_name, we need to ensure the base_config's ee_left/ee_right match what's expected.
-    # The base_config functions already set L_ee and R_ee, so we just need to pass the target_frame_name
-    # through to the UnifiedArmKinematics constructor.
-    # For now, we assume the user will pick a robot_type that has the desired EE frames or modify the config after creation.
-    
     # Override ee_left and ee_right frame names if provided. This is crucial for consistency with target_frame_name.
-    # The base configs default to "L_ee" and "R_ee", so we should update ArmIKConfig's 
+    # The base configs default to "L_ee" and "R_ee", so we should update ArmIKConfig's
     # `left_ee_frame_name` and `right_ee_frame_name` to match.
     if 'left_ee_frame_name' in kwargs: base_config.left_ee_frame_name = kwargs.pop('left_ee_frame_name')
     if 'right_ee_frame_name' in kwargs: base_config.right_ee_frame_name = kwargs.pop('right_ee_frame_name')

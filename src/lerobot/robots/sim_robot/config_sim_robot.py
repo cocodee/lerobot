@@ -145,4 +145,7 @@ class SimRobotPandaHilConfig(SimRobotPandaConfig):
             "z": 1.0,
         }
     )
-    gripper_joint_name: str = "left_arm_joint_7"    
+    gripper_joint_name: str = "left_arm_joint_7"
+
+    # Kinematics solver selection: "berobot" (default) or "unified"
+    kinematics_solver: str = "berobot"    

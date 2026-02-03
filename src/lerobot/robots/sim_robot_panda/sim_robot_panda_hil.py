@@ -11,6 +11,7 @@ from scipy.spatial.transform import Rotation as R
 
 from lerobot.errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
 from lerobot.model.be_kinematics import BeRobotKinematics
+from lerobot.model.unified_arm_ik import UnifiedArmKinematics
 from ..sim_robot.config_sim_robot import SimRobotPandaHilConfig
 from .sim_robot_panda import SimRobotPanda  # 确保这里导入的是 MuJoCo 版本的 SimRobot
 from .webxr_intent_translator import WebXRIntentTranslator
@@ -42,11 +43,35 @@ class SimRobotPandaHil(SimRobotPanda):
                 "Ensure config.urdf_path points to 'panda.urdf'."
             )
 
-        self.kinematics = BeRobotKinematics(
-            urdf_path=self.config.urdf_path,
-            target_frame_name=self.config.target_frame_name, # 通常是 "panda_link8" 或 "panda_hand"
-            joint_names=PANDA_URDF_JOINT_NAMES,
-        )
+        # 根据配置选择运动学求解器
+        kinematics_type = getattr(self.config, 'kinematics_solver', 'berobot').lower()
+
+        if kinematics_type == "unified":
+            # 使用 UnifiedArmKinematics (基于 Pinocchio + CasADi)
+            logger.info("Using UnifiedArmKinematics solver (Pinocchio + CasADi)")
+            self.kinematics = UnifiedArmKinematics(
+                robot_type="panda",
+                target_frame_name=self.config.target_frame_name,
+                urdf_path=self.config.urdf_path,
+                unit_test=False,
+                cache_filename="panda_model_cache.pkl",
+                joint_names=PANDA_URDF_JOINT_NAMES,
+                position_weight=50.0,
+                orientation_weight=1.0,
+                posture_weight=0.02,
+                joint_delta_limit=np.deg2rad(10),  # Limit joint change to 10 degrees per step
+                visualization=False,
+                smooth_window_size=14,
+            )
+        else:
+            # 使用 BeRobotKinematics (默认)
+            logger.info("Using BeRobotKinematics solver (default)")
+            self.kinematics = BeRobotKinematics(
+                urdf_path=self.config.urdf_path,
+                target_frame_name=self.config.target_frame_name, # 通常是 "panda_link8" 或 "panda_hand"
+                joint_names=PANDA_URDF_JOINT_NAMES,
+            )
+
         self.diff_ik = DifferentialIKWrapper(self.kinematics)
 
         self.end_effector_bounds = self.config.end_effector_bounds
