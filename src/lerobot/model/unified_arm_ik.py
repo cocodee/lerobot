@@ -735,7 +735,7 @@ class UnifiedArmKinematics:
             joint_pos_rad
         )
         
-        frame_id = self.unified_arm_ik.reduced_robot.model.getFrameId(self.target_frame_name+"_target",pin.FrameType.OP_FRAME)
+        frame_id = self.unified_arm_ik.reduced_robot.model.getFrameId(self.target_frame_name,pin.FrameType.OP_FRAME)
         if frame_id >= self.unified_arm_ik.reduced_robot.model.nframes:
             raise ValueError(f"Frame {self.target_frame_name} not found!")
             
