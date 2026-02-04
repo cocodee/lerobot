@@ -12,6 +12,8 @@ import logging
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Tuple
 from pathlib import Path
+from scipy.spatial.transform import Rotation as R
+
 
 # Logger setup
 logger_mp = logging.getLogger(__name__)
@@ -616,19 +618,21 @@ def create_h1_config(unit_test=False) -> ArmIKConfig:
 def create_panda_config(unit_test=False) -> ArmIKConfig:
     urdf, directory = get_base_paths(unit_test, "panda", "fr3.urdf")
     active_joint_names = [f"joint{i}" for i in range(1, 8)]
+    # 1. 定义位移 (URDF 中的 joint8 xyz)
+    offset_trans = np.array([0.0, 0.0, 0.107])
     
+    # 2. 定义旋转 (URDF 中的 hand_joint rpy)
+    # 注意：URDF 中的 -0.785398... 等于 -45 度
+    # 这里的 'z' 代表绕 Z 轴旋转
+    offset_rot = R.from_euler('z', -45, degrees=True).as_matrix()
     return ArmIKConfig(
         name="Panda", urdf_path=urdf, model_dir=directory, 
         cache_filename="panda_model_cache.pkl",
         active_joint_names=active_joint_names,
-        ee_left=EndEffectorConfig("joint7", np.array([0.0, 0.0, 0.107]), np.array([
-    [0, 0, 1],  # New X is Old Z
-    [0, 1, 0],  # New Y is Old Y
-    [-1, 0, 0]  # New Z is Old -X
-])),
+        ee_left=EndEffectorConfig("joint7", offset_trans, offset_rot),
         ee_right=None,
         left_ee_frame_name="hand",
-        weights=IKWeights(translation=50, rotation=1.0, regularization=0.02, smooth=0.1),
+        weights=IKWeights(translation=50, rotation=5.0, regularization=0.02, smooth=0.1),
         smooth_window_size=7
     )
 
