@@ -621,7 +621,11 @@ def create_panda_config(unit_test=False) -> ArmIKConfig:
         name="Panda", urdf_path=urdf, model_dir=directory, 
         cache_filename="panda_model_cache.pkl",
         active_joint_names=active_joint_names,
-        ee_left=EndEffectorConfig("joint7", np.array([0.0, 0.0, 0.107])),
+        ee_left=EndEffectorConfig("joint7", np.array([0.0, 0.0, 0.107]), np.array([
+    [0, 0, 1],  # New X is Old Z
+    [0, 1, 0],  # New Y is Old Y
+    [-1, 0, 0]  # New Z is Old -X
+])),
         ee_right=None,
         left_ee_frame_name="hand",
         weights=IKWeights(translation=50, rotation=1.0, regularization=0.02, smooth=0.1),
