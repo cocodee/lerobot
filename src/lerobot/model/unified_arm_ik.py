@@ -468,11 +468,11 @@ def create_panda_config(unit_test=False) -> ArmIKConfig:
         name="Panda", urdf_path=urdf, model_dir=directory, cache_filename="panda_model_cache.pkl",
         joints_to_lock=None,  # No joints to lock by default for single arm
         active_joint_names=active_joint_names,
-        ee_left=EndEffectorConfig("joint7", np.array([0.0, 0.0, 0.0])),  # end effector link
+        ee_left=EndEffectorConfig("joint7", np.array([0.0, 0.0, 0.107])),  # end effector link
         ee_right=None,  # Panda is single arm
         left_ee_frame_name="hand",
         weights=IKWeights(translation=50, rotation=1.0, regularization=0.02, smooth=0.1),
-        smooth_window_size=14
+        smooth_window_size=7
     )
 # ==========================================
 # UnifiedArmKinematics (BeRobotKinematics-like Interface)
