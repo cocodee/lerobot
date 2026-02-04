@@ -937,8 +937,9 @@ if __name__ == "__main__":
             new_rotation = (rot_noise * base_rot).toRotationMatrix()
             
             # 计算偏移量
-            z_offset = 0.1 * np.sin(step * 0.05)
-            x_offset = 0.05 * np.cos(step * 0.05)
+            z_offset = 0.2 * np.sin(step * 0.05)
+            y_offset = 0.05 * (1+np.sin(step * 0.05))
+            x_offset = 0.05 * (1+np.cos(step * 0.05))
 
             # === FIX START ===
             # 错误写法 (导致累积漂移): 
