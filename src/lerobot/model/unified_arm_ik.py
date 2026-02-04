@@ -889,8 +889,8 @@ if __name__ == "__main__":
         unit_test=UNIT_TEST,
         cache_filename=f"{robot_type}_unified_kin_cache.pkl",
         visualization=VISUALIZATION,
-        position_weight=100.0,
-        orientation_weight=10.0,
+        position_weight=1000.0,
+        orientation_weight=100.0,
         posture_weight=0.05,
         joint_delta_limit=np.deg2rad(10),
     )
