@@ -631,7 +631,7 @@ def create_panda_config(unit_test=False) -> ArmIKConfig:
         active_joint_names=active_joint_names,
         ee_left=EndEffectorConfig("joint7", offset_trans, offset_rot),
         ee_right=None,
-        left_ee_frame_name="hand",
+        left_ee_frame_name="L_ee",
         weights=IKWeights(translation=50, rotation=5.0, regularization=0.02, smooth=0.1),
         smooth_window_size=7
     )
