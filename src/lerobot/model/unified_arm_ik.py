@@ -572,7 +572,7 @@ class UnifiedArmKinematics:
         # Ensure we use the correct model for FK
         pin.framesForwardKinematics(self.unified_arm_ik.reduced_robot.model, self.unified_arm_ik.reduced_robot.data, q)
 
-        frame_id = self.unified_arm_ik.reduced_robot.model.getFrameId(self.target_frame_name)
+        frame_id = self.unified_arm_ik.reduced_robot.model.getFrameId(self.target_frame_name,cpin.FrameType.BODY)
         return self.unified_arm_ik.reduced_robot.data.oMf[frame_id].homogeneous
 
     def inverse_kinematics(
