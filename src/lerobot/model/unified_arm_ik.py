@@ -325,13 +325,22 @@ class UnifiedArmIK:
     def _save_cache(self):
         """保存模型缓存（不包含 CasADi 对象）"""
         try:
+            # ✅ FIX: 将 EndEffectorConfig 转换为 dict 以便安全序列化
+            def ee_to_dict(ee: Optional[EndEffectorConfig]) -> Optional[dict]:
+                if ee is None:
+                    return None
+                return {
+                    "parent_joint_name": ee.parent_joint_name,
+                    "offset_translation": ee.offset_translation,
+                    "offset_rotation": ee.offset_rotation,
+                }
+            
             data = {
                 "robot_model": self.robot.model,
                 "reduced_model": self.reduced_robot.model,
-                # 保存配置以确保一致性
                 "config": {
-                    "ee_left": self.config.ee_left,
-                    "ee_right": self.config.ee_right,
+                    "ee_left": ee_to_dict(self.config.ee_left),
+                    "ee_right": ee_to_dict(self.config.ee_right),
                     "left_ee_frame_name": self.config.left_ee_frame_name,
                     "right_ee_frame_name": self.config.right_ee_frame_name,
                 }
@@ -348,10 +357,26 @@ class UnifiedArmIK:
             with open(self.cache_path, "rb") as f:
                 data = pickle.load(f)
             
-            # 验证配置匹配
+            # ✅ FIX: 正确比较配置，处理 numpy 数组
             cached_config = data.get("config", {})
-            if (cached_config.get("ee_left") != self.config.ee_left or
-                cached_config.get("ee_right") != self.config.ee_right):
+            
+            # 比较 ee_left
+            ee_left_match = self._compare_ee_config(
+                cached_config.get("ee_left"), 
+                self.config.ee_left
+            )
+            
+            # 比较 ee_right  
+            ee_right_match = self._compare_ee_config(
+                cached_config.get("ee_right"),
+                self.config.ee_right
+            )
+            
+            # 比较帧名
+            left_name_match = cached_config.get("left_ee_frame_name") == self.config.left_ee_frame_name
+            right_name_match = cached_config.get("right_ee_frame_name") == self.config.right_ee_frame_name
+            
+            if not (ee_left_match and ee_right_match and left_name_match and right_name_match):
                 logger_mp.warning("Cache config mismatch, rebuilding model...")
                 raise ValueError("Config mismatch")
             
@@ -364,9 +389,42 @@ class UnifiedArmIK:
             reduced_robot.data = reduced_robot.model.createData()
             
             return robot, reduced_robot
+            
         except Exception as e:
             logger_mp.error(f"Cache loading failed: {e}")
             raise
+
+    def _compare_ee_config(self, cached_ee: Optional[dict], current_ee: Optional[EndEffectorConfig]) -> bool:
+        """安全比较 EndEffectorConfig，处理 numpy 数组"""
+        # 处理 None 情况
+        if cached_ee is None and current_ee is None:
+            return True
+        if cached_ee is None or current_ee is None:
+            return False
+        
+        # 比较 parent_joint_name
+        if cached_ee.get("parent_joint_name") != current_ee.parent_joint_name:
+            return False
+        
+        # 比较 offset_translation (numpy array)
+        cached_trans = cached_ee.get("offset_translation")
+        current_trans = current_ee.offset_translation
+        if cached_trans is None or current_trans is None:
+            if cached_trans is not current_trans:  # 一个为 None 另一个不为 None
+                return False
+        elif not np.array_equal(cached_trans, current_trans):
+            return False
+        
+        # 比较 offset_rotation (numpy array)
+        cached_rot = cached_ee.get("offset_rotation")
+        current_rot = current_ee.offset_rotation
+        if cached_rot is None or current_rot is None:
+            if cached_rot is not current_rot:
+                return False
+        elif not np.array_equal(cached_rot, current_rot):
+            return False
+        
+        return True
 
     def scale_arms(self, human_left_pose: Optional[np.ndarray], 
                    human_right_pose: Optional[np.ndarray]) -> Tuple[Optional[np.ndarray], Optional[np.ndarray]]:
