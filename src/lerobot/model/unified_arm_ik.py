@@ -862,9 +862,16 @@ if __name__ == "__main__":
     UNIT_TEST = True
     VISUALIZATION = True
     
+    # 请确保路径正确
     robot_type = "panda"
     target_ee = "hand"
+    # 注意：这里的路径可能需要根据你的实际环境修改
     urdf_path = "/home/smai/workspace/dikeke/franka_description/fr3_urdfs/fr3_franka_hand_obj.urdf"
+
+    # 如果 URDF 文件不存在，避免报错，提示用户
+    if not os.path.exists(urdf_path):
+        logger_mp.error(f"URDF file not found at: {urdf_path}")
+        sys.exit(1)
 
     unified_kinematics_solver = UnifiedArmKinematics(
         robot_type=robot_type,
@@ -883,15 +890,23 @@ if __name__ == "__main__":
         pin.neutral(unified_kinematics_solver.unified_arm_ik.reduced_robot.model).copy()
     )
     
+    # 获取初始位姿
     initial_ee_pose = unified_kinematics_solver.forward_kinematics(initial_q_deg)
 
-    L_tf_target_init = pin.SE3(pin.Quaternion(1, 0, 0, 0), np.array([0.25, +0.25, 0.1]))
-    R_tf_target_init = pin.SE3(pin.Quaternion(1, 0, 0, 0), np.array([0.25, -0.25, 0.1]))
+    # 定义左右手的初始目标基准位姿
+    L_tf_target_init = pin.SE3(pin.Quaternion(1, 0, 0, 0), np.array([0.25, +0.25, 0.5])) # z轴稍微抬高一点便于观察
+    R_tf_target_init = pin.SE3(pin.Quaternion(1, 0, 0, 0), np.array([0.25, -0.25, 0.5]))
 
+    # === FIX START ===
+    # 1. 保存一个不变的“基准”位姿 (Base Pose)
     if unified_kinematics_solver.is_left_arm_control:
-        active_ee_target = L_tf_target_init.homogeneous
+        base_ee_target_matrix = L_tf_target_init.homogeneous.copy()
     else:
-        active_ee_target = R_tf_target_init.homogeneous
+        base_ee_target_matrix = R_tf_target_init.homogeneous.copy()
+
+    # 2. active_ee_target 作为当前要发送给 IK 的目标，初始化为基准
+    active_ee_target = base_ee_target_matrix.copy()
+    # === FIX END ===
 
     rotation_speed = 0.005
     noise_trans = 0.001
@@ -902,12 +917,16 @@ if __name__ == "__main__":
     if input("Enter 's' to start simulation:\n").lower() == 's':
         step = 0
         current_q_deg = initial_q_deg
+        
+        # 记录基准位置向量
+        base_translation = base_ee_target_matrix[:3, 3].copy()
+
         while True:
-            # 生成动态目标
+            # 生成动态旋转
             angle = rotation_speed * step if step <= 120 else rotation_speed * (240 - step)
             base_rot = pin.Quaternion(np.cos(angle/2), 0, np.sin(angle/2), 0)
             
-            # 添加噪声
+            # 添加旋转噪声
             rot_noise = pin.Quaternion(
                 np.cos(np.random.normal(0, noise_rot)/2), 
                 np.random.normal(0, noise_rot/2), 
@@ -917,11 +936,23 @@ if __name__ == "__main__":
             
             new_rotation = (rot_noise * base_rot).toRotationMatrix()
             
+            # 计算偏移量
             z_offset = 0.1 * np.sin(step * 0.05)
             x_offset = 0.05 * np.cos(step * 0.05)
 
-            current_target_translation = active_ee_target[:3, 3] + np.array([x_offset, 0, z_offset])
-            logger_mp.info(f"[{robot_type.upper()}] Target: {current_target_translation}")
+            # === FIX START ===
+            # 错误写法 (导致累积漂移): 
+            # current_target_translation = active_ee_target[:3, 3] + np.array([x_offset, 0, z_offset])
+            
+            # 正确写法 (基于基准位置计算):
+            current_target_translation = base_translation + np.array([x_offset, 0, z_offset])
+            # === FIX END ===
+
+            # logging.info 太快可能会刷屏，建议偶尔打印
+            if step % 20 == 0:
+                logger_mp.info(f"[{robot_type.upper()}] Step {step} Target Z: {current_target_translation[2]:.4f}")
+
+            # 更新目标矩阵
             active_ee_target[:3, :3] = new_rotation
             active_ee_target[:3, 3] = current_target_translation
 
@@ -929,10 +960,6 @@ if __name__ == "__main__":
                 sol_q_deg = unified_kinematics_solver.inverse_kinematics(current_q_deg, active_ee_target)
                 current_q_deg = sol_q_deg
                 
-                # ✅ FIX: 避免重复显示（UnifiedArmIK.solve_ik 已经调用了 display）
-                # if VISUALIZATION:
-                #     unified_kinematics_solver.unified_arm_ik.vis.display(np.deg2rad(current_q_deg))
-
             except Exception as e:
                 logger_mp.error(f"Error in IK: {e}")
 
