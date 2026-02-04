@@ -161,7 +161,7 @@ class UnifiedArmIK:
         if self.config.smooth_window_size == 14:
             weights = np.array([0.4, 0.3, 0.2, 0.1])
         else:
-            weights = np.array([0.5, 0.2, 0.1, 0.1])  # 均匀权重
+            weights = np.array([0.5, 0.2, 0.2, 0.1])  # 均匀权重
         
         self.smooth_filter = WeightedMovingFilter(weights, self.reduced_robot.model.nq)
         self.init_data = np.zeros(self.reduced_robot.model.nq)
