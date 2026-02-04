@@ -293,9 +293,9 @@ class UnifiedArmIK:
         # 显示 EE Frames
         frame_ids = []
         if self.use_left:
-            frame_ids.append(self.reduced_robot.model.getFrameId(self.config.left_ee_frame_name))
+            frame_ids.append(self.reduced_robot.model.getFrameId(self.config.left_ee_frame_name,pin.FrameType.OP_FRAME))
         if self.use_right:
-            frame_ids.append(self.reduced_robot.model.getFrameId(self.config.right_ee_frame_name))
+            frame_ids.append(self.reduced_robot.model.getFrameId(self.config.right_ee_frame_name,pin.FrameType.OP_FRAME))
             
         self.vis.displayFrames(True, frame_ids=frame_ids, axis_length=0.15, axis_width=5)
         self.vis.display(pin.neutral(self.reduced_robot.model))
