@@ -139,7 +139,7 @@ class UnifiedArmIK:
             )
         )
 
-def _setup_casadi_optimization(self):
+    def _setup_casadi_optimization(self):
         # Model & Data
         self.cmodel = cpin.Model(self.reduced_robot.model)
         self.cdata = self.cmodel.createData()
