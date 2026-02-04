@@ -44,7 +44,7 @@ class SimRobotPandaHil(SimRobotPanda):
             )
 
         # 根据配置选择运动学求解器
-        kinematics_type = getattr(self.config, 'kinematics_solver', 'unified').lower()
+        kinematics_type = getattr(self.config, 'kinematics_solver', 'berobot').lower()
 
         if kinematics_type == "unified":
             # 使用 UnifiedArmKinematics (基于 Pinocchio + CasADi)
