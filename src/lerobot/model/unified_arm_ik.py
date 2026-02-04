@@ -735,7 +735,7 @@ class UnifiedArmKinematics:
             joint_pos_rad
         )
         
-        frame_id = self.unified_arm_ik.reduced_robot.model.getFrameId(self.target_frame_name,pin.FrameType.OP_FRAME)
+        frame_id = self.unified_arm_ik.reduced_robot.model.getFrameId(self.target_frame_name+"_target",pin.FrameType.OP_FRAME)
         if frame_id >= self.unified_arm_ik.reduced_robot.model.nframes:
             raise ValueError(f"Frame {self.target_frame_name} not found!")
             
@@ -872,7 +872,7 @@ if __name__ == "__main__":
     
     # 请确保路径正确
     robot_type = "panda"
-    target_ee = "hand"
+    target_ee = "L_ee"
     # 注意：这里的路径可能需要根据你的实际环境修改
     urdf_path = "/home/smai/workspace/dikeke/franka_description/fr3_urdfs/fr3_franka_hand_obj.urdf"
 
