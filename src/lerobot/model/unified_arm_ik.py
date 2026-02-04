@@ -908,7 +908,7 @@ if __name__ == "__main__":
     active_ee_target = base_ee_target_matrix.copy()
     # === FIX END ===
 
-    rotation_speed = 0.005
+    rotation_speed = 0.05
     noise_trans = 0.001
     noise_rot = 0.01
 
