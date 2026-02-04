@@ -181,13 +181,13 @@ class UnifiedArmIK:
         
         # 获取 Frame ID（必须在添加 Frame 后）
         if self.use_left:
-            self.L_hand_id = self.reduced_robot.model.getFrameId(self.config.left_ee_frame_name)
+            self.L_hand_id = self.reduced_robot.model.getFrameId(self.config.left_ee_frame_name,pin.FrameType.OP_FRAME)
             if self.L_hand_id >= self.reduced_robot.model.nframes:
                 raise ValueError(f"Left EE frame '{self.config.left_ee_frame_name}' not found!")
             self.param_tf_l = self.opti.parameter(4, 4)
             
         if self.use_right:
-            self.R_hand_id = self.reduced_robot.model.getFrameId(self.config.right_ee_frame_name)
+            self.R_hand_id = self.reduced_robot.model.getFrameId(self.config.right_ee_frame_name,pin.FrameType.OP_FRAME)
             if self.R_hand_id >= self.reduced_robot.model.nframes:
                 raise ValueError(f"Right EE frame '{self.config.right_ee_frame_name}' not found!")
             self.param_tf_r = self.opti.parameter(4, 4)
