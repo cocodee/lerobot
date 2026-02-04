@@ -968,7 +968,39 @@ if __name__ == "__main__":
             try:
                 sol_q_deg = unified_kinematics_solver.inverse_kinematics(current_q_deg, active_ee_target)
                 current_q_deg = sol_q_deg
+                # ==========================================
+                # ✅ 新增：数学验证逻辑 (Validation Logic)
+                # ==========================================
                 
+                # 2. 将解代回 FK (闭环计算)
+                # 注意：forward_kinematics 必须计算 target_ee 这一帧的位姿
+                actual_ee_pose_matrix = unified_kinematics_solver.forward_kinematics(sol_q_deg)
+
+                # 3. 提取平移和旋转
+                target_pos = active_ee_target[:3, 3]
+                actual_pos = actual_ee_pose_matrix[:3, 3]
+                
+                target_rot = active_ee_target[:3, :3]
+                actual_rot = actual_ee_pose_matrix[:3, :3]
+
+                # 4. 计算误差指标
+                
+                # A. 位置误差 (欧几里得距离)
+                pos_error = np.linalg.norm(target_pos - actual_pos)
+                
+                # B. 旋转误差 (计算旋转矩阵差异的 Frobenius 范数，或者转角误差)
+                # 简单方法：计算 R_diff = R_actual.T * R_target，看它离单位矩阵有多远
+                rot_error_matrix = np.dot(actual_rot.T, target_rot)
+                # 使用 pinocchio 的 log3 计算旋转向量，其模长即为角度误差(弧度)
+                rot_error_rad = np.linalg.norm(pin.log3(rot_error_matrix))
+                rot_error_deg = np.rad2deg(rot_error_rad)
+
+                # 5. 打印证明结果
+                # 如果 IK 工作正常，pos_error 应 < 0.001 (1mm), rot_error_deg 应 < 0.1度
+                # 注意：这取决于你的权重和求解器精度设置
+                if step % 20 == 0:
+                    status = "✅ PASS" if (pos_error < 0.005 and rot_error_deg < 1.0) else "❌ HIGH ERROR"
+                    print(f"[{status}] Step {step} | Pos Err: {pos_error*1000:.2f} mm | Rot Err: {rot_error_deg:.2f} deg")               
             except Exception as e:
                 logger_mp.error(f"Error in IK: {e}")
 
