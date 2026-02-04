@@ -120,8 +120,9 @@ class UnifiedArmIK:
         else:
              # Fallback simple weights
              weights = np.array([0.4, 0.3, 0.2, 0.1])
-             
-        self.smooth_filter = WeightedMovingFilter(weights, self.config.smooth_window_size)
+
+        # IMPORTANT: data_size should be the number of joints (nq), NOT the window size
+        self.smooth_filter = WeightedMovingFilter(weights, self.reduced_robot.model.nq)
         self.init_data = np.zeros(self.reduced_robot.model.nq)
 
         # Visualization
