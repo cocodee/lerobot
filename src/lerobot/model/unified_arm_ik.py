@@ -139,65 +139,99 @@ class UnifiedArmIK:
             )
         )
 
-    def _setup_casadi_optimization(self):
+def _setup_casadi_optimization(self):
         # Model & Data
         self.cmodel = cpin.Model(self.reduced_robot.model)
         self.cdata = self.cmodel.createData()
 
-        # Optimization Problem
+        # --- 1. 定义 Opti 和 MX 变量 (外部接口保持不变) ---
         self.opti = casadi.Opti()
         self.var_q = self.opti.variable(self.reduced_robot.model.nq)
         self.var_q_last = self.opti.parameter(self.reduced_robot.model.nq)
-        
-        # 3. 关键修改：建立基于 var_q 的计算图，而不是使用独立的 Function 对象
-        # 这样可以灵活地逐步累加 Cost
-        cpin.framesForwardKinematics(self.cmodel, self.cdata, self.var_q)
 
-        total_cost = 0
+        # --- 2. 定义 SX 变量用于 Pinocchio 计算 (内部计算图) ---
+        # 必须使用 SX 来满足 Pinocchio 的 C++ 接口要求
+        q_sx = casadi.SX.sym("q_sx", self.reduced_robot.model.nq)
+        q_last_sx = casadi.SX.sym("q_last_sx", self.reduced_robot.model.nq)
+
+        # 使用 SX 变量运行运动学
+        # cdata 会存储 SX 类型的表达式
+        cpin.framesForwardKinematics(self.cmodel, self.cdata, q_sx)
+
+        total_cost_sx = 0
         w = self.config.weights
+        
+        # 准备构建 Function 的输入列表
+        sx_inputs = [q_sx, q_last_sx]
+        mx_inputs = [self.var_q, self.var_q_last]
 
-        # === 左臂逻辑 ===
+        # === 左臂逻辑 (基于 SX 构建) ===
         if self.use_left:
+            # 定义 Opti 参数 (MX)
             self.param_tf_l = self.opti.parameter(4, 4)
+            # 定义对应的 SX 符号
+            tf_l_sx = casadi.SX.sym("tf_l_sx", 4, 4)
+            
+            # 添加到输入列表
+            sx_inputs.append(tf_l_sx)
+            mx_inputs.append(self.param_tf_l)
+
             self.L_hand_id = self.reduced_robot.model.getFrameId(self.config.left_ee_frame_name)
             
-            # 获取符号变量
+            # 获取符号变量 (SX)
             pos_L = self.cdata.oMf[self.L_hand_id].translation
             rot_L = self.cdata.oMf[self.L_hand_id].rotation
             
-            # 计算误差
-            diff_trans_L = pos_L - self.param_tf_l[:3, 3]
-            diff_rot_L = cpin.log3(rot_L @ self.param_tf_l[:3, :3].T)
+            # 计算误差 (SX)
+            diff_trans_L = pos_L - tf_l_sx[:3, 3]
+            diff_rot_L = cpin.log3(rot_L @ tf_l_sx[:3, :3].T)
             
-            # 累加 Cost (权重乘在每一项上)
-            total_cost += w.translation * casadi.sumsqr(diff_trans_L)
-            total_cost += w.rotation * casadi.sumsqr(diff_rot_L)
+            # 累加 Cost (SX)
+            total_cost_sx += w.translation * casadi.sumsqr(diff_trans_L)
+            total_cost_sx += w.rotation * casadi.sumsqr(diff_rot_L)
 
-        # === 右臂逻辑 ===
+        # === 右臂逻辑 (基于 SX 构建) ===
         if self.use_right:
+            # 定义 Opti 参数 (MX)
             self.param_tf_r = self.opti.parameter(4, 4)
+            # 定义对应的 SX 符号
+            tf_r_sx = casadi.SX.sym("tf_r_sx", 4, 4)
+
+            # 添加到输入列表
+            sx_inputs.append(tf_r_sx)
+            mx_inputs.append(self.param_tf_r)
+
             self.R_hand_id = self.reduced_robot.model.getFrameId(self.config.right_ee_frame_name)
             
-            # 获取符号变量 (cdata 中的数据是共享的，不需要再次调用 framesForwardKinematics)
+            # 获取符号变量 (SX)
             pos_R = self.cdata.oMf[self.R_hand_id].translation
             rot_R = self.cdata.oMf[self.R_hand_id].rotation
             
-            # 计算误差
-            diff_trans_R = pos_R - self.param_tf_r[:3, 3]
-            diff_rot_R = cpin.log3(rot_R @ self.param_tf_r[:3, :3].T)
+            # 计算误差 (SX)
+            diff_trans_R = pos_R - tf_r_sx[:3, 3]
+            diff_rot_R = cpin.log3(rot_R @ tf_r_sx[:3, :3].T)
             
-            # 累加 Cost
-            total_cost += w.translation * casadi.sumsqr(diff_trans_R)
-            total_cost += w.rotation * casadi.sumsqr(diff_rot_R)
+            # 累加 Cost (SX)
+            total_cost_sx += w.translation * casadi.sumsqr(diff_trans_R)
+            total_cost_sx += w.rotation * casadi.sumsqr(diff_rot_R)
 
-        # === 公共 Cost ===
-        total_cost += w.regularization * casadi.sumsqr(self.var_q)
-        total_cost += w.smooth * casadi.sumsqr(self.var_q - self.var_q_last)
+        # === 公共 Cost (SX) ===
+        total_cost_sx += w.regularization * casadi.sumsqr(q_sx)
+        total_cost_sx += w.smooth * casadi.sumsqr(q_sx - q_last_sx)
 
-        # 设置优化目标
-        self.opti.minimize(total_cost)
+        # --- 3. 桥接 SX 和 MX ---
+        # 创建一个 CasADi 函数，将 SX 计算图封装起来
+        # 输入: [q, q_last, tf_l?, tf_r?] (SX)
+        # 输出: cost (SX)
+        cost_func = casadi.Function('cost_func', sx_inputs, [total_cost_sx])
 
-        # 设置约束
+        # 在 Opti 中调用该函数，传入 MX 变量，得到 MX 类型的 Cost
+        total_cost_mx = cost_func(*mx_inputs)
+
+        # --- 4. 设置优化器 ---
+        self.opti.minimize(total_cost_mx)
+
+        # 设置约束 (这里直接用 MX 变量即可，因为是简单的边界约束)
         self.opti.subject_to(self.opti.bounded(
             self.reduced_robot.model.lowerPositionLimit,
             self.var_q,
