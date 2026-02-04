@@ -862,11 +862,13 @@ if __name__ == "__main__":
     UNIT_TEST = True
     VISUALIZATION = True
     
-    robot_type = "h1_2"
-    target_ee = "L_ee"
+    robot_type = "panda"
+    target_ee = "hand"
+    urdf_path = "/home/smai/workspace/dikeke/franka_description/fr3_urdfs/fr3_franka_hand_obj.urdf"
 
     unified_kinematics_solver = UnifiedArmKinematics(
         robot_type=robot_type,
+        urdf_path= urdf_path,
         target_frame_name=target_ee,
         unit_test=UNIT_TEST,
         cache_filename=f"{robot_type}_unified_kin_cache.pkl",
