@@ -602,13 +602,11 @@ class UnifiedArmKinematics:
         if self.is_left_arm_control:
             left_wrist_target = desired_ee_pose
             # Inactive arm (right) target is its current pose to keep it stable
-            right_ee_id = self.unified_arm_ik.reduced_robot.model.getFrameId(self.arm_ik_config.right_ee_frame_name)
-            right_wrist_target = self.unified_arm_ik.reduced_robot.data.oMf[right_ee_id].homogeneous
+            right_wrist_target = None
         else:  # Controlling right arm
             right_wrist_target = desired_ee_pose
             # Inactive arm (left) target is its current pose to keep it stable
-            left_ee_id = self.unified_arm_ik.reduced_robot.model.getFrameId(self.arm_ik_config.left_ee_frame_name)
-            left_wrist_target = self.unified_arm_ik.reduced_robot.data.oMf[left_ee_id].homogeneous
+            left_wrist_target = None
 
         # Update weights dynamically if provided for this specific solve call
         # Note: UnifiedArmIK re-initializes CasADi solver only on UnifiedArmIK init.
