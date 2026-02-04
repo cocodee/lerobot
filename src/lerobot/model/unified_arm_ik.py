@@ -921,6 +921,7 @@ if __name__ == "__main__":
             x_offset = 0.05 * np.cos(step * 0.05)
 
             current_target_translation = active_ee_target[:3, 3] + np.array([x_offset, 0, z_offset])
+            logger_mp.info(f"[{robot_type.upper()}] Target: {current_target_translation}")
             active_ee_target[:3, :3] = new_rotation
             active_ee_target[:3, 3] = current_target_translation
 
