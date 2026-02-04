@@ -176,7 +176,7 @@ class UnifiedArmIK:
             sx_inputs.append(tf_l_sx)
             mx_inputs.append(self.param_tf_l)
 
-            self.L_hand_id = self.reduced_robot.model.getFrameId(self.config.left_ee_frame_name)
+            self.L_hand_id = self.reduced_robot.model.getFrameId(self.config.left_ee_frame_name,cpin.FrameType.BODY)
             
             # 获取符号变量 (SX)
             pos_L = self.cdata.oMf[self.L_hand_id].translation
@@ -201,7 +201,7 @@ class UnifiedArmIK:
             sx_inputs.append(tf_r_sx)
             mx_inputs.append(self.param_tf_r)
 
-            self.R_hand_id = self.reduced_robot.model.getFrameId(self.config.right_ee_frame_name)
+            self.R_hand_id = self.reduced_robot.model.getFrameId(self.config.right_ee_frame_name,cpin.FrameType.BODY)
             
             # 获取符号变量 (SX)
             pos_R = self.cdata.oMf[self.R_hand_id].translation
