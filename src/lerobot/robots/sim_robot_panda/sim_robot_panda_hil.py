@@ -56,12 +56,11 @@ class SimRobotPandaHil(SimRobotPanda):
                 unit_test=False,
                 cache_filename="panda_model_cache.pkl",
                 joint_names=PANDA_URDF_JOINT_NAMES,
-                position_weight=50.0,
+                position_weight=100.0,
                 orientation_weight=1.0,
                 posture_weight=0.02,
                 joint_delta_limit=np.deg2rad(10),  # Limit joint change to 10 degrees per step
                 visualization=False,
-                smooth_window_size=14,
             )
         else:
             # 使用 BeRobotKinematics (默认)
