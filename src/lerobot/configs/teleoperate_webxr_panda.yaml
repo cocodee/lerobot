@@ -17,7 +17,7 @@ robot:
   xml_path: "/home/smai/workspace/dikeke/franka_description/fr3_urdfs/fr3_franka_hand_obj.xml"
 
   # Target end-effector frame name in URDF
-  target_frame_name: "hand"
+  target_frame_name: "L_ee"
   kinematics_solver: "unified"    
   # End-effector workspace boundaries (min and max for x, y, z)
   end_effector_bounds:
