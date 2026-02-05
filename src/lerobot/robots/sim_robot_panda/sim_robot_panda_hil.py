@@ -56,9 +56,9 @@ class SimRobotPandaHil(SimRobotPanda):
                 unit_test=False,
                 cache_filename="panda_model_cache.pkl",
                 joint_names=PANDA_URDF_JOINT_NAMES,
-                position_weight=100.0,
-                orientation_weight=1.0,
-                posture_weight=0.02,
+                position_weight=1000.0,
+                orientation_weight=100.0,
+                posture_weight=0.05,
                 joint_delta_limit=np.deg2rad(10),  # Limit joint change to 10 degrees per step
                 visualization=False,
             )
