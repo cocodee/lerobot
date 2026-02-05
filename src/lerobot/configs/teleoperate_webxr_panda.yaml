@@ -18,7 +18,7 @@ robot:
 
   # Target end-effector frame name in URDF
   target_frame_name: "hand"
-  kinematics_solver: "berobot"    
+  kinematics_solver: "unified"    
   # End-effector workspace boundaries (min and max for x, y, z)
   end_effector_bounds:
     min: [-2.0, -2.0, -2.0]
