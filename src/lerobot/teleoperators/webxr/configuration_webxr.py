@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from ..config import TeleoperatorConfig
-from lerobot.common.policies import register_policy
 
 @TeleoperatorConfig.register_subclass("webxr")
 @dataclass
