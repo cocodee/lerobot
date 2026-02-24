@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from ..config import TeleoperatorConfig
+from lerobot.common.policies import register_policy
 
 @TeleoperatorConfig.register_subclass("webxr")
 @dataclass
@@ -12,3 +13,10 @@ class WebxrTeleopConfig(TeleoperatorConfig):
     pos_scale: float = 1.0
     use_gripper: bool = True
     robot_type: str = "sim_robot"
+
+
+@TeleoperatorConfig.register_subclass("webxr_delta")
+@dataclass
+class WebxrDeltaTeleopConfig(WebxrTeleopConfig):
+    """Configuration for WebXR Delta teleoperator (same as WebXR, uses delta output)."""
+    pass
