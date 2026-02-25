@@ -212,8 +212,7 @@ class WebxrDeltaTeleop(Teleoperator):
                         joint_state = self._robot.get_present_joint_state()
                         # Get joint names from robot or use keys from joint_state
                         if hasattr(self._robot, 'get_joint_names'):
-                            from lerobot.utils.robot_utils import get_joint_names
-                            joint_names = get_joint_names(self._robot)
+                            joint_names = self._robot.get_joint_names()
                         else:
                             joint_names = list(joint_state.keys())
                         joint_pos = np.array([joint_state[name] for name in joint_names])
