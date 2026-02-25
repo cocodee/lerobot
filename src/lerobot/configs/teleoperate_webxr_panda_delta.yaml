@@ -1,0 +1,77 @@
+# WebXR Delta Teleoperation Configuration for SimRobotPandaHil
+#
+# This config uses WebxrDeltaTeleop which outputs delta actions (like other teleop devices),
+# making it compatible with the standard RL training pipeline.
+#
+# Usage:
+#   bash scripts/run_teleoperate_webxr_panda.sh --config_path=configs/teleoperate_webxr_panda_delta.yaml
+
+# ===============================================
+# Robot (SimRobotPandaHil) Configuration
+# ===============================================
+robot:
+  type: sim_robot_panda_hil
+  # URDF path for IK/FK calculations
+  # Update this to your actual URDF file path
+  urdf_path: "/home/smai/workspace/dikeke/franka_description/fr3_urdfs/fr3_franka_hand_obj.urdf"
+
+  # MuJoCo XML path for simulation
+  # Update this to your actual XML file path
+  xml_path: "/home/smai/workspace/dikeke/franka_description/fr3_urdfs/fr3_franka_hand_obj.xml"
+
+  # Target end-effector frame name in URDF
+  target_frame_name: "L_ee"
+  kinematics_solver: "unified"
+  # End-effector workspace boundaries (min and max for x, y, z)
+  end_effector_bounds:
+    min: [-2.0, -2.0, -2.0]
+    max: [2.0, 2.0, 2.0]
+
+  # Position step sizes (scaling factors for delta positions)
+  end_effector_step_sizes:
+    x: 1.0
+    y: 1.0
+    z: 1.0
+
+  # Maximum gripper position (in meters)
+  max_gripper_pos: 0.04
+
+# ===============================================
+# Teleoperator (WebXR Delta) Configuration
+# ===============================================
+teleop:
+  # Use webxr_delta type for delta action output
+  type: webxr_delta
+
+  # Zenoh connection endpoint
+  # Format: "tcp/<ip>:<port>" or "ws/<url>"
+  zenoh_connect_key: "tcp/47.116.8.214:7447"
+
+  robot_type: "sim_robot_panda"
+
+  # WebXR coordinate system to robot coordinate system rotation matrix (3x3)
+  # Maps WebXR controller frame to robot frame
+  # Panda robot configuration:
+  #   - Robot X comes from WebXR Y
+  #   - Robot Y comes from -WebXR X
+  #   - Robot Z comes from -WebXR Z
+  xr_to_robot_matrix:
+    - [0, 1, 0]
+    - [0, 0, -1]
+    - [-1, 0, 0]
+
+  # Axis mapping rotation matrix (3x3) - for device orientation correction
+  # Use this when device is held in a different orientation (e.g., phone vertical)
+  # Example mapping: Z->X, X->Y, Y->Z
+  axis_map_matrix:
+    - [0, 0, 1]
+    - [1, 0, 0]
+    - [0, 1, 0]
+
+# ===============================================
+# Control Configuration
+# ===============================================
+fps: 30
+
+# Teleoperation duration in seconds (null = unlimited)
+teleop_time_s: null

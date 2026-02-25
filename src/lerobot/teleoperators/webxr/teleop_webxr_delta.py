@@ -11,7 +11,7 @@ from typing import Any, Optional
 
 from lerobot.teleoperators.webxr.teleop_webxr import WebxrTeleop
 from lerobot.robots.sim_robot_panda.webxr_intent_translator import WebXRIntentTranslator
-from lerobot.teleoperators.webxr.configuration_webxr import WebxrTeleopConfig
+from lerobot.teleoperators.webxr.configuration_webxr import WebxrDeltaTeleopConfig
 from lerobot.teleoperators import Teleoperator
 
 
@@ -29,27 +29,60 @@ class WebxrDeltaTeleop(Teleoperator):
     - WebxrTeleop: outputs {x, y, z, qx, qy, qz, qw, mode, type} (absolute pose)
     - WebxrDeltaTeleop: outputs {delta_x, delta_y, delta_z, delta_qx, ...} (delta)
 
+    Coordinate System:
+    The WebXRIntentTranslator needs two matrices for proper coordinate transformation:
+    - xr_to_robot_matrix: Maps WebXR controller frame to robot frame
+    - axis_map_rotation: Remaps axes for device orientation (e.g., phone held vertically)
+
     Usage:
-        teleop = WebxrDeltaTeleop(config)
+        teleop = WebxrDeltaTeleopConfig(config)
         teleop.connect()
         teleop.set_robot(robot)  # Optional: enables automatic pose updates
         action = teleop.get_action()  # Returns delta action
     """
 
-    config_class = WebxrTeleopConfig
+    config_class = WebxrDeltaTeleopConfig
     name = "webxr_delta"
     robot_type = "sim_robot"
 
-    def __init__(self, config: WebxrTeleopConfig):
+    def __init__(self, config: WebxrDeltaTeleopConfig):
         super().__init__(config)
         self.config = config
 
         # Create the underlying WebXR teleoperator
         self.webxr_teleop = WebxrTeleop(config)
 
+        # Initialize coordinate transformation matrices from config
+        xr_to_robot_matrix = None
+        axis_map_rotation = None
+
+        if config.xr_to_robot_matrix is not None:
+            xr_to_robot_matrix = np.array(config.xr_to_robot_matrix)
+            # Ensure it's a 3x3 matrix
+            if xr_to_robot_matrix.shape != (3, 3):
+                raise ValueError(f"xr_to_robot_matrix must be 3x3, got {xr_to_robot_matrix.shape}")
+
+        if config.axis_map_matrix is not None:
+            axis_map_matrix = np.array(config.axis_map_matrix)
+            if axis_map_matrix.shape != (3, 3):
+                raise ValueError(f"axis_map_matrix must be 3x3, got {axis_map_matrix.shape}")
+            axis_map_rotation = R.from_matrix(axis_map_matrix)
+
         # Create the intent translator for pose conversion
-        # TODO: Load xr_to_robot_matrix from config if needed
-        self.translator = WebXRIntentTranslator()
+        self.translator = WebXRIntentTranslator(
+            xr_to_robot_matrix=xr_to_robot_matrix,
+            axis_map_rotation=axis_map_rotation
+        )
+
+        logger.info(f"WebxrDeltaTeleop initialized with:")
+        if xr_to_robot_matrix is not None:
+            logger.info(f"  xr_to_robot_matrix: {xr_to_robot_matrix.tolist()}")
+        else:
+            logger.info(f"  xr_to_robot_matrix: None (identity)")
+        if axis_map_rotation is not None:
+            logger.info(f"  axis_map_rotation: {axis_map_rotation.as_matrix().tolist()}")
+        else:
+            logger.info(f"  axis_map_rotation: None (identity)")
 
         # Current robot end-effector pose (4x4 homogeneous matrix)
         self.current_ee_pose: Optional[np.ndarray] = None

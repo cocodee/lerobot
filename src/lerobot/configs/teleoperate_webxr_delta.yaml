@@ -1,0 +1,70 @@
+# WebXR Delta Teleoperation Configuration for SimRobotHil (Supre Robot)
+#
+# This config uses WebxrDeltaTeleop which outputs delta actions (like other teleop devices),
+# making it compatible with the standard RL training pipeline.
+#
+# Usage:
+#   python -m lerobot.scripts.teleoperate_webxr_ee_panda --config_path=configs/teleoperate_webxr_delta.yaml
+
+# ===============================================
+# Robot (Follower) Configuration
+# ===============================================
+robot:
+  # Specifies which subclass of RobotConfig to use.
+  # This matches the name in `@RobotConfig.register_subclass("sim_robot_hil")`
+  type: sim_robot_hil
+
+  # URDF paths for kinematics
+  # urdf_path: "/home/smai/workspace/dikeke/webxr/urdf/RJ2506-20251125-all-13-std.urdf"
+  # urdf_path: "/home/smai/workspace/dc_dir/sim_lerobot/rf2502_new_3/urdf/rf2502_new_3.urdf"
+  # urdf_path1: "/home/smai/workspace/dc_dir/sim_lerobot/rf2502_new_3/urdf/rf2502_new_3.urdf"
+  urdf_path: "/home/smai/workspace/dikeke/webxr/supre_robot/rf2502_new_3_std.urdf"
+  urdf_path1: "/home/smai/workspace/dikeke/webxr/supre_robot/rf2502_new_3_std.urdf"
+
+  target_frame_name: arml_Link5
+
+  end_effector_bounds:
+    min: [-10.0, -10.0, -10.0]
+    max: [10.0, 10.0, 10.0]
+
+  end_effector_step_sizes:
+    x: 1.0
+    y: 1.0
+    z: 1.0
+
+# ===============================================
+# Teleoperator (WebXR Delta) Configuration
+# ===============================================
+teleop:
+  # Use webxr_delta type for delta action output
+  type: webxr_delta
+
+  # Zenoh connection endpoint
+  zenoh_connect_key: "tcp/47.116.8.214:7447"
+
+  # WebXR coordinate system to robot coordinate system rotation matrix (3x3)
+  # Maps WebXR controller frame to robot frame
+  # Supre robot configuration:
+  #   - Robot X comes from -WebXR X
+  #   - Robot Y comes from WebXR Y
+  #   - Robot Z comes from -WebXR Z
+  xr_to_robot_matrix:
+    - [-1, 0, 0]
+    - [0, 1, 0]
+    - [0, 0, -1]
+
+  # Axis mapping rotation matrix (3x3) - for device orientation correction
+  # Supre robot mapping: roll->pitch, pitch->yaw, yaw->roll (r->p, p->y, y->r)
+  axis_map_matrix:
+    - [-1, 0, 0]
+    - [0, 1, 0]
+    - [0, 0, -1]
+
+# ===============================================
+# Control Configuration
+# ===============================================
+fps: 30
+robot_type: "sim_robot_hil"
+
+# Teleoperation duration in seconds (null = unlimited)
+teleop_time_s: null
