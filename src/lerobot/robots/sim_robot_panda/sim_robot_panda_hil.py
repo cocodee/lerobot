@@ -208,9 +208,7 @@ class SimRobotPandaHil(SimRobotPanda):
                 r_delta = R.from_quat(delta_quat)
                 delta_rot_mat = r_delta.as_matrix()
 
-                # R_new = R_delta * R_curr (或者根据控制逻辑 R_curr * R_delta)
-                # 这里沿用 SimRobotHil 逻辑：左乘 delta
-                new_rot_mat = delta_rot_mat @ current_rot_mat
+                new_rot_mat =  current_rot_mat@ delta_rot_mat
                 desired_ee_pos[:3, :3] = new_rot_mat
             else:
                 desired_ee_pos[:3, :3] = current_rot_mat
