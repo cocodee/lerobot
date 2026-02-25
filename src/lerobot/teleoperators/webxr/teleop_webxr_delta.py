@@ -244,6 +244,8 @@ class WebxrDeltaTeleop(Teleoperator):
         # Auto-fetch current EE pose if robot reference is set
         if self._robot is not None:
             self.current_ee_pose = self._get_current_ee_pose()
+        else:
+            logger.warning("WebxrDeltaTeleop: No robot reference set, using manually set pose")
 
         # Get raw WebXR pose
         webxr_action = self.webxr_teleop.get_action()
