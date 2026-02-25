@@ -247,48 +247,23 @@ class WebxrDeltaTeleop(Teleoperator):
 
         # Get raw WebXR pose
         webxr_action = self.webxr_teleop.get_action()
-
-        # Extract mode
-        self.current_mode = webxr_action.get("mode", webxr_action.get("m", "IDLE"))
-        gripper_val = webxr_action.get("gripper", webxr_action.get("g", 1.0))
-
-        # Handle IDLE mode - return zero deltas
-        if self.current_mode == "IDLE" or self.current_ee_pose is None:
-            return self._zero_action(gripper_val)
-
-        # Check for mode transition - reset prev_target_pose
-        if self.current_mode != self.prev_mode:
-            self.prev_target_pose = self.current_ee_pose.copy()
-            logger.info(f"Mode changed: {self.prev_mode} -> {self.current_mode}, reset prev_target_pose")
-
-        self.prev_mode = self.current_mode
-
-        # Normalize frame for translator (handle both old and new formats)
-        frame = self._normalize_frame(webxr_action)
-
+        gripper_val = webxr_action.get("gripper", webxr_action.get("g", 1.0))    
         # Use WebXRIntentTranslator to compute target pose
-        target_pose = self.translator.update(frame, self.current_ee_pose)
+        target_pose = self.translator.update(webxr_action, self.current_ee_pose)
 
         # If translator returns None (shouldn't happen with non-IDLE mode), use current pose
         if target_pose is None:
             target_pose = self.current_ee_pose.copy()
 
-        # Initialize prev_target_pose on first action
-        if self.prev_target_pose is None:
-            self.prev_target_pose = self.current_ee_pose.copy()
-
         # Calculate delta from prev_target to current target
         # This is the actual command to send to the robot
-        delta_pos = target_pose[:3, 3] - self.prev_target_pose[:3, 3]
+        delta_pos = target_pose[:3, 3] - self.current_ee_pose[:3, 3]
 
         # Calculate rotation delta
         current_rot = R.from_matrix(target_pose[:3, :3])
-        prev_rot = R.from_matrix(self.prev_target_pose[:3, :3])
+        prev_rot = R.from_matrix(self.current_ee_pose[:3, :3])
         delta_rot = prev_rot.inv() * current_rot
         delta_quat = delta_rot.as_quat()  # [x, y, z, w]
-
-        # Update prev_target_pose for next iteration
-        self.prev_target_pose = target_pose.copy()
 
         # Return delta action
         return {
