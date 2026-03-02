@@ -66,6 +66,7 @@ from lerobot.teleoperators import (
 )
 from lerobot.teleoperators.gamepad.teleop_gamepad import GamepadTeleop
 from lerobot.teleoperators.keyboard.teleop_keyboard import KeyboardEndEffectorTeleop
+from lerobot.teleoperators.webxr.teleop_webxr_delta import WebxrDeltaTeleop
 from lerobot.utils.robot_utils import busy_wait
 from lerobot.utils.utils import log_say
 
@@ -1985,9 +1986,9 @@ class WebxrControlWrapper(gym.Wrapper):
             - success: Whether episode success was signaled
             - rerecord_episode: Whether episode rerecording was requested
         """
-        if not hasattr(self.teleop_device, "name") or self.teleop_device.name != "webxr":
+        if not hasattr(self.teleop_device, "name") or self.teleop_device.name not in ("webxr", "webxr_delta"):
             raise AttributeError(
-                "teleop_device does not have a 'name' attribute or it is not webxr. Expected for WebxrControlWrapper."
+                "teleop_device does not have a 'name' attribute or it is not webxr/webxr_delta. Expected for WebxrControlWrapper."
             )
 
         # Get status flags from the underlying gamepad controller within the teleop_device
@@ -2282,6 +2283,9 @@ def make_robot_env(cfg: EnvConfig) -> gym.Env:
             use_gripper=cfg.wrapper.use_gripper,
         )
     elif control_mode == "webxr":
+        # For WebxrDeltaTeleop, set robot reference for automatic pose updates
+        if isinstance(teleop_device, WebxrDeltaTeleop):
+            teleop_device.set_robot(robot)
         env = WebxrControlWrapper(
             env=env,
             teleop_device=teleop_device,
