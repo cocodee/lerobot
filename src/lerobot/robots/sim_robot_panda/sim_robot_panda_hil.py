@@ -152,7 +152,7 @@ class SimRobotPandaHil(SimRobotPanda):
         # --- 3. 解析 Action ---
         logger.info(f"send_action: {action}")
         # 检查是否为 WebXR 格式 (包含 p, q, g, m, type)
-        if isinstance(action, dict) and "delta_x" in action:
+        if isinstance(action, dict) and action["type"]=="webxr":
             # 使用 WebXRIntentTranslator 计算目标 EE 位姿
             desired_ee_pos = self.webxr_translator.update(
                 frame=action,
@@ -176,6 +176,7 @@ class SimRobotPandaHil(SimRobotPanda):
 
             if isinstance(action, dict):
                 if all(k in action for k in ["delta_x", "delta_y", "delta_z"]):
+                    logger.info(f"send_action Delta: {action}")
                     delta_ee = np.array([
                         action["delta_x"] * self.config.end_effector_step_sizes["x"],
                         action["delta_y"] * self.config.end_effector_step_sizes["y"],
