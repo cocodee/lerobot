@@ -78,7 +78,7 @@ logger = logging.getLogger(__name__)
 ACTION_TYPE_ABS = "ABS_EE"
 ACTION_TYPE_TWIST = "TWIST_EE"
 ACTION_TYPE_DELTA = "DELTA_EE"
-ACTION_TYPE = ACTION_TYPE_ABS
+ACTION_TYPE = ACTION_TYPE_DELTA
 
 def get_present_position(robot_arm):
     #leader and follower
