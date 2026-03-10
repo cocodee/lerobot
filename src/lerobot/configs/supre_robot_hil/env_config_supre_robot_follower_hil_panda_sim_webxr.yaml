@@ -30,11 +30,34 @@ robot:
     z: 1.0
 
 teleop:
-  # Specifies which subclass of TeleoperatorConfig to use.
-  # This matches the name in `@TeleoperatorConfig.register_subclass("supre_robot_leader")`
-  type: webxr
+  # Use webxr_delta type for delta action output
+  type: webxr_delta
+
+  # Zenoh connection endpoint
+  # Format: "tcp/<ip>:<port>" or "ws/<url>"
   zenoh_connect_key: "tcp/47.116.8.214:7447"
-  robot_type: sim_robot_panda_hil
+
+  robot_type: "sim_robot_panda"
+
+  # WebXR coordinate system to robot coordinate system rotation matrix (3x3)
+  # Maps WebXR controller frame to robot frame
+  # Panda robot configuration:
+  #   - Robot X comes from WebXR Y
+  #   - Robot Y comes from -WebXR X
+  #   - Robot Z comes from -WebXR Z
+  xr_to_robot_matrix:
+    - [0, 1, 0]
+    - [0, 0, -1]
+    - [-1, 0, 0]
+
+  # Axis mapping rotation matrix (3x3) - for device orientation correction
+  # Use this when device is held in a different orientation (e.g., phone vertical)
+  # Example mapping: Z->X, X->Y, Y->Z
+  axis_map_matrix:
+    - [0, 0, 1]
+    - [1, 0, 0]
+    - [0, 1, 0]
+
 wrapper:
   display_cameras: false
   add_joint_velocity_to_observation: true
