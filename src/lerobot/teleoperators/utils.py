@@ -84,5 +84,8 @@ def make_teleoperator_from_config(config: TeleoperatorConfig) -> Teleoperator:
     elif config.type == "webxr":
         from .webxr import WebxrTeleop
         return WebxrTeleop(config)
+    elif config.type == "webxr_delta":
+        from .webxr.teleop_webxr_delta import WebxrTeleopDelta
+        return WebxrTeleopDelta(config)
     else:
         raise ValueError(config.type)
