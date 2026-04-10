@@ -21,10 +21,17 @@ import time
 from queue import Queue
 from typing import Any
 
+import numpy as np
+
 from lerobot.errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
+from lerobot.model.kinematics import RobotKinematics
 
 from ..teleoperator import Teleoperator
-from .configuration_keyboard import KeyboardEndEffectorTeleopConfig, KeyboardTeleopConfig
+from .configuration_keyboard import (
+    KeyboardEndEffectorTeleopConfig,
+    KeyboardJointIKTeleopConfig,
+    KeyboardTeleopConfig,
+)
 import logging
 
 
@@ -344,3 +351,174 @@ class KeyboardEndEffectorTeleop(KeyboardTeleop):
         self.pending_releases.clear()
         
         logger.info(f"{self.name} extended state reset.")
+
+
+def _rotation_matrix_x(angle_deg: float) -> np.ndarray:
+    angle_rad = np.deg2rad(angle_deg)
+    c, s = np.cos(angle_rad), np.sin(angle_rad)
+    return np.array([[1.0, 0.0, 0.0], [0.0, c, -s], [0.0, s, c]], dtype=np.float64)
+
+
+def _rotation_matrix_y(angle_deg: float) -> np.ndarray:
+    angle_rad = np.deg2rad(angle_deg)
+    c, s = np.cos(angle_rad), np.sin(angle_rad)
+    return np.array([[c, 0.0, s], [0.0, 1.0, 0.0], [-s, 0.0, c]], dtype=np.float64)
+
+
+def _rotation_matrix_z(angle_deg: float) -> np.ndarray:
+    angle_rad = np.deg2rad(angle_deg)
+    c, s = np.cos(angle_rad), np.sin(angle_rad)
+    return np.array([[c, -s, 0.0], [s, c, 0.0], [0.0, 0.0, 1.0]], dtype=np.float64)
+
+
+class KeyboardJointIKTeleop(KeyboardEndEffectorTeleop):
+    """
+    Keyboard teleop that maintains an end-effector pose internally and outputs joint-space actions.
+
+    Unlike `KeyboardEndEffectorTeleop`, this teleoperator solves IK locally and exposes the same
+    joint-space action keys as leader-arm teleoperators, which allows it to be used inside
+    `SwitchableTeleoperator`.
+    """
+
+    config_class = KeyboardJointIKTeleopConfig
+    name = "keyboard_joint_ik"
+
+    def __init__(self, config: KeyboardJointIKTeleopConfig):
+        super().__init__(config)
+        self.config = config
+        self.command_by_key = dict(config.key_bindings)
+        self.continuous_keys = set(self.command_by_key)
+        self.misc_keys_queue = Queue()
+        self._kinematics = None
+        self.current_joint_pos_deg: np.ndarray | None = None
+        self.current_ee_pose: np.ndarray | None = None
+
+    @property
+    def action_features(self) -> dict[str, type]:
+        action_joint_names = [*self.config.joint_names, self.config.gripper_joint_name]
+        return {f"{joint}.pos": float for joint in action_joint_names}
+
+    def _ensure_kinematics(self) -> None:
+        if self._kinematics is not None:
+            return
+
+        self._kinematics = RobotKinematics(
+            urdf_path=self.config.urdf_path,
+            target_frame_name=self.config.target_frame_name,
+            joint_names=self.config.joint_names,
+        )
+
+        self.current_joint_pos_deg = np.array(
+            [self.config.initial_joint_positions[joint] for joint in [*self.config.joint_names, self.config.gripper_joint_name]],
+            dtype=np.float64,
+        )
+        self.current_ee_pose = self._kinematics.forward_kinematics(self.current_joint_pos_deg)
+
+    def get_action(self) -> dict[str, Any]:
+        if not self.is_connected:
+            raise DeviceNotConnectedError(
+                "KeyboardJointIKTeleop is not connected. You need to run `connect()` before `get_action()`."
+            )
+
+        self._ensure_kinematics()
+        self._drain_pressed_keys()
+
+        assert self.current_joint_pos_deg is not None
+        assert self.current_ee_pose is not None
+
+        delta_translation = np.zeros(3, dtype=np.float64)
+        delta_rotation = np.eye(3, dtype=np.float64)
+        gripper_delta = 0.0
+
+        for key in list(self.current_pressed.keys()):
+            if not self.current_pressed[key]:
+                continue
+
+            command = self.command_by_key.get(key)
+            if command is None:
+                self.misc_keys_queue.put(key)
+                continue
+
+            if command == "translate_x_positive":
+                delta_translation[0] += self.config.end_effector_step_sizes["x"]
+            elif command == "translate_x_negative":
+                delta_translation[0] -= self.config.end_effector_step_sizes["x"]
+            elif command == "translate_y_positive":
+                delta_translation[1] += self.config.end_effector_step_sizes["y"]
+            elif command == "translate_y_negative":
+                delta_translation[1] -= self.config.end_effector_step_sizes["y"]
+            elif command == "translate_z_positive":
+                delta_translation[2] += self.config.end_effector_step_sizes["z"]
+            elif command == "translate_z_negative":
+                delta_translation[2] -= self.config.end_effector_step_sizes["z"]
+            elif command == "rotate_roll_positive":
+                delta_rotation = delta_rotation @ _rotation_matrix_x(self.config.rotation_step_sizes_deg["roll"])
+            elif command == "rotate_roll_negative":
+                delta_rotation = delta_rotation @ _rotation_matrix_x(-self.config.rotation_step_sizes_deg["roll"])
+            elif command == "rotate_pitch_positive":
+                delta_rotation = delta_rotation @ _rotation_matrix_y(self.config.rotation_step_sizes_deg["pitch"])
+            elif command == "rotate_pitch_negative":
+                delta_rotation = delta_rotation @ _rotation_matrix_y(-self.config.rotation_step_sizes_deg["pitch"])
+            elif command == "rotate_yaw_positive":
+                delta_rotation = delta_rotation @ _rotation_matrix_z(self.config.rotation_step_sizes_deg["yaw"])
+            elif command == "rotate_yaw_negative":
+                delta_rotation = delta_rotation @ _rotation_matrix_z(-self.config.rotation_step_sizes_deg["yaw"])
+            elif command == "gripper_open":
+                gripper_delta += self.config.gripper_step_size
+            elif command == "gripper_close":
+                gripper_delta -= self.config.gripper_step_size
+            else:
+                self.misc_keys_queue.put(key)
+
+        desired_ee_pose = self.current_ee_pose.copy()
+        desired_ee_pose[:3, 3] = self.current_ee_pose[:3, 3] + delta_translation
+        desired_ee_pose[:3, 3] = np.clip(
+            desired_ee_pose[:3, 3],
+            self.config.end_effector_bounds["min"],
+            self.config.end_effector_bounds["max"],
+        )
+        desired_ee_pose[:3, :3] = self.current_ee_pose[:3, :3] @ delta_rotation
+
+        new_joint_pos_deg = self._kinematics.inverse_kinematics(self.current_joint_pos_deg, desired_ee_pose)
+        gripper_index = len(self.config.joint_names)
+        new_joint_pos_deg = np.array(new_joint_pos_deg, dtype=np.float64)
+        new_joint_pos_deg[gripper_index] = np.clip(
+            self.current_joint_pos_deg[gripper_index] + gripper_delta,
+            self.config.gripper_bounds["min"],
+            self.config.gripper_bounds["max"],
+        )
+
+        self.current_joint_pos_deg = new_joint_pos_deg
+        self.current_ee_pose = desired_ee_pose
+
+        for key in list(self.current_pressed.keys()):
+            if key not in self.continuous_keys:
+                self.current_pressed.pop(key)
+
+        return self._format_joint_action(self.current_joint_pos_deg)
+
+    def _format_joint_action(self, joint_pos_deg: np.ndarray) -> dict[str, float]:
+        arm_joint_values = joint_pos_deg[: len(self.config.joint_names)]
+        gripper_value = float(joint_pos_deg[len(self.config.joint_names)])
+
+        if self.config.output_mode == "degrees":
+            arm_action = {
+                f"{joint}.pos": float(value) for joint, value in zip(self.config.joint_names, arm_joint_values, strict=True)
+            }
+        else:
+            arm_action = {}
+            for joint, value in zip(self.config.joint_names, arm_joint_values, strict=True):
+                joint_bounds = self.config.joint_degree_bounds[joint]
+                min_deg = joint_bounds["min"]
+                max_deg = joint_bounds["max"]
+                bounded_value = float(np.clip(value, min_deg, max_deg))
+                normalized = (((bounded_value - min_deg) / (max_deg - min_deg)) * 200.0) - 100.0
+                arm_action[f"{joint}.pos"] = normalized
+
+        arm_action[f"{self.config.gripper_joint_name}.pos"] = gripper_value
+        return arm_action
+
+    def reset(self) -> None:
+        super().reset()
+        self.current_joint_pos_deg = None
+        self.current_ee_pose = None

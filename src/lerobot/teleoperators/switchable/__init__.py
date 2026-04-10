@@ -14,18 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .configuration_keyboard import (
-    KeyboardEndEffectorTeleopConfig,
-    KeyboardJointIKTeleopConfig,
-    KeyboardTeleopConfig,
-)
-from .teleop_keyboard import KeyboardEndEffectorTeleop, KeyboardJointIKTeleop, KeyboardTeleop
+from .config_switchable import SwitchableTeleoperatorConfig
+from .keyboard_events import KeyboardEventSource, TeleopEvent
+from .switchable_teleoperator import SwitchableTeleoperator
 
 __all__ = [
-    "KeyboardTeleopConfig",
-    "KeyboardTeleop",
-    "KeyboardEndEffectorTeleopConfig",
-    "KeyboardEndEffectorTeleop",
-    "KeyboardJointIKTeleopConfig",
-    "KeyboardJointIKTeleop",
+    "SwitchableTeleoperatorConfig",
+    "KeyboardEventSource",
+    "TeleopEvent",
+    "SwitchableTeleoperator",
 ]

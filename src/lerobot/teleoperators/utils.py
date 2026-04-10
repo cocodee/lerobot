@@ -53,6 +53,10 @@ def make_teleoperator_from_config(config: TeleoperatorConfig) -> Teleoperator:
         from .keyboard.teleop_keyboard import KeyboardEndEffectorTeleop
 
         return KeyboardEndEffectorTeleop(config)
+    elif config.type == "keyboard_joint_ik":
+        from .keyboard.teleop_keyboard import KeyboardJointIKTeleop
+
+        return KeyboardJointIKTeleop(config)
     elif config.type == "homunculus_glove":
         from .homunculus import HomunculusGlove
 
@@ -87,5 +91,9 @@ def make_teleoperator_from_config(config: TeleoperatorConfig) -> Teleoperator:
     elif config.type == "webxr_delta":
         from .webxr.teleop_webxr_delta import WebxrDeltaTeleop
         return WebxrDeltaTeleop(config)
+    elif config.type == "switchable":
+        from .switchable import SwitchableTeleoperator
+
+        return SwitchableTeleoperator(config)
     else:
         raise ValueError(config.type)
