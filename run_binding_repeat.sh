@@ -6,7 +6,7 @@ source ./setup_binding_env.sh
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 cd "$SCRIPT_DIR"
 
-CONFIG_FILE_PATH="$SCRIPT_DIR/src/lerobot/teleoperators/supre_robot_leader/trunk_teleoperate.yaml"
+CONFIG_FILE_PATH="$SCRIPT_DIR/src/lerobot/teleoperators/supre_robot_leader/trunk_teleoperate_repeat.yaml"
 
 python -m lerobot.repeat_joint_trajectory \
     --robot.type=supre_robot_follower \
