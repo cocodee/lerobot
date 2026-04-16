@@ -69,6 +69,22 @@ def default_target_sequence() -> list[dict[str, float]]:
                 0.0,
             ]
         ),
+        _target(
+            [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+            ]
+        ),        
     ]
 
 
