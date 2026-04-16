@@ -8,7 +8,7 @@ cd "$SCRIPT_DIR"
 
 CONFIG_FILE_PATH="$SCRIPT_DIR/src/lerobot/teleoperators/supre_robot_leader/trunk_teleoperate.yaml"
 
-PYTHONPATH=src python -m lerobot.repeat_joint_trajectory \
+python -m lerobot.repeat_joint_trajectory \
     --robot.type=supre_robot_follower \
     --robot.id=supre_follower \
     --cycles=10 \

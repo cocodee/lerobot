@@ -35,14 +35,12 @@ SUPRE_JOINT_NAMES = [
     "left_arm_joint_4",
     "left_arm_joint_5",
     "left_arm_joint_6",
-    "left_arm_joint_7",
     "right_arm_joint_1",
     "right_arm_joint_2",
     "right_arm_joint_3",
     "right_arm_joint_4",
     "right_arm_joint_5",
     "right_arm_joint_6",
-    "right_arm_joint_7",
 ]
 
 
@@ -57,16 +55,14 @@ def default_target_sequence() -> list[dict[str, float]]:
     return [
         _target(
             [
-                -5.0,
-                -5.0,
+                5.0,
+                5.0,
                 0.0,
                 0.0,
                 5.0,
-                0.0,
                 0.0,
                 5.0,
                 10.0,
-                0.0,
                 0.0,
                 0.0,
                 0.0,
