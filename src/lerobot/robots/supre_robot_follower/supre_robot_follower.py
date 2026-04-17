@@ -191,6 +191,80 @@ class SupreRobotFollower(Robot):
         print("current_pos: ", pos_dict)
         return {self.observation_joint_names[i]: positions[i] for i in range(len(self.observation_joint_names))}
 
+    def _prepare_action(self, action: dict[str, Any]) -> Tuple[List[float], Dict[str, Any]]:
+        if action is None:
+            raise ValueError("Action dictionary must contain 'joint_positions'.")
+
+        action_pos = {key.removesuffix(".pos"): val for key, val in action.items()}
+
+        target_positions = [action_pos[name] for name in self.observation_joint_names]
+                
+        final_clamped_positions = []
+        warnings = {}
+
+        # 我们需要按顺序遍历关节，以保持 target_positions 列表的顺序
+        for i, joint_name in enumerate(self.observation_joint_names):
+            # 获取当前关节的目标位置
+            target_pos = target_positions[i]
+            
+            # 从我们预处理好的字典中查找限制
+            limits = self.calibration_limits[joint_name]
+            
+            # 执行钳位操作
+            clamped_pos = max(limits.min_position, min(target_pos, limits.max_position))
+            
+            # 如果发生了钳位，记录下来以便发出警告
+            if abs(clamped_pos - target_pos) > 1e-4:
+                warnings[joint_name] = {
+                    "original": target_pos,
+                    "clamped": clamped_pos,
+                    "limits": (limits.min_position, limits.max_position)
+                }
+            
+            final_clamped_positions.append(clamped_pos)
+        
+        # 如果有任何关节被限制了，打印一条总的警告信息
+        if warnings:
+            # 可以在这里使用 logging.warning 来代替 print
+            logger.warning(
+                "One or more joint positions were clamped to their absolute limits:"
+            )
+        
+        # 使用经过两层安全检查后的最终位置
+        final_target_positions = final_clamped_positions
+
+        if self.joint_position_gauge:
+            for joint_name, position in zip(self.observation_joint_names, final_target_positions):
+                # 使用 'leader' 作为 robot_name
+                self.joint_position_gauge.labels(
+                    robot_name='follower', 
+                    joint_name=joint_name,
+                    joint_id=joint_name,
+                ).set(position)
+
+        # 同时更新 sorted_items 以便 wandb 记录正确的值
+        sorted_items = list(zip(self.observation_joint_names, final_target_positions))
+
+        ### WANDB MODIFICATION START ###
+        # 4. 在发送动作时，使用时间戳记录 action 数据
+        current_timestamp = time.time()
+
+        # 准备要记录的数据，键名使用 'action/' 前缀进行分组
+        log_data = {f"action/{key}": value for key, value in sorted_items}
+        
+        # 将时间戳本身也添加到 log_data 中，这是定义 x 轴的关键
+        log_data["timestamp"] = current_timestamp
+        
+        #wandb.log(log_data)
+        ### WANDB MODIFICATION END ###
+
+        # 首先，创建一个包含最终执行值的字典 (key: 'left_arm_joint_1', value: final_pos)
+        final_action = {
+            f"{name}.pos": pos 
+            for name, pos in zip(self.observation_joint_names, final_target_positions)
+        }
+        
+        return final_clamped_positions, final_action   
     def _prepare_and_clamp_action(self, action: dict[str, Any]) -> Tuple[List[float], Dict[str, Any]]:
         if action is None:
             raise ValueError("Action dictionary must contain 'joint_positions'.")
@@ -384,8 +458,8 @@ class SupreRobotFollower(Robot):
         start_positions = np.array([start_positions_map[name] for name in self.observation_joint_names])
         
         # 终点: 调用辅助方法计算最终钳位后的目标位置，但 *不发送*
-        final_target_positions, _ = self._prepare_and_clamp_action(goal_action)
-        end_positions = np.array(final_target_positions)
+        final_target_positions, _ = self._prepare_action(goal_action)
+        end_positions = final_target_positions
 
         # --- 2. 计算插值参数 ---
         control_period = 1.0 / self.config.control_frequency
